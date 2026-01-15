@@ -378,11 +378,46 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       });
     }
 
-    doc.fontSize(12)
-      .fillColor('#64748b')
-      .text(`Total de OS: ${ordens.length}`, { align: 'center' });
-
-    doc.moveDown(1.5);
+    // Se houver filtro de data, mostrar caixa destacada com estatísticas
+    if (dataInicio || dataFim) {
+      doc.moveDown(0.8);
+      
+      // Caixa de destaque
+      const boxY = doc.y;
+      const boxHeight = 60;
+      const boxX = 50;
+      const boxWidth = 500;
+      
+      // Fundo da caixa
+      doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 8)
+        .fillAndStroke('#dbeafe', '#3b82f6');
+      
+      // Título
+      doc.fontSize(12)
+        .fillColor('#1e40af')
+        .font('Helvetica-Bold')
+        .text('ESTATÍSTICAS DO PERÍODO', boxX + 20, boxY + 12, { width: boxWidth - 40 });
+      
+      // Total de OS
+      doc.fontSize(16)
+        .fillColor('#1e3a8a')
+        .font('Helvetica-Bold')
+        .text(
+          `${ordens.length} ${ordens.length === 1 ? 'Ordem de Serviço' : 'Ordens de Serviço'}`,
+          boxX + 20,
+          boxY + 32,
+          { width: boxWidth - 40, align: 'center' }
+        );
+      
+      doc.y = boxY + boxHeight + 15;
+    } else {
+      // Total simples quando não há filtro de período
+      doc.moveDown(0.5);
+      doc.fontSize(12)
+        .fillColor('#64748b')
+        .text(`Total de OS: ${ordens.length}`, { align: 'center' });
+      doc.moveDown(1);
+    }
 
     // Lista de ordens de serviço
     ordens.forEach((ordem, index) => {

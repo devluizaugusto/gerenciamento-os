@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import ServiceOrderCard from './components/orders/ServiceOrderCard';
 import Modal from './components/common/Modal';
 import Toast from './components/common/Toast';
+import Statistics from './components/common/Statistics';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
@@ -282,6 +283,16 @@ function App() {
 
       <main className="min-h-[calc(100vh-280px)] pb-12 flex-1 pt-8">
         <div className="container p-4 md:p-6 lg:p-8">
+          {/* Estatísticas */}
+          <Statistics 
+            ordens={ordens} 
+            diaFilter={diaFilter}
+            mesFilter={mesFilter}
+            anoFilter={anoFilter}
+            dataInicioFilter={dataInicioFilter}
+            dataFimFilter={dataFimFilter}
+          />
+
           {/* Filtros de Status */}
           <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
             <button
