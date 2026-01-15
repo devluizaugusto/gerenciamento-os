@@ -1,0 +1,83 @@
+### Exemplos de Requisições HTTP para testar a API
+### Use com extensão REST Client do VS Code ou similar
+
+@baseUrl = http://localhost:3001/api/ordens-servico
+
+### Listar todas as ordens de serviço
+GET {{baseUrl}}
+
+### Buscar ordem de serviço por ID
+GET {{baseUrl}}/1
+
+### Buscar ordem de serviço por número
+GET {{baseUrl}}/numero/1001
+
+### Filtrar por status: aberto
+GET {{baseUrl}}/status/aberto
+
+### Filtrar por status: em_andamento
+GET {{baseUrl}}/status/em_andamento
+
+### Filtrar por status: finalizado
+GET {{baseUrl}}/status/finalizado
+
+### Criar nova ordem de serviço
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "numero_os": 1001,
+  "solicitante": "João Silva",
+  "ubs": "UBS Central",
+  "setor": "Informática",
+  "descricao_problema": "Computador não liga, necessário verificar fonte",
+  "data_abertura": "15/12/2024",
+  "servico_realizado": null,
+  "status": "aberto"
+}
+
+### Criar ordem de serviço com data no formato ISO
+POST {{baseUrl}}
+Content-Type: application/json
+
+{
+  "numero_os": 1002,
+  "solicitante": "Maria Santos",
+  "ubs": "UBS Norte",
+  "setor": "Elétrica",
+  "descricao_problema": "Lâmpada queimada no corredor principal",
+  "data_abertura": "2024-12-16",
+  "status": "em_andamento"
+}
+
+### Atualizar ordem de serviço para em andamento
+PUT {{baseUrl}}/1
+Content-Type: application/json
+
+{
+  "status": "em_andamento",
+  "servico_realizado": "Verificação iniciada"
+}
+
+### Finalizar ordem de serviço
+PUT {{baseUrl}}/1
+Content-Type: application/json
+
+{
+  "status": "finalizado",
+  "servico_realizado": "Troca de fonte do computador realizada com sucesso",
+  "data_fechamento": "16/12/2024"
+}
+
+### Atualizar múltiplos campos
+PUT {{baseUrl}}/1
+Content-Type: application/json
+
+{
+  "solicitante": "João Silva Atualizado",
+  "descricao_problema": "Problema resolvido completamente",
+  "status": "finalizado"
+}
+
+### Deletar ordem de serviço
+DELETE {{baseUrl}}/1

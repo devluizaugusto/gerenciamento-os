@@ -1,0 +1,107 @@
+### Exemplos de Validação com Zod
+
+### ✅ Criar OS - VÁLIDO
+POST http://localhost:3001/api/ordens-servico
+Content-Type: application/json
+
+{
+  "solicitante": "João Silva",
+  "ubs": "UBS Central",
+  "setor": "Manutenção",
+  "descricao_problema": "Problema na impressora",
+  "data_abertura": "14/01/2026",
+  "status": "aberto"
+}
+
+### ❌ Criar OS - Campo obrigatório faltando
+POST http://localhost:3001/api/ordens-servico
+Content-Type: application/json
+
+{
+  "ubs": "UBS Central",
+  "setor": "Manutenção",
+  "descricao_problema": "Problema na impressora",
+  "data_abertura": "14/01/2026"
+}
+
+### ❌ Criar OS - Data em formato inválido
+POST http://localhost:3001/api/ordens-servico
+Content-Type: application/json
+
+{
+  "solicitante": "João Silva",
+  "ubs": "UBS Central",
+  "setor": "Manutenção",
+  "descricao_problema": "Problema na impressora",
+  "data_abertura": "14-01-2026",
+  "status": "aberto"
+}
+
+### ❌ Criar OS - Status inválido
+POST http://localhost:3001/api/ordens-servico
+Content-Type: application/json
+
+{
+  "solicitante": "João Silva",
+  "ubs": "UBS Central",
+  "setor": "Manutenção",
+  "descricao_problema": "Problema na impressora",
+  "data_abertura": "14/01/2026",
+  "status": "invalido"
+}
+
+### ❌ Criar OS - Campo vazio
+POST http://localhost:3001/api/ordens-servico
+Content-Type: application/json
+
+{
+  "solicitante": "",
+  "ubs": "UBS Central",
+  "setor": "Manutenção",
+  "descricao_problema": "Problema na impressora",
+  "data_abertura": "14/01/2026"
+}
+
+### ✅ Atualizar OS - VÁLIDO
+PUT http://localhost:3001/api/ordens-servico/1
+Content-Type: application/json
+
+{
+  "status": "em_andamento",
+  "servico_realizado": "Impressora formatada e configurada"
+}
+
+### ❌ Atualizar OS - ID inválido
+PUT http://localhost:3001/api/ordens-servico/abc
+Content-Type: application/json
+
+{
+  "status": "em_andamento"
+}
+
+### ❌ Atualizar OS - Nenhum campo fornecido
+PUT http://localhost:3001/api/ordens-servico/1
+Content-Type: application/json
+
+{}
+
+### ✅ Buscar por status - VÁLIDO
+GET http://localhost:3001/api/ordens-servico/status/aberto
+
+### ❌ Buscar por status - Status inválido
+GET http://localhost:3001/api/ordens-servico/status/invalido
+
+### ✅ Buscar por ID - VÁLIDO
+GET http://localhost:3001/api/ordens-servico/1
+
+### ❌ Buscar por ID - ID inválido
+GET http://localhost:3001/api/ordens-servico/abc
+
+### ✅ Gerar relatório - VÁLIDO
+GET http://localhost:3001/api/ordens-servico/pdf/relatorio/geral?status=aberto&dataInicio=2026-01-01&dataFim=2026-01-31
+
+### ❌ Gerar relatório - Formato de data inválido
+GET http://localhost:3001/api/ordens-servico/pdf/relatorio/geral?status=aberto&dataInicio=01/01/2026&dataFim=31/01/2026
+
+### ❌ Gerar relatório - Status inválido
+GET http://localhost:3001/api/ordens-servico/pdf/relatorio/geral?status=invalido

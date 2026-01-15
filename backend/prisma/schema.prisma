@@ -1,0 +1,26 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model OrdemServico {
+  id                  Int       @id @default(autoincrement())
+  numero_os           Int       @unique
+  solicitante         String    @db.VarChar(255)
+  ubs                 String    @db.VarChar(255)
+  setor               String    @db.VarChar(255)
+  descricao_problema  String    @db.Text
+  data_abertura       DateTime  @db.Date
+  servico_realizado   String?   @db.Text
+  status              String    @default("aberto") @db.VarChar(50)
+  data_fechamento     DateTime? @db.Date
+
+  @@map("ordem_servico")
+}
