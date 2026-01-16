@@ -14,7 +14,7 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
   const status = getStatusConfig(ordem.status);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 border-2 border-transparent hover:-translate-y-2 hover:shadow-2xl hover:border-primary/20 animate-fadeInUp group">
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 border-2 border-green-200 hover:-translate-y-2 hover:shadow-2xl animate-fadeInUp group">
       {/* Header com gradiente */}
       <div 
         className="relative px-6 py-5 bg-gradient-to-r overflow-hidden"

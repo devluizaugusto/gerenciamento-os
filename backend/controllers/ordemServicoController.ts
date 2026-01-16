@@ -198,7 +198,6 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
     // Processar data_abertura
     if (data_abertura !== undefined && data_abertura !== null && String(data_abertura).trim() !== '') {
       let dataAberturaFormatada = String(data_abertura);
-      console.log('📅 [UPDATE] data_abertura recebida:', data_abertura);
       if (dataAberturaFormatada.includes('/')) {
         const parts = dataAberturaFormatada.split('/');
         if (parts.length === 3) {
@@ -208,16 +207,12 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
         dataAberturaFormatada = `${dataAberturaFormatada}T12:00:00.000Z`;
       }
       updateData.data_abertura = new Date(dataAberturaFormatada);
-      console.log('📅 [UPDATE] data_abertura formatada:', dataAberturaFormatada);
-      console.log('📅 [UPDATE] data_abertura Date object:', updateData.data_abertura);
     }
     
     // Processar data_fechamento
     if (data_fechamento !== undefined) {
-      console.log('📅 [UPDATE] data_fechamento recebida:', data_fechamento);
       if (data_fechamento === null || String(data_fechamento).trim() === '') {
         updateData.data_fechamento = null;
-        console.log('📅 [UPDATE] data_fechamento definida como NULL');
       } else {
         let dataFechamentoFormatada = String(data_fechamento);
         if (dataFechamentoFormatada.includes('/')) {
@@ -229,8 +224,6 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
           dataFechamentoFormatada = `${dataFechamentoFormatada}T12:00:00.000Z`;
         }
         updateData.data_fechamento = new Date(dataFechamentoFormatada);
-        console.log('📅 [UPDATE] data_fechamento formatada:', dataFechamentoFormatada);
-        console.log('📅 [UPDATE] data_fechamento Date object:', updateData.data_fechamento);
       }
     }
     
@@ -257,18 +250,12 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
       return;
     }
     
-    console.log('💾 [UPDATE] Dados que serão salvos no banco:', JSON.stringify(updateData, null, 2));
-    
     const ordemAtualizada = await prisma.ordemServico.update({
       where: { id: parseInt(String(id)) },
       data: updateData
     });
     
-    console.log('✅ [UPDATE] Ordem atualizada no banco:', JSON.stringify(ordemAtualizada, null, 2));
-    
     const ordemFormatada = formatOrdemServico(ordemAtualizada);
-    console.log('📤 [UPDATE] Ordem formatada para retornar:', JSON.stringify(ordemFormatada, null, 2));
-    
     res.json(ordemFormatada);
   } catch (error) {
     console.error('Erro ao atualizar ordem de serviço:', error);

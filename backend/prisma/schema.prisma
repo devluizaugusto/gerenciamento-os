@@ -22,5 +22,8 @@ model OrdemServico {
   status              String    @default("aberto") @db.VarChar(50)
   data_fechamento     DateTime? @db.Date
 
+  @@index([status])
+  @@index([data_abertura])
+  @@index([numero_os])
   @@map("ordem_servico")
 }

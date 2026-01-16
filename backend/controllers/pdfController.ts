@@ -316,7 +316,7 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
 
     // Cabeçalho
     doc.fontSize(24)
-      .fillColor('#2563eb')
+      .fillColor('#047857')
       .text('RELATÓRIO DE ORDENS DE SERVIÇO', { align: 'center' });
 
     doc.moveDown(0.5);
@@ -331,6 +331,8 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
     doc.fontSize(12)
       .fillColor('#64748b')
       .text(`Relatório gerado em: ${dataHojeBR}`, { align: 'center' });
+
+    doc.moveDown(1);
 
     // Mostrar filtros aplicados
     const filtrosAplicados: string[] = [];
@@ -390,17 +392,17 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       
       // Fundo da caixa
       doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 8)
-        .fillAndStroke('#dbeafe', '#3b82f6');
+        .fillAndStroke('#d1fae5', '#10b981');
       
       // Título
       doc.fontSize(12)
-        .fillColor('#1e40af')
+        .fillColor('#047857')
         .font('Helvetica-Bold')
-        .text('ESTATÍSTICAS DO PERÍODO', boxX + 20, boxY + 12, { width: boxWidth - 40 });
+        .text('ESTATÍSTICAS DO PERÍODO', boxX + 20, boxY + 12, { width: boxWidth - 40, align: 'center' });
       
       // Total de OS
       doc.fontSize(16)
-        .fillColor('#1e3a8a')
+        .fillColor('#065f46')
         .font('Helvetica-Bold')
         .text(
           `${ordens.length} ${ordens.length === 1 ? 'Ordem de Serviço' : 'Ordens de Serviço'}`,

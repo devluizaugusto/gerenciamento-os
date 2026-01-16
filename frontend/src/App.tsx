@@ -20,6 +20,7 @@ import {
   useGenerateRelatorioPDF,
 } from './hooks/useOrdemServico';
 import { useToast } from './hooks/useToast';
+import { useDebounce } from './hooks/useDebounce';
 
 function App() {
   // Estados de filtros
@@ -48,6 +49,9 @@ function App() {
   // Toast notifications
   const { toasts, removeToast, success, error: errorToast } = useToast();
 
+  // Debounce do searchTerm para evitar re-renders excessivos durante digitação
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
   // Filtrar ordens com useMemo para otimização
   const filteredOrdens = useMemo(() => {
     let filtered = [...ordens];
@@ -57,9 +61,9 @@ function App() {
       filtered = filtered.filter(ordem => ordem.status === statusFilter);
     }
 
-    // Filtrar por busca
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
+    // Filtrar por busca (usando debounced value)
+    if (debouncedSearchTerm) {
+      const term = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(ordem =>
         ordem.numero_os.toString().includes(term) ||
         ordem.solicitante.toLowerCase().includes(term) ||
@@ -140,7 +144,7 @@ function App() {
     });
 
     return filtered;
-  }, [ordens, statusFilter, searchTerm, diaFilter, mesFilter, anoFilter, dataInicioFilter, dataFimFilter]);
+  }, [ordens, statusFilter, debouncedSearchTerm, diaFilter, mesFilter, anoFilter, dataInicioFilter, dataFimFilter]);
 
   // Handlers com useCallback para evitar re-renders
   const closeModal = useCallback(() => {
@@ -293,70 +297,78 @@ function App() {
             dataFimFilter={dataFimFilter}
           />
 
-          {/* Filtros de Status */}
-          <div className="flex flex-wrap gap-2 md:gap-3 mb-6">
-            <button
-              className={`btn px-3 md:px-5 py-2 md:py-3 text-xs md:text-sm font-semibold ${
-                statusFilter === 'todos' 
-                  ? '!bg-green-600 text-white hover:!bg-green-700' 
-                  : '!bg-green-100 !text-green-700 hover:!bg-green-200'
-              }`}
-              onClick={() => setStatusFilter('todos')}
-            >
-              Todos ({ordens.length})
-            </button>
-            <button
-              className={`btn px-3 md:px-5 py-2 md:py-3 text-xs md:text-sm font-semibold ${
-                statusFilter === 'aberto' 
-                  ? '!bg-red-600 text-white hover:!bg-red-700' 
-                  : '!bg-red-100 !text-red-700 hover:!bg-red-200'
-              }`}
-              onClick={() => setStatusFilter('aberto')}
-            >
-              Abertos ({ordens.filter(o => o.status === 'aberto').length})
-            </button>
-            <button
-              className={`btn px-3 md:px-5 py-2 md:py-3 text-xs md:text-sm font-semibold ${
-                statusFilter === 'em_andamento' 
-                  ? '!bg-amber-500 text-white hover:!bg-amber-600' 
-                  : '!bg-amber-100 !text-amber-700 hover:!bg-amber-200'
-              }`}
-              onClick={() => setStatusFilter('em_andamento')}
-            >
-              Em Andamento ({ordens.filter(o => o.status === 'em_andamento').length})
-            </button>
-            <button
-              className={`btn px-3 md:px-5 py-2 md:py-3 text-xs md:text-sm font-semibold ${
-                statusFilter === 'finalizado' 
-                  ? '!bg-green-600 text-white hover:!bg-green-700' 
-                  : '!bg-green-100 !text-green-700 hover:!bg-green-200'
-              }`}
-              onClick={() => setStatusFilter('finalizado')}
-            >
-              Finalizados ({ordens.filter(o => o.status === 'finalizado').length})
-            </button>
-          </div>
+          {/* Card de Filtros */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 shadow-lg mb-6">
+            {/* Título */}
+            <h2 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
+              <span className="text-3xl">🔍</span>
+              Filtros e Buscas
+            </h2>
+            
+            {/* Filtros de Status */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  statusFilter === 'todos' 
+                    ? 'bg-green-600 text-white hover:bg-green-700' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+                onClick={() => setStatusFilter('todos')}
+              >
+                Todos ({ordens.length})
+              </button>
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  statusFilter === 'aberto' 
+                    ? 'bg-red-800 text-white hover:bg-red-900' 
+                    : 'bg-red-200 text-red-900 hover:bg-red-300'
+                }`}
+                onClick={() => setStatusFilter('aberto')}
+              >
+                Abertos ({ordens.filter(o => o.status === 'aberto').length})
+              </button>
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  statusFilter === 'em_andamento' 
+                    ? 'bg-amber-700 text-white hover:bg-amber-800' 
+                    : 'bg-amber-200 text-amber-900 hover:bg-amber-300'
+                }`}
+                onClick={() => setStatusFilter('em_andamento')}
+              >
+                Em Andamento ({ordens.filter(o => o.status === 'em_andamento').length})
+              </button>
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  statusFilter === 'finalizado' 
+                    ? 'bg-green-800 text-white hover:bg-green-900' 
+                    : 'bg-green-200 text-green-900 hover:bg-green-300'
+                }`}
+                onClick={() => setStatusFilter('finalizado')}
+              >
+                Finalizados ({ordens.filter(o => o.status === 'finalizado').length})
+              </button>
+            </div>
 
-          {/* Busca */}
-          <div className="mb-6 relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-text-muted pointer-events-none">
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="Buscar por número, solicitante, unidade, setor ou descrição..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-5 py-3 text-sm md:text-base border-2 border-border-light rounded-xl focus:outline-none focus:border-primary transition-colors duration-200"
-            />
-          </div>
+            {/* Busca */}
+            <div className="mb-4 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar por número, solicitante, unidade, setor ou descrição..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+              />
+            </div>
 
-          {/* Filtros de Data */}
-          <div className="mb-6 pb-6 border-b border-border-light">
             {/* Primeira linha: Dia, Mês, Ano */}
-            <div className="flex gap-3 md:gap-4 flex-wrap items-end mb-4">
-              <div className="m-0 min-w-[100px] md:min-w-[120px] flex-1 max-w-full md:max-w-[200px]">
-                <label htmlFor="diaFilter" className="text-sm font-semibold mb-2 block text-text-secondary tracking-wide uppercase text-xs">
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              <div>
+                <label htmlFor="diaFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Dia:
                 </label>
                 <input
@@ -367,19 +379,19 @@ function App() {
                   placeholder="Informe o dia"
                   min="1"
                   max="31"
-                  className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-border-light rounded-lg text-sm md:text-[0.9375rem] cursor-pointer font-medium transition-all duration-200 bg-white text-text-primary hover:border-border focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(220,38,38,0.08)]"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                 />
               </div>
 
-              <div className="m-0 min-w-[100px] md:min-w-[120px] flex-1 max-w-full md:max-w-[200px]">
-                <label htmlFor="mesFilter" className="text-sm font-semibold mb-2 block text-text-secondary tracking-wide uppercase text-xs">
+              <div>
+                <label htmlFor="mesFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Mês:
                 </label>
                 <select
                   id="mesFilter"
                   value={mesFilter}
                   onChange={(e) => setMesFilter(e.target.value)}
-                  className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-border-light rounded-lg text-sm md:text-[0.9375rem] cursor-pointer font-medium transition-all duration-200 bg-white text-text-primary hover:border-border focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(220,38,38,0.08)]"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors cursor-pointer"
                 >
                   <option value="">Todos</option>
                   <option value="01">Janeiro</option>
@@ -397,8 +409,8 @@ function App() {
                 </select>
               </div>
 
-              <div className="m-0 min-w-[100px] md:min-w-[120px] flex-1 max-w-full md:max-w-[200px]">
-                <label htmlFor="anoFilter" className="text-sm font-semibold mb-2 block text-text-secondary tracking-wide uppercase text-xs">
+              <div>
+                <label htmlFor="anoFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Ano:
                 </label>
                 <input
@@ -409,15 +421,15 @@ function App() {
                   placeholder="Informe o ano"
                   min="2020"
                   max="2100"
-                  className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-border-light rounded-lg text-sm md:text-[0.9375rem] cursor-pointer font-medium transition-all duration-200 bg-white text-text-primary hover:border-border focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(220,38,38,0.08)]"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                 />
               </div>
             </div>
 
             {/* Segunda linha: Data Inicial, Data Final, Limpar Filtros */}
-            <div className="flex gap-3 md:gap-4 flex-wrap items-end">
-              <div className="m-0 min-w-[100px] md:min-w-[120px] flex-1 max-w-full md:max-w-[200px]">
-                <label htmlFor="dataInicioFilter" className="text-sm font-semibold mb-2 block text-text-secondary tracking-wide uppercase text-xs">
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label htmlFor="dataInicioFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Data Inicial:
                 </label>
                 <input
@@ -426,12 +438,12 @@ function App() {
                   value={dataInicioFilter}
                   onChange={(e) => setDataInicioFilter(e.target.value)}
                   max={dataFimFilter || undefined}
-                  className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-border-light rounded-lg text-sm md:text-[0.9375rem] cursor-pointer font-medium transition-all duration-200 bg-white text-text-primary hover:border-border focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(220,38,38,0.08)]"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                 />
               </div>
 
-              <div className="m-0 min-w-[100px] md:min-w-[120px] flex-1 max-w-full md:max-w-[200px]">
-                <label htmlFor="dataFimFilter" className="text-sm font-semibold mb-2 block text-text-secondary tracking-wide uppercase text-xs">
+              <div>
+                <label htmlFor="dataFimFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Data Final:
                 </label>
                 <input
@@ -440,16 +452,13 @@ function App() {
                   value={dataFimFilter}
                   onChange={(e) => setDataFimFilter(e.target.value)}
                   min={dataInicioFilter || undefined}
-                  className="w-full px-3 md:px-4 py-2 md:py-3 border-2 border-border-light rounded-lg text-sm md:text-[0.9375rem] cursor-pointer font-medium transition-all duration-200 bg-white text-text-primary hover:border-border focus:outline-none focus:border-primary focus:shadow-[0_0_0_4px_rgba(220,38,38,0.08)]"
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                 />
               </div>
 
-              <div className="flex flex-col justify-end w-full md:w-auto">
-                <label className="text-sm font-semibold mb-2 hidden md:block text-transparent select-none pointer-events-none">
-                  -
-                </label>
+              <div className="flex items-end">
                 <button
-                  className="btn btn-secondary whitespace-nowrap text-sm md:text-base"
+                  className="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={limparFiltros}
                   disabled={!temFiltrosAtivos}
                 >

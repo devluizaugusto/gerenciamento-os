@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import ordemServicoRoutes from './routes/ordemServicoRoutes';
 
@@ -9,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middlewares
+app.use(compression()); // Compressão de respostas HTTP
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -17,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (_req: Request, res: Response) => {
   res.json({ 
     message: 'API do Sistema de Ordem de Serviços',
-    version: '1.0.0',
+    version: '1.0.2',
     endpoints: {
       ordensServico: '/api/ordens-servico'
     }

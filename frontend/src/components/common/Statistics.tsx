@@ -98,97 +98,87 @@ const Statistics: React.FC<StatisticsProps> = memo(({ ordens, diaFilter, mesFilt
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 shadow-lg mb-6 animate-fadeInUp">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-2xl">📊</span>
-        <h2 className="text-lg font-bold text-blue-900">
-          Estatísticas de Ordens de Serviço
-          {temFiltros && <span className="text-sm text-blue-600 ml-2">(Filtrado)</span>}
-        </h2>
-      </div>
+    <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 shadow-lg mb-6">
+      <h2 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
+        <span className="text-3xl">📊</span>
+        Estatísticas
+        {temFiltros && <span className="text-base text-green-600 font-normal ml-2">(Filtrado)</span>}
+      </h2>
       
       <div className={`grid grid-cols-1 ${statistics.temFiltroPeriodo ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
         {/* OS do Dia */}
-        <div className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 border-2 border-blue-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-1">
-                📅 {diaFilter ? `Dia ${statistics.diaAtual}` : 'Hoje'}
-              </p>
-              <p className="text-3xl font-extrabold text-blue-900">
-                {statistics.osDia}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {statistics.osDia === 1 ? 'OS criada' : 'OS criadas'}
-              </p>
-            </div>
-            <div className="text-4xl opacity-20">📋</div>
+        <div className="group bg-gradient-to-br from-emerald-100 via-emerald-200 to-emerald-100 rounded-xl p-5 border-2 border-emerald-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-extrabold text-emerald-800 uppercase tracking-widest drop-shadow-sm">
+              {diaFilter ? `Dia ${statistics.diaAtual}` : 'Hoje'}
+            </p>
+            <span className="text-2xl">📅</span>
           </div>
+          <p className="text-5xl font-extrabold text-emerald-900 mb-2 group-hover:scale-105 transition-transform duration-300">
+            {statistics.osDia}
+          </p>
+          <p className="text-sm text-emerald-700 font-semibold">
+            {statistics.osDia === 1 ? 'Ordem criada' : 'Ordens criadas'}
+          </p>
         </div>
 
         {/* OS do Mês */}
-        <div className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 border-2 border-indigo-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide mb-1">
-                📆 {mesFilter ? getNomeMes(statistics.mesAtual) : 'Este Mês'}
-              </p>
-              <p className="text-3xl font-extrabold text-indigo-900">
-                {statistics.osMes}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {statistics.osMes === 1 ? 'OS criada' : 'OS criadas'}
-              </p>
-            </div>
-            <div className="text-4xl opacity-20">📊</div>
+        <div className="group bg-gradient-to-br from-green-100 via-green-200 to-green-100 rounded-xl p-5 border-2 border-green-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-extrabold text-green-800 uppercase tracking-widest drop-shadow-sm">
+              {mesFilter ? `Mês: ${getNomeMes(statistics.mesAtual)}` : 'Todos os Meses'}
+            </p>
+            <span className="text-2xl">📊</span>
           </div>
+          <p className="text-5xl font-extrabold text-green-900 mb-2 group-hover:scale-105 transition-transform duration-300">
+            {statistics.osMes}
+          </p>
+          <p className="text-sm text-green-700 font-semibold">
+            {statistics.osMes === 1 ? 'Ordem criada' : 'Ordens criadas'}
+          </p>
         </div>
 
         {/* OS do Ano */}
-        <div className="bg-white rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 border-2 border-purple-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-purple-600 uppercase tracking-wide mb-1">
-                🗓️ {anoFilter ? `Ano ${statistics.anoAtual}` : 'Este Ano'}
-              </p>
-              <p className="text-3xl font-extrabold text-purple-900">
-                {statistics.osAno}
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                {statistics.osAno === 1 ? 'OS criada' : 'OS criadas'}
-              </p>
-            </div>
-            <div className="text-4xl opacity-20">📈</div>
+        <div className="group bg-gradient-to-br from-teal-100 via-teal-200 to-teal-100 rounded-xl p-5 border-2 border-teal-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-extrabold text-teal-800 uppercase tracking-widest drop-shadow-sm">
+              Ano: {statistics.anoAtual}
+            </p>
+            <span className="text-2xl">🗓️</span>
           </div>
+          <p className="text-5xl font-extrabold text-teal-900 mb-2 group-hover:scale-105 transition-transform duration-300">
+            {statistics.osAno}
+          </p>
+          <p className="text-sm text-teal-700 font-semibold">
+            {statistics.osAno === 1 ? 'Ordem criada' : 'Ordens criadas'}
+          </p>
         </div>
 
         {/* OS do Período (se houver filtro) */}
         {statistics.temFiltroPeriodo && (
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 shadow-md hover:shadow-lg transition-all duration-200 hover:-translate-y-1 border-2 border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1 whitespace-nowrap">
-                  📅 OS criadas por período
-                </p>
-                <p className="text-3xl font-extrabold text-green-900">
-                  {statistics.osPeriodo}
-                </p>
-                <p className="text-xs text-gray-600 mt-1 font-medium">
-                  {dataInicioFilter && dataFimFilter ? (
-                    <>
-                      {formatarDataBR(dataInicioFilter)} a {formatarDataBR(dataFimFilter)}
-                    </>
-                  ) : dataInicioFilter ? (
-                    <>A partir de {formatarDataBR(dataInicioFilter)}</>
-                  ) : dataFimFilter ? (
-                    <>Até {formatarDataBR(dataFimFilter)}</>
-                  ) : (
-                    'Período selecionado'
-                  )}
-                </p>
-              </div>
-              <div className="text-4xl opacity-20">🎯</div>
+          <div className="group bg-gradient-to-br from-cyan-100 via-cyan-200 to-cyan-100 rounded-xl p-5 border-2 border-cyan-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-extrabold text-cyan-800 uppercase tracking-widest drop-shadow-sm">
+                Período
+              </p>
+              <span className="text-2xl">📆</span>
             </div>
+            <p className="text-5xl font-extrabold text-cyan-900 mb-2 group-hover:scale-105 transition-transform duration-300">
+              {statistics.osPeriodo}
+            </p>
+            <p className="text-sm text-cyan-700 font-semibold">
+              {dataInicioFilter && dataFimFilter ? (
+                <>
+                  {formatarDataBR(dataInicioFilter)} - {formatarDataBR(dataFimFilter)}
+                </>
+              ) : dataInicioFilter ? (
+                <>A partir de {formatarDataBR(dataInicioFilter)}</>
+              ) : dataFimFilter ? (
+                <>Até {formatarDataBR(dataFimFilter)}</>
+              ) : (
+                'Ordens criadas'
+              )}
+            </p>
           </div>
         )}
       </div>
