@@ -101,7 +101,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({ ordens, diaFilter, mesFilt
     <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 shadow-lg mb-6">
       <h2 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
         <span className="text-3xl">📊</span>
-        Estatísticas
+        Estatísticas de Ordens de Serviço
         {temFiltros && <span className="text-base text-green-600 font-normal ml-2">(Filtrado)</span>}
       </h2>
       
@@ -126,7 +126,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({ ordens, diaFilter, mesFilt
         <div className="group bg-gradient-to-br from-green-100 via-green-200 to-green-100 rounded-xl p-5 border-2 border-green-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-extrabold text-green-800 uppercase tracking-widest drop-shadow-sm">
-              {mesFilter ? `Mês: ${getNomeMes(statistics.mesAtual)}` : 'Todos os Meses'}
+              Mês: {getNomeMes(statistics.mesAtual)}
             </p>
             <span className="text-2xl">📊</span>
           </div>
