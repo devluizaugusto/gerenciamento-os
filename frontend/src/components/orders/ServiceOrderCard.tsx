@@ -7,10 +7,9 @@ interface ServiceOrderCardProps {
   onEdit: (ordem: OrdemServico) => void;
   onDelete: (id: number) => void;
   onView: (ordem: OrdemServico) => void;
-  onGeneratePDF: (id: number) => void;
 }
 
-const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit, onDelete, onView, onGeneratePDF }) => {
+const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit, onDelete, onView }) => {
   const status = getStatusConfig(ordem.status);
 
   return (
@@ -131,18 +130,12 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
 
       {/* Botões de ação */}
       <div className="px-6 py-4 bg-gradient-to-br from-gray-50 to-white border-t-2 border-border-light/50">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button 
             className="btn btn-view text-xs px-3 py-2.5 font-semibold rounded-lg transition-all duration-200 hover:scale-105" 
             onClick={() => onView(ordem)}
           >
             👁️ Ver
-          </button>
-          <button 
-            className="btn btn-pdf text-xs px-3 py-2.5 font-semibold rounded-lg transition-all duration-200 hover:scale-105" 
-            onClick={() => onGeneratePDF(ordem.id)}
-          >
-            📄 PDF
           </button>
           <button 
             className="btn btn-edit text-xs px-3 py-2.5 font-semibold rounded-lg transition-all duration-200 hover:scale-105" 

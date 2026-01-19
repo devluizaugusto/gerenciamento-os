@@ -16,7 +16,6 @@ import {
   useCreateOrdemServico,
   useUpdateOrdemServico,
   useDeleteOrdemServico,
-  useGeneratePDF,
   useGenerateRelatorioPDF,
 } from './hooks/useOrdemServico';
 import { useToast } from './hooks/useToast';
@@ -43,7 +42,6 @@ function App() {
   const createMutation = useCreateOrdemServico();
   const updateMutation = useUpdateOrdemServico();
   const deleteMutation = useDeleteOrdemServico();
-  const generatePDFMutation = useGeneratePDF();
   const generateRelatorioPDFMutation = useGenerateRelatorioPDF();
 
   // Toast notifications
@@ -210,16 +208,6 @@ function App() {
       }
     }
   }, [deleteMutation, errorToast]);
-
-  const handleGeneratePDF = useCallback(async (id: number) => {
-    try {
-      await generatePDFMutation.mutateAsync(id);
-      success('📄 PDF gerado com sucesso!');
-    } catch (err: any) {
-      console.error('Erro ao gerar PDF:', err);
-      errorToast(err.response?.data?.error || '❌ Erro ao gerar PDF');
-    }
-  }, [generatePDFMutation, success, errorToast]);
 
   const handleGenerateRelatorioPDF = useCallback(async () => {
     try {
@@ -516,7 +504,6 @@ function App() {
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                       onView={handleView}
-                      onGeneratePDF={handleGeneratePDF}
                     />
                   ))}
                 </div>
