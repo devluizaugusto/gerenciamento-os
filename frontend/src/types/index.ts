@@ -2,7 +2,7 @@ export interface OrdemServico {
   id: number;
   numero_os: number;
   solicitante: string;
-  ubs: string;
+  unidade: string;
   setor: string;
   descricao_problema: string;
   data_abertura: string;
@@ -13,7 +13,7 @@ export interface OrdemServico {
 
 export interface FormData {
   solicitante: string;
-  ubs: string;
+  unidade: string;
   setor: string;
   descricao_problema: string;
   data_abertura: string;

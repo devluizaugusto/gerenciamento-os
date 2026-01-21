@@ -60,7 +60,7 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
               <span className="text-2xl">🏥</span>
               <span className="font-bold text-blue-700 text-xs uppercase tracking-wide">Unidade</span>
             </div>
-            <span className="text-blue-950 text-base font-bold">{ordem.ubs}</span>
+            <span className="text-blue-950 text-base font-bold">{ordem.unidade}</span>
           </div>
 
           {/* Setor */}

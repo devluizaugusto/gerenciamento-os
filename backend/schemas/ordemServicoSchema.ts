@@ -9,7 +9,7 @@ export const createOrdemServicoSchema = z.object({
       .max(255, 'Solicitante deve ter no máximo 255 caracteres')
       .trim(),
     
-    ubs: z
+    unidade: z
       .string({ message: 'Unidade deve ser um texto' })
       .min(1, 'Campo obrigatório: Unidade')
       .max(255, 'Unidade deve ter no máximo 255 caracteres')
@@ -86,7 +86,7 @@ export const updateOrdemServicoSchema = z.object({
       .trim()
       .optional(),
     
-    ubs: z
+    unidade: z
       .string()
       .min(1, 'Unidade não pode estar vazia')
       .max(255, 'Unidade deve ter no máximo 255 caracteres')

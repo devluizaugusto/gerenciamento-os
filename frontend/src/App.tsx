@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
-import ServiceOrderCard from './components/orders/ServiceOrderCard';
+import ServiceOrderTable from './components/orders/ServiceOrderTable';
 import Modal from './components/common/Modal';
 import Toast from './components/common/Toast';
 import Statistics from './components/common/Statistics';
@@ -65,7 +65,7 @@ function App() {
       filtered = filtered.filter(ordem =>
         ordem.numero_os.toString().includes(term) ||
         ordem.solicitante.toLowerCase().includes(term) ||
-        ordem.ubs.toLowerCase().includes(term) ||
+        ordem.unidade.toLowerCase().includes(term) ||
         ordem.setor.toLowerCase().includes(term) ||
         ordem.descricao_problema.toLowerCase().includes(term)
       );
@@ -163,13 +163,6 @@ function App() {
     setSelectedOrdem(ordem);
     setModalContent('edit');
     setModalTitle(`Editar OS #${ordem.numero_os}`);
-    setShowModal(true);
-  }, []);
-
-  const handleView = useCallback((ordem: OrdemServico) => {
-    setSelectedOrdem(ordem);
-    setModalContent('view');
-    setModalTitle(`Detalhes da OS #${ordem.numero_os}`);
     setShowModal(true);
   }, []);
 
@@ -296,10 +289,10 @@ function App() {
             {/* Filtros de Status */}
             <div className="flex flex-wrap gap-2 mb-4">
               <button
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
                   statusFilter === 'todos' 
-                    ? 'bg-green-600 text-white hover:bg-green-700' 
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md' 
+                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:shadow-md border border-blue-300'
                 }`}
                 onClick={() => setStatusFilter('todos')}
               >
@@ -348,7 +341,18 @@ function App() {
                 type="text"
                 placeholder="Buscar por número, solicitante, unidade, setor ou descrição..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Remove caracteres negativos (-)
+                  const sanitizedValue = value.replace(/-/g, '');
+                  setSearchTerm(sanitizedValue);
+                }}
+                onKeyDown={(e) => {
+                  // Bloqueia a tecla de menos (-)
+                  if (e.key === '-') {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
               />
             </div>
@@ -363,7 +367,19 @@ function App() {
                   type="number"
                   id="diaFilter"
                   value={diaFilter}
-                  onChange={(e) => setDiaFilter(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Permite vazio ou apenas valores positivos entre 1 e 31
+                    if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 31)) {
+                      setDiaFilter(value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Bloqueia teclas de menos (-), mais (+) e 'e'
+                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="Informe o dia"
                   min="1"
                   max="31"
@@ -405,7 +421,19 @@ function App() {
                   type="number"
                   id="anoFilter"
                   value={anoFilter}
-                  onChange={(e) => setAnoFilter(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Permite vazio ou apenas valores positivos entre 2020 e 2100
+                    if (value === '' || (parseInt(value) >= 2020 && parseInt(value) <= 2100)) {
+                      setAnoFilter(value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Bloqueia teclas de menos (-), mais (+) e 'e'
+                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="Informe o ano"
                   min="2020"
                   max="2100"
@@ -496,17 +524,11 @@ function App() {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  {filteredOrdens.map((ordem) => (
-                    <ServiceOrderCard
-                      key={ordem.id}
-                      ordem={ordem}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onView={handleView}
-                    />
-                  ))}
-                </div>
+                <ServiceOrderTable
+                  ordens={filteredOrdens}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
               )}
             </>
           )}

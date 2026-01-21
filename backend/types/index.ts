@@ -11,7 +11,7 @@ export interface OrdemServicoFormatada {
   id: number;
   numero_os: number;
   solicitante: string;
-  ubs: string;
+  unidade: string;
   setor: string;
   descricao_problema: string;
   data_abertura: string | null;
@@ -23,7 +23,7 @@ export interface OrdemServicoFormatada {
 // Tipos para criação
 export interface CreateOrdemServicoInput {
   solicitante: string;
-  ubs: string;
+  unidade: string;
   setor: string;
   descricao_problema: string;
   data_abertura: string;
@@ -35,7 +35,7 @@ export interface CreateOrdemServicoInput {
 // Tipos para atualização
 export interface UpdateOrdemServicoInput {
   solicitante?: string;
-  ubs?: string;
+  unidade?: string;
   setor?: string;
   descricao_problema?: string;
   data_abertura?: string;

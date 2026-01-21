@@ -425,7 +425,7 @@ export const createOrdemServicoSchema = z.object({
 ### Middleware de Validação
 
 ```typescript
-export const validateSchema = (schema: z.ZodSchema) => {
+export const validateSchema = (schema: z.ZodType<any>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       schema.parse(req.body);

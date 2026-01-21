@@ -32,7 +32,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     resolver: zodResolver(ordemServicoSchema),
     defaultValues: {
       solicitante: '',
-      ubs: '',
+      unidade: '',
       setor: '',
       descricao_problema: '',
       data_abertura: '',
@@ -48,7 +48,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     'RIBEIRO DO MEL', 'SANTANA', 'SANTA CRUZ', 'ALEGRIA', 'REDENTOR',
     'JOAO ERNESTO', 'CONGAL', 'SANTA TEREZINHA', 'SANTO ANTONIO',
     'N. SRA DE FATIMA', 'CONVALES', 'SAO SEBASTIAO', 'OTACIO DE LEMOS',
-    'PONTO CERTO', 'CTA', 'CER', 'POLICLINICA', 'SAMU',
+    'PONTO CERTO', 'CTA', 'CER', 'CEO', 'POLICLINICA', 'SAMU',
     'HOSPITAL DE CAMPANHA', 'VISA', 'VIGILANCIA AMBIENTAL', 'CAPS',
     'RESIDENCIA TERAPEUTICA', 'UNIDADE DE ACOLHIMENTO', 'SEDE DA SECRETARIA',
     'CAF', 'LABORATÓRIO', 'CAPS DAS 3 PONTES'
@@ -62,7 +62,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   ];
 
   // Watch dos valores atuais
-  const ubsValue = watch('ubs');
+  const unidadeValue = watch('unidade');
   const setorValue = watch('setor');
 
   // Converter data do formato brasileiro (DD/MM/YYYY) para o formato do input (YYYY-MM-DD)
@@ -90,12 +90,12 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   // Preencher form quando houver ordem para edição
   useEffect(() => {
     if (ordem) {
-      const ubsVal = ordem.ubs || '';
+      const unidadeVal = ordem.unidade || '';
       const setorVal = ordem.setor || '';
       
       reset({
         solicitante: ordem.solicitante || '',
-        ubs: ubsVal,
+        unidade: unidadeVal,
         setor: setorVal,
         descricao_problema: ordem.descricao_problema || '',
         data_abertura: formatDateForInput(ordem.data_abertura),
@@ -105,7 +105,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       });
       
       // Verificar se os valores são customizados
-      setShowUnidadeInput(!!ubsVal && !unidadesPredefinidas.includes(ubsVal));
+      setShowUnidadeInput(!!unidadeVal && !unidadesPredefinidas.includes(unidadeVal));
       setShowSetorInput(!!setorVal && !setoresPredefinidos.includes(setorVal));
     }
   }, [ordem, reset]);
@@ -135,10 +135,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     const value = e.target.value;
     if (value === '__custom__') {
       setShowUnidadeInput(true);
-      setValue('ubs', '');
+      setValue('unidade', '');
     } else {
       setShowUnidadeInput(false);
-      setValue('ubs', value);
+      setValue('unidade', value);
     }
   };
 
@@ -187,9 +187,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
             )}
           </div>
 
-          {/* Unidade (UBS) */}
+          {/* Unidade */}
           <div>
-            <label htmlFor="ubs" className="label text-blue-900">
+            <label htmlFor="unidade" className="label text-blue-900">
               <span className="text-lg mr-2">🏥</span>
               Unidade <span className="text-danger">*</span>
             </label>
@@ -197,16 +197,16 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
               <div className="space-y-2">
                 <input
                   type="text"
-                  id="ubs"
-                  {...register('ubs')}
-                  className={`input ${errors.ubs ? 'border-danger ring-2 ring-danger/20' : 'border-blue-200 focus:border-blue-500'}`}
+                  id="unidade"
+                  {...register('unidade')}
+                  className={`input ${errors.unidade ? 'border-danger ring-2 ring-danger/20' : 'border-blue-200 focus:border-blue-500'}`}
                   placeholder="Digite a unidade"
                 />
                 <button
                   type="button"
                   onClick={() => {
                     setShowUnidadeInput(false);
-                    setValue('ubs', '');
+                    setValue('unidade', '');
                   }}
                   className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
                 >
@@ -215,10 +215,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
               </div>
             ) : (
               <select
-                id="ubs"
+                id="unidade"
                 onChange={handleUnidadeChange}
-                value={ubsValue}
-                className={`input ${errors.ubs ? 'border-danger ring-2 ring-danger/20' : 'border-blue-200 focus:border-blue-500'}`}
+                value={unidadeValue}
+                className={`input ${errors.unidade ? 'border-danger ring-2 ring-danger/20' : 'border-blue-200 focus:border-blue-500'}`}
               >
                 <option value="">Selecione uma unidade</option>
                 {unidadesPredefinidas.map((unidade) => (
@@ -229,9 +229,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
                 <option value="__custom__">➕ Adicionar outra unidade</option>
               </select>
             )}
-            {errors.ubs && (
+            {errors.unidade && (
               <p className="text-danger text-sm mt-2 flex items-center gap-1 animate-slideDown">
-                <span>⚠️</span> {errors.ubs.message}
+                <span>⚠️</span> {errors.unidade.message}
               </p>
             )}
           </div>

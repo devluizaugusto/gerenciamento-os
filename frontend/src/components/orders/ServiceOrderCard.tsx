@@ -6,10 +6,9 @@ interface ServiceOrderCardProps {
   ordem: OrdemServico;
   onEdit: (ordem: OrdemServico) => void;
   onDelete: (id: number) => void;
-  onView: (ordem: OrdemServico) => void;
 }
 
-const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit, onDelete, onView }) => {
+const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit, onDelete }) => {
   const status = getStatusConfig(ordem.status);
 
   return (
@@ -64,8 +63,8 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
               <span className="text-primary text-lg">🏢</span>
               <span className="text-[0.625rem] font-bold text-text-muted uppercase tracking-wider">Unidade</span>
             </div>
-            <p className="text-text-primary font-semibold text-sm truncate" title={ordem.ubs}>
-              {ordem.ubs}
+            <p className="text-text-primary font-semibold text-sm truncate" title={ordem.unidade}>
+              {ordem.unidade}
             </p>
           </div>
 
@@ -130,13 +129,7 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
 
       {/* Botões de ação */}
       <div className="px-6 py-4 bg-gradient-to-br from-gray-50 to-white border-t-2 border-border-light/50">
-        <div className="grid grid-cols-3 gap-2">
-          <button 
-            className="btn btn-view text-xs px-3 py-2.5 font-semibold rounded-lg transition-all duration-200 hover:scale-105" 
-            onClick={() => onView(ordem)}
-          >
-            👁️ Ver
-          </button>
+        <div className="grid grid-cols-2 gap-2">
           <button 
             className="btn btn-edit text-xs px-3 py-2.5 font-semibold rounded-lg transition-all duration-200 hover:scale-105" 
             onClick={() => onEdit(ordem)}

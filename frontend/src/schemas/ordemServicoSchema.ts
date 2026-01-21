@@ -8,7 +8,7 @@ export const ordemServicoSchema = z.object({
     .max(255, 'O nome do solicitante deve ter no máximo 255 caracteres')
     .trim(),
   
-  ubs: z
+  unidade: z
     .string()
     .min(3, 'O nome da unidade deve ter no mínimo 3 caracteres')
     .max(255, 'O nome da unidade deve ter no máximo 255 caracteres')

@@ -14,7 +14,7 @@ model OrdemServico {
   id                  Int       @id @default(autoincrement())
   numero_os           Int       @unique
   solicitante         String    @db.VarChar(255)
-  ubs                 String    @db.VarChar(255)
+  unidade             String    @db.VarChar(255)
   setor               String    @db.VarChar(255)
   descricao_problema  String    @db.Text
   data_abertura       DateTime  @db.Date

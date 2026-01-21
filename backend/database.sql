@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS ordem_servico (
   id INT AUTO_INCREMENT PRIMARY KEY,
   numero_os INT NOT NULL UNIQUE,
   solicitante VARCHAR(255) NOT NULL,
-  ubs VARCHAR(255) NOT NULL,
+  unidade VARCHAR(255) NOT NULL,
   setor VARCHAR(255) NOT NULL,
   descricao_problema TEXT NOT NULL,
   data_abertura DATE NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS ordem_servico (
 
 -- Dados de exemplo (opcional)
 INSERT INTO ordem_servico 
-(numero_os, solicitante, ubs, setor, descricao_problema, data_abertura, servico_realizado, status, data_fechamento) 
+(numero_os, solicitante, unidade, setor, descricao_problema, data_abertura, servico_realizado, status, data_fechamento) 
 VALUES 
 (1001, 'KAREN', 'POLICLINICA', 'USG', 'CABEAMENTO E INSTALAÇÃO E CONFIGURAÇÃO DE ROTEADOR', '2026-01-05', 'CABEAMENTO E INSTALAÇÃO E CONFIGURAÇÃO DE ROTEADOR', 'finalizado', '2026-01-05'),
 (1002, 'REBECA', 'JUA', 'DENTISTA', 'PORTAS USB DO COMPUTADOR COM MAL FUNCIONAMENTO', '2026-01-05', 'LIMPEZA DAS PORTAS USB', 'finalizado', '2026-01-05'),

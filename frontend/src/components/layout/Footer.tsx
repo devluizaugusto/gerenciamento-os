@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
           {/* Rodapé adicional */}
           <div className="text-center mt-4 pt-4 border-t border-white/20">
             <p className="text-white/70 text-xs">
-              Versão 1.0.2 | Feito com dedicação para otimizar o gerenciamento de serviços
+              Versão 2.0 | Feito com dedicação para otimizar o gerenciamento de serviços
             </p>
           </div>
         </div>

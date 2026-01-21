@@ -78,7 +78,7 @@ export const createOrdemServico = async (req: Request, res: Response): Promise<v
   try {
     const {
       solicitante,
-      ubs,
+      unidade,
       setor,
       descricao_problema,
       data_abertura,
@@ -139,7 +139,7 @@ export const createOrdemServico = async (req: Request, res: Response): Promise<v
       data: {
         numero_os: numeroOS,
         solicitante,
-        ubs,
+        unidade,
         setor,
         descricao_problema,
         data_abertura: new Date(dataAberturaFormatada),
@@ -167,7 +167,7 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
     const { id } = req.params;
     const {
       solicitante,
-      ubs,
+      unidade,
       setor,
       descricao_problema,
       data_abertura,
@@ -190,7 +190,7 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
     const updateData: any = {};
     
     if (solicitante !== undefined) updateData.solicitante = solicitante;
-    if (ubs !== undefined) updateData.ubs = ubs;
+    if (unidade !== undefined) updateData.unidade = unidade;
     if (setor !== undefined) updateData.setor = setor;
     if (descricao_problema !== undefined) updateData.descricao_problema = descricao_problema;
     if (servico_realizado !== undefined) updateData.servico_realizado = servico_realizado;
