@@ -9,6 +9,13 @@ interface ServiceOrderTableProps {
   onView: (ordem: OrdemServico) => void;
 }
 
+// Mapeamento de cores do quadrado baseado no status
+const STATUS_GRADIENT_MAP: Record<string, string> = {
+  aberto: 'from-red-600 to-red-700',
+  em_andamento: 'from-amber-500 to-amber-600',
+  finalizado: 'from-green-600 to-green-700',
+};
+
 const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEdit, onDelete, onView }) => {
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-green-200">
@@ -52,6 +59,7 @@ const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEd
             {ordens.map((ordem, index) => {
               const status = getStatusConfig(ordem.status);
               const isEven = index % 2 === 0;
+              const bgGradient = STATUS_GRADIENT_MAP[ordem.status] || '';
               
               return (
                 <tr 
@@ -63,7 +71,7 @@ const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEd
                   {/* Número OS */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+                      <div className={`flex-shrink-0 w-14 h-14 bg-gradient-to-br ${bgGradient} rounded-lg flex items-center justify-center shadow-md`}>
                         <span className="text-white font-bold text-base">#{ordem.numero_os}</span>
                       </div>
                     </div>

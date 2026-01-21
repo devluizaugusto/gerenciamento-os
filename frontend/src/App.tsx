@@ -21,13 +21,25 @@ import {
 import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 
+// Função utilitária para obter mês e ano atual
+const getDataAtual = () => {
+  const data = new Date();
+  return {
+    mes: String(data.getMonth() + 1).padStart(2, '0'),
+    ano: String(data.getFullYear())
+  };
+};
+
 function App() {
+  // Obter mês e ano atual para filtro padrão
+  const { mes: mesAtual, ano: anoAtual } = getDataAtual();
+
   // Estados de filtros
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [diaFilter, setDiaFilter] = useState<string>('');
-  const [mesFilter, setMesFilter] = useState<string>('');
-  const [anoFilter, setAnoFilter] = useState<string>('');
+  const [mesFilter, setMesFilter] = useState<string>(mesAtual); // Mês atual por padrão
+  const [anoFilter, setAnoFilter] = useState<string>(anoAtual); // Ano atual por padrão
   const [dataInicioFilter, setDataInicioFilter] = useState<string>('');
   const [dataFimFilter, setDataFimFilter] = useState<string>('');
 
@@ -201,13 +213,13 @@ function App() {
     if (window.confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
       try {
         await deleteMutation.mutateAsync(id);
-        errorToast('🗑️ Ordem de Serviço excluída com sucesso!');
+        success('🗑️ Ordem de Serviço excluída com sucesso!');
       } catch (err: any) {
         console.error('Erro ao deletar ordem:', err);
         errorToast(err.response?.data?.error || '❌ Erro ao deletar ordem de serviço');
       }
     }
-  }, [deleteMutation, errorToast]);
+  }, [deleteMutation, success, errorToast]);
 
   const handleGenerateRelatorioPDF = useCallback(async () => {
     try {
@@ -228,16 +240,37 @@ function App() {
   }, [generateRelatorioPDFMutation, statusFilter, searchTerm, diaFilter, mesFilter, anoFilter, dataInicioFilter, dataFimFilter, success, errorToast]);
 
   const limparFiltros = useCallback(() => {
+    const { mes, ano } = getDataAtual();
+    
     setStatusFilter('todos');
     setSearchTerm('');
     setDiaFilter('');
-    setMesFilter('');
-    setAnoFilter('');
+    setMesFilter(mes);
+    setAnoFilter(ano);
     setDataInicioFilter('');
     setDataFimFilter('');
   }, []);
 
-  const temFiltrosAtivos = statusFilter !== 'todos' || searchTerm || diaFilter || mesFilter || anoFilter || dataInicioFilter || dataFimFilter;
+  const verTodoHistorico = useCallback(() => {
+    setStatusFilter('todos');
+    setSearchTerm('');
+    setDiaFilter('');
+    setMesFilter(''); // Remove filtro de mês
+    setAnoFilter(''); // Remove filtro de ano
+    setDataInicioFilter('');
+    setDataFimFilter('');
+  }, []);
+
+  // Verificar se há filtros ativos além do padrão (mês e ano atual)
+  const temFiltrosAtivos = useMemo(() => {
+    return statusFilter !== 'todos' || 
+           searchTerm !== '' || 
+           diaFilter !== '' || 
+           mesFilter !== mesAtual || 
+           anoFilter !== anoAtual || 
+           dataInicioFilter !== '' || 
+           dataFimFilter !== '';
+  }, [statusFilter, searchTerm, diaFilter, mesFilter, anoFilter, dataInicioFilter, dataFimFilter, mesAtual, anoAtual]);
 
   // Renderizar conteúdo do modal com Suspense
   const renderModalContent = () => {
@@ -348,18 +381,7 @@ function App() {
                 type="text"
                 placeholder="Buscar por número, solicitante, unidade, setor ou descrição..."
                 value={searchTerm}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Remove caracteres negativos (-)
-                  const sanitizedValue = value.replace(/-/g, '');
-                  setSearchTerm(sanitizedValue);
-                }}
-                onKeyDown={(e) => {
-                  // Bloqueia a tecla de menos (-)
-                  if (e.key === '-') {
-                    e.preventDefault();
-                  }
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
               />
             </div>
@@ -374,20 +396,8 @@ function App() {
                   type="number"
                   id="diaFilter"
                   value={diaFilter}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Permite vazio ou apenas valores positivos entre 1 e 31
-                    if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 31)) {
-                      setDiaFilter(value);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Bloqueia teclas de menos (-), mais (+) e 'e'
-                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
-                      e.preventDefault();
-                    }
-                  }}
-                  placeholder="Informe o dia"
+                  onChange={(e) => setDiaFilter(e.target.value)}
+                  placeholder="Dia (1-31)"
                   min="1"
                   max="31"
                   className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
@@ -428,20 +438,8 @@ function App() {
                   type="number"
                   id="anoFilter"
                   value={anoFilter}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Permite vazio ou apenas valores positivos entre 2020 e 2100
-                    if (value === '' || (parseInt(value) >= 2020 && parseInt(value) <= 2100)) {
-                      setAnoFilter(value);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    // Bloqueia teclas de menos (-), mais (+) e 'e'
-                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
-                      e.preventDefault();
-                    }
-                  }}
-                  placeholder="Informe o ano"
+                  onChange={(e) => setAnoFilter(e.target.value)}
+                  placeholder="Ano (2020-2100)"
                   min="2020"
                   max="2100"
                   className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
@@ -479,16 +477,32 @@ function App() {
                 />
               </div>
 
-              <div className="flex items-end">
+              <div className="flex items-end gap-2">
                 <button
-                  className="w-full px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={limparFiltros}
                   disabled={!temFiltrosAtivos}
                 >
-                  Limpar Filtros
+                  📅 Mês Atual
+                </button>
+                <button
+                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={verTodoHistorico}
+                >
+                  📚 Todo Histórico
                 </button>
               </div>
             </div>
+            
+            {/* Indicador de filtro ativo */}
+            {mesFilter && anoFilter && (
+              <div className="mt-4 bg-green-100 border-2 border-green-300 rounded-lg p-3 flex items-center gap-2">
+                <span className="text-lg">📌</span>
+                <p className="text-sm font-semibold text-green-800">
+                  Mostrando ordens de <span className="font-bold">{mesFilter}/{anoFilter}</span>
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Loading State */}
