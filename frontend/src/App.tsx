@@ -166,6 +166,13 @@ function App() {
     setShowModal(true);
   }, []);
 
+  const handleView = useCallback((ordem: OrdemServico) => {
+    setSelectedOrdem(ordem);
+    setModalContent('view');
+    setModalTitle(`Detalhes da OS #${ordem.numero_os}`);
+    setShowModal(true);
+  }, []);
+
   const handleSubmit = async (formData: OrdemServicoFormData) => {
     try {
       if (modalContent === 'edit' && selectedOrdem) {
@@ -528,6 +535,7 @@ function App() {
                   ordens={filteredOrdens}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onView={handleView}
                 />
               )}
             </>

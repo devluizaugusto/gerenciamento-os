@@ -6,9 +6,10 @@ interface ServiceOrderTableProps {
   ordens: OrdemServico[];
   onEdit: (ordem: OrdemServico) => void;
   onDelete: (id: number) => void;
+  onView: (ordem: OrdemServico) => void;
 }
 
-const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEdit, onDelete }) => {
+const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEdit, onDelete, onView }) => {
   return (
     <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-green-200">
       <div className="overflow-x-auto table-scroll">
@@ -30,6 +31,9 @@ const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEd
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                 Problema
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
+                Serviço Realizado
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                 Data Abertura
@@ -87,6 +91,13 @@ const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEd
                     </div>
                   </td>
 
+                  {/* Serviço Realizado */}
+                  <td className="px-6 py-4 max-w-xs">
+                    <div className="text-sm text-gray-600 truncate" title={ordem.servico_realizado || '-'}>
+                      {ordem.servico_realizado || '-'}
+                    </div>
+                  </td>
+
                   {/* Data Abertura */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-700 font-medium">{ordem.data_abertura}</div>
@@ -114,6 +125,17 @@ const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEd
                   {/* Ações */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => onView(ordem)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg flex items-center gap-2 text-sm font-semibold"
+                        title="Ver detalhes da ordem de serviço"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span>Ver</span>
+                      </button>
                       <button
                         onClick={() => onEdit(ordem)}
                         className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg flex items-center gap-2 text-sm font-semibold"
