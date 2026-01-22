@@ -403,7 +403,18 @@ function App() {
                 type="text"
                 placeholder="Buscar por número, solicitante, unidade, setor ou descrição..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Remove caracteres negativos (-)
+                  const sanitizedValue = value.replace(/-/g, '');
+                  setSearchTerm(sanitizedValue);
+                }}
+                onKeyDown={(e) => {
+                  // Bloqueia a tecla de menos (-)
+                  if (e.key === '-') {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
               />
             </div>
@@ -418,7 +429,19 @@ function App() {
                   type="number"
                   id="diaFilter"
                   value={diaFilter}
-                  onChange={(e) => setDiaFilter(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Permite vazio ou apenas valores positivos entre 1 e 31
+                    if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 31 && !value.includes('-'))) {
+                      setDiaFilter(value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Bloqueia teclas de menos (-), mais (+) e 'e'
+                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="Dia (1-31)"
                   min="1"
                   max="31"
@@ -460,7 +483,19 @@ function App() {
                   type="number"
                   id="anoFilter"
                   value={anoFilter}
-                  onChange={(e) => setAnoFilter(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Permite vazio ou apenas valores positivos entre 2020 e 2100
+                    if (value === '' || (parseInt(value) >= 2020 && parseInt(value) <= 2100 && !value.includes('-'))) {
+                      setAnoFilter(value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    // Bloqueia teclas de menos (-), mais (+) e 'e'
+                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="Ano (2020-2100)"
                   min="2020"
                   max="2100"

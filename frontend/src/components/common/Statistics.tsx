@@ -118,7 +118,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({ ordens, diaFilter, mesFilt
             {statistics.osDia}
           </p>
           <p className="text-sm text-emerald-700 font-semibold">
-            {statistics.osDia === 1 ? 'Ordem criada' : 'Ordens criadas'}
+            {statistics.osDia === 1 ? 'Ordem de Serviço Criada' : 'Ordens de Serviços Criadas'}
           </p>
         </div>
 
@@ -134,7 +134,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({ ordens, diaFilter, mesFilt
             {statistics.osMes}
           </p>
           <p className="text-sm text-green-700 font-semibold">
-            {statistics.osMes === 1 ? 'Ordem criada' : 'Ordens criadas'}
+            {statistics.osMes === 1 ? 'Ordem de Serviço Criada' : 'Ordens de Serviços Criadas'}
           </p>
         </div>
 
@@ -150,7 +150,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({ ordens, diaFilter, mesFilt
             {statistics.osAno}
           </p>
           <p className="text-sm text-teal-700 font-semibold">
-            {statistics.osAno === 1 ? 'Ordem criada' : 'Ordens criadas'}
+            {statistics.osAno === 1 ? 'Ordem de Serviço Criada' : 'Ordens de Serviços Criadas'}
           </p>
         </div>
 
@@ -176,7 +176,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({ ordens, diaFilter, mesFilt
               ) : dataFimFilter ? (
                 <>Até {formatarDataBR(dataFimFilter)}</>
               ) : (
-                'Ordens criadas'
+                'Ordens de Serviços Criadas'
               )}
             </p>
           </div>
