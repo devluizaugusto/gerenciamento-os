@@ -21,6 +21,22 @@ import {
 import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 
+// Mapeamento de meses para nomes abreviados
+const MESES_ABREVIADOS: Record<string, string> = {
+  '01': 'Jan',
+  '02': 'Fev',
+  '03': 'Mar',
+  '04': 'Abr',
+  '05': 'Mai',
+  '06': 'Jun',
+  '07': 'Jul',
+  '08': 'Ago',
+  '09': 'Set',
+  '10': 'Out',
+  '11': 'Nov',
+  '12': 'Dez',
+};
+
 // Função utilitária para obter mês e ano atual
 const getDataAtual = () => {
   const data = new Date();
@@ -28,6 +44,12 @@ const getDataAtual = () => {
     mes: String(data.getMonth() + 1).padStart(2, '0'),
     ano: String(data.getFullYear())
   };
+};
+
+// Função para formatar mês/ano para exibição
+const formatarMesAno = (mes: string, ano: string): string => {
+  const mesAbreviado = MESES_ABREVIADOS[mes] || mes;
+  return `${mesAbreviado}/${ano}`;
 };
 
 function App() {
@@ -499,7 +521,7 @@ function App() {
               <div className="mt-4 bg-green-100 border-2 border-green-300 rounded-lg p-3 flex items-center gap-2">
                 <span className="text-lg">📌</span>
                 <p className="text-sm font-semibold text-green-800">
-                  Mostrando ordens de <span className="font-bold">{mesFilter}/{anoFilter}</span>
+                  Mostrando Ordens de Serviços de: <span className="font-bold">{formatarMesAno(mesFilter, anoFilter)}</span>
                 </p>
               </div>
             )}
