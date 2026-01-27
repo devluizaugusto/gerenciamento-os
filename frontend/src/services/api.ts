@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
-import { OrdemServico, FormData } from '../types';
+import { ServiceOrder, FormData } from '../types';
 
-// Usar /api em desenvolvimento (proxy do Vite) e produção
+// Use /api in development (Vite proxy) and production
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
@@ -9,49 +9,49 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-export const ordemServicoAPI = {
-  // Listar todas as ordens de serviço
-  getAll: async (): Promise<OrdemServico[]> => {
-    const response = await api.get<OrdemServico[]>('/ordens-servico');
+export const serviceOrderAPI = {
+  // List all service orders
+  getAll: async (): Promise<ServiceOrder[]> => {
+    const response = await api.get<ServiceOrder[]>('/ordens-servico');
     return response.data;
   },
 
-  // Buscar por ID
-  getById: async (id: number): Promise<OrdemServico> => {
-    const response = await api.get<OrdemServico>(`/ordens-servico/${id}`);
+  // Get by ID
+  getById: async (id: number): Promise<ServiceOrder> => {
+    const response = await api.get<ServiceOrder>(`/ordens-servico/${id}`);
     return response.data;
   },
 
-  // Buscar por número
-  getByNumero: async (numero: number): Promise<OrdemServico> => {
-    const response = await api.get<OrdemServico>(`/ordens-servico/numero/${numero}`);
+  // Get by number
+  getByNumber: async (number: number): Promise<ServiceOrder> => {
+    const response = await api.get<ServiceOrder>(`/ordens-servico/numero/${number}`);
     return response.data;
   },
 
-  // Filtrar por status
-  getByStatus: async (status: string): Promise<OrdemServico[]> => {
-    const response = await api.get<OrdemServico[]>(`/ordens-servico/status/${status}`);
+  // Filter by status
+  getByStatus: async (status: string): Promise<ServiceOrder[]> => {
+    const response = await api.get<ServiceOrder[]>(`/ordens-servico/status/${status}`);
     return response.data;
   },
 
-  // Criar nova ordem de serviço
-  create: async (data: FormData): Promise<OrdemServico> => {
-    const response = await api.post<OrdemServico>('/ordens-servico', data);
+  // Create new service order
+  create: async (data: FormData): Promise<ServiceOrder> => {
+    const response = await api.post<ServiceOrder>('/ordens-servico', data);
     return response.data;
   },
 
-  // Atualizar ordem de serviço
-  update: async (id: number, data: FormData): Promise<OrdemServico> => {
-    const response = await api.put<OrdemServico>(`/ordens-servico/${id}`, data);
+  // Update service order
+  update: async (id: number, data: FormData): Promise<ServiceOrder> => {
+    const response = await api.put<ServiceOrder>(`/ordens-servico/${id}`, data);
     return response.data;
   },
 
-  // Deletar ordem de serviço
+  // Delete service order
   delete: async (id: number): Promise<void> => {
     await api.delete(`/ordens-servico/${id}`);
   },
 
-  // Gerar PDF de uma ordem de serviço
+  // Generate PDF of a service order
   generatePDF: async (id: number): Promise<Blob> => {
     const response = await api.get(`/ordens-servico/pdf/${id}`, {
       responseType: 'blob'
@@ -59,8 +59,8 @@ export const ordemServicoAPI = {
     return response.data;
   },
 
-  // Gerar relatório PDF
-  generateRelatorioPDF: async (
+  // Generate report PDF
+  generateReportPDF: async (
     status: string | null = null,
     search: string | null = null,
     dia: string | null = null,

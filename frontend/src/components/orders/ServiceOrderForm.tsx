@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ordemServicoSchema, OrdemServicoFormData } from '../../schemas/ordemServicoSchema';
-import { OrdemServico } from '../../types';
+import { serviceOrderSchema, ServiceOrderFormData } from '../../schemas/ordemServicoSchema';
+import { ServiceOrder } from '../../types';
 
 interface ServiceOrderFormProps {
-  ordem?: OrdemServico | null;
-  onSubmit: (formData: OrdemServicoFormData) => void;
+  order?: ServiceOrder | null;
+  onSubmit: (formData: ServiceOrderFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
 const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ 
-  ordem, 
+  order, 
   onSubmit, 
   onCancel,
   isLoading = false 
@@ -20,7 +20,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const [showUnidadeInput, setShowUnidadeInput] = useState(false);
   const [showSetorInput, setShowSetorInput] = useState(false);
 
-  // Configurar React Hook Form com validação Zod
+  // Configure React Hook Form with Zod validation
   const {
     register,
     handleSubmit,
@@ -28,8 +28,8 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     reset,
     watch,
     setValue,
-  } = useForm<OrdemServicoFormData>({
-    resolver: zodResolver(ordemServicoSchema),
+  } = useForm<ServiceOrderFormData>({
+    resolver: zodResolver(serviceOrderSchema),
     defaultValues: {
       solicitante: '',
       unidade: '',
@@ -42,7 +42,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     },
   });
 
-  // Listas de opções predefinidas
+  // Predefined options lists
   const unidadesPredefinidas = [
     'URUCUBA', 'MENDES', 'GAMELEIRA', 'JUA', 'LAGOA AZUL',
     'RIBEIRO DO MEL', 'SANTANA', 'SANTA CRUZ', 'ALEGRIA', 'REDENTOR',
@@ -61,11 +61,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     'ADMINISTRAÇÃO', 'TELECARDIO', 'FINCANCEIRO/ADM'
   ];
 
-  // Watch dos valores atuais
+  // Watch current values
   const unidadeValue = watch('unidade');
   const setorValue = watch('setor');
 
-  // Converter data do formato brasileiro (DD/MM/YYYY) para o formato do input (YYYY-MM-DD)
+  // Convert date from Brazilian format (DD/MM/YYYY) to input format (YYYY-MM-DD)
   const formatDateForInput = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '';
     if (dateStr.includes('/')) {
@@ -75,7 +75,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     return dateStr;
   };
 
-  // Converter data do formato do input (YYYY-MM-DD) para o formato brasileiro (DD/MM/YYYY)
+  // Convert date from input format (YYYY-MM-DD) to Brazilian format (DD/MM/YYYY)
   const formatDateToBR = (dateStr: string): string => {
     if (!dateStr) return '';
     if (dateStr.includes('-')) {
@@ -87,35 +87,35 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     return dateStr;
   };
 
-  // Preencher form quando houver ordem para edição
+  // Fill form when there's an order for editing
   useEffect(() => {
-    if (ordem) {
-      const unidadeVal = ordem.unidade || '';
-      const setorVal = ordem.setor || '';
+    if (order) {
+      const unidadeVal = order.unidade || '';
+      const setorVal = order.setor || '';
       
       reset({
-        solicitante: ordem.solicitante || '',
+        solicitante: order.solicitante || '',
         unidade: unidadeVal,
         setor: setorVal,
-        descricao_problema: ordem.descricao_problema || '',
-        data_abertura: formatDateForInput(ordem.data_abertura),
-        servico_realizado: ordem.servico_realizado || '',
-        status: ordem.status || 'aberto',
-        data_fechamento: formatDateForInput(ordem.data_fechamento),
+        descricao_problema: order.descricao_problema || '',
+        data_abertura: formatDateForInput(order.data_abertura),
+        servico_realizado: order.servico_realizado || '',
+        status: order.status || 'aberto',
+        data_fechamento: formatDateForInput(order.data_fechamento),
       });
       
-      // Verificar se os valores são customizados
+      // Check if values are customized
       setShowUnidadeInput(!!unidadeVal && !unidadesPredefinidas.includes(unidadeVal));
       setShowSetorInput(!!setorVal && !setoresPredefinidos.includes(setorVal));
     }
-  }, [ordem, reset]);
+  }, [order, reset]);
 
-  // Handler de submit do formulário
-  const handleFormSubmit = (data: OrdemServicoFormData) => {
-    console.log('📝 [FORM] Dados do formulário (bruto):', data);
+  // Form submit handler
+  const handleFormSubmit = (data: ServiceOrderFormData) => {
+    console.log('📝 [FORM] Form data (raw):', data);
     
-    // Converter datas para formato brasileiro
-    const formattedData: OrdemServicoFormData = {
+    // Convert dates to Brazilian format
+    const formattedData: ServiceOrderFormData = {
       ...data,
       data_abertura: formatDateToBR(data.data_abertura),
       data_fechamento: data.data_fechamento && data.data_fechamento.trim() !== ''
@@ -126,11 +126,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         : null,
     };
 
-    console.log('📤 [FORM] Dados formatados para enviar:', formattedData);
+    console.log('📤 [FORM] Formatted data to send:', formattedData);
     onSubmit(formattedData);
   };
 
-  // Handlers para alternar entre select e input customizado
+  // Handlers to toggle between select and custom input
   const handleUnidadeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === '__custom__') {
@@ -155,7 +155,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      {/* Seção: Informações do Solicitante */}
+      {/* Section: Requester Information */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-100">
         <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">👤</span>
@@ -287,7 +287,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Seção: Descrição do Problema */}
+      {/* Section: Problem Description */}
       <div className="bg-gradient-to-br from-red-50 to-orange-50 p-6 rounded-xl border-2 border-red-100">
         <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">🔧</span>
@@ -318,7 +318,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Seção: Datas e Status */}
+      {/* Section: Dates and Status */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border-2 border-purple-100">
         <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">📅</span>
@@ -383,7 +383,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Seção: Serviço Realizado */}
+      {/* Section: Service Performed */}
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-100">
         <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">✅</span>
@@ -409,7 +409,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Botões de Ação */}
+      {/* Action Buttons */}
       <div className="flex gap-4 justify-end pt-6 border-t-2 border-gray-200">
         <button
           type="button"
@@ -427,10 +427,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           {isSubmitting || isLoading ? (
             <>
               <span className="inline-block animate-spin mr-2">⏳</span>
-              {ordem ? 'Atualizando...' : 'Criando...'}
+              {order ? 'Atualizando...' : 'Criando...'}
             </>
           ) : (
-            ordem ? '✅ Atualizar Ordem de Serviço' : '✅ Criar Ordem de Serviço'
+            order ? '✅ Atualizar Ordem de Serviço' : '✅ Criar Ordem de Serviço'
           )}
         </button>
       </div>

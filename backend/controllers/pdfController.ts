@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import PDFDocument from 'pdfkit';
 import prisma from '../config/prisma';
-import { formatOrdemServico } from '../utils/dateFormatter';
+import { formatServiceOrder } from '../utils/dateFormatter';
 import { OrdemServicoFormatada } from '../types';
 
-// Função auxiliar para obter cor do status
+// Helper function to get status color
 const getStatusColor = (status: string): string => {
   const config: Record<string, string> = {
     aberto: '#dc3545',
@@ -23,63 +23,63 @@ const getStatusLabel = (status: string): string => {
   return labels[status] || status;
 };
 
-// Gerar PDF de uma única ordem de serviço
-export const generateOrdemServicoPDF = async (req: Request, res: Response): Promise<void> => {
+// Generate PDF of a single service order
+export const generateServiceOrderPDF = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
 
-    const ordemData = await prisma.ordemServico.findUnique({
+    const orderData = await prisma.ordemServico.findUnique({
       where: { id: parseInt(String(id)) }
     });
 
-    if (!ordemData) {
+    if (!orderData) {
       res.status(404).json({ error: 'Ordem de serviço não encontrada' });
       return;
     }
 
-    const ordem = formatOrdemServico(ordemData);
+    const order = formatServiceOrder(orderData);
     
-    if (!ordem) {
+    if (!order) {
       res.status(500).json({ error: 'Erro ao formatar ordem de serviço' });
       return;
     }
 
-    // Criar documento PDF
+    // Create PDF document
     const doc = new PDFDocument({
       size: 'A4',
       margin: 50
     });
 
-    // Definir nome do arquivo
+    // Set filename
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=OS-${ordem.numero_os}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=OS-${order.numero_os}.pdf`);
 
-    // Pipe do PDF para a resposta
+    // Pipe PDF to response
     doc.pipe(res);
 
-    // Cabeçalho
+    // Header
     doc.fontSize(24)
       .fillColor('#2563eb')
       .text('ORDEM DE SERVIÇO', { align: 'center' });
 
     doc.moveDown(0.5);
 
-    // Número da OS
+    // Order number
     doc.fontSize(18)
       .fillColor('#1e293b')
-      .text(`OS #${ordem.numero_os}`, { align: 'center', underline: true });
+      .text(`OS #${order.numero_os}`, { align: 'center', underline: true });
 
     doc.moveDown(1);
 
-    // Status com cor
-    const statusColor = getStatusColor(ordem.status);
+    // Status with color
+    const statusColor = getStatusColor(order.status);
     doc.fontSize(14)
       .fillColor(statusColor)
-      .text(`Status: ${getStatusLabel(ordem.status)}`, { align: 'center' });
+      .text(`Status: ${getStatusLabel(order.status)}`, { align: 'center' });
 
     doc.moveDown(1.5);
 
-    // Linha divisória
+    // Divider line
     doc.strokeColor('#e2e8f0')
       .lineWidth(1)
       .moveTo(50, doc.y)
@@ -88,7 +88,7 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
 
     doc.moveDown(1);
 
-    // Informações principais
+    // Main information
     const infoY = doc.y;
     const labelWidth = 130;
     const valueWidth = 200;
@@ -97,7 +97,7 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
     const lineHeight = 20;
     let currentY = infoY;
 
-    // Função auxiliar para adicionar linha de informação
+    // Helper function to add info line
     const addInfoLine = (label: string, value: string | null | number, x: number, y: number, maxWidth: number = valueWidth): number => {
       const labelX = x;
       const valueX = x + labelWidth;
@@ -121,21 +121,21 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
       return y + Math.max(lineHeight, textHeight + 2);
     };
 
-    // Coluna esquerda
-    currentY = addInfoLine('Solicitante:', ordem.solicitante || '-', col1X, currentY);
-    currentY = addInfoLine('Unidade:', ordem.ubs || '-', col1X, currentY);
-    currentY = addInfoLine('Setor:', ordem.setor || '-', col1X, currentY);
+    // Left column
+    currentY = addInfoLine('Solicitante:', order.solicitante || '-', col1X, currentY);
+    currentY = addInfoLine('Unidade:', order.unidade || '-', col1X, currentY);
+    currentY = addInfoLine('Setor:', order.setor || '-', col1X, currentY);
 
-    // Coluna direita
+    // Right column
     let rightY = infoY;
-    rightY = addInfoLine('Data de Abertura:', ordem.data_abertura || '-', col2X, rightY, 170);
-    if (ordem.data_fechamento) {
-      rightY = addInfoLine('Data de Fechamento:', ordem.data_fechamento, col2X, rightY, 170);
+    rightY = addInfoLine('Data de Abertura:', order.data_abertura || '-', col2X, rightY, 170);
+    if (order.data_fechamento) {
+      rightY = addInfoLine('Data de Fechamento:', order.data_fechamento, col2X, rightY, 170);
     }
 
     doc.y = Math.max(currentY, rightY) + 10;
 
-    // Linha divisória
+    // Divider line
     doc.strokeColor('#e2e8f0')
       .lineWidth(1)
       .moveTo(50, doc.y)
@@ -144,7 +144,7 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
 
     doc.moveDown(1);
 
-    // Descrição do Problema
+    // Problem Description
     doc.fontSize(12)
       .fillColor('#1e293b')
       .font('Helvetica-Bold')
@@ -155,7 +155,7 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
     doc.fontSize(11)
       .fillColor('#1e293b')
       .font('Helvetica')
-      .text(ordem.descricao_problema, {
+      .text(order.descricao_problema, {
         width: 500,
         align: 'left',
         lineGap: 5
@@ -163,8 +163,8 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
 
     doc.moveDown(1);
 
-    // Serviço Realizado
-    if (ordem.servico_realizado) {
+    // Service Performed
+    if (order.servico_realizado) {
       doc.strokeColor('#e2e8f0')
         .lineWidth(1)
         .moveTo(50, doc.y)
@@ -183,23 +183,23 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
       doc.fontSize(11)
         .fillColor('#1e293b')
         .font('Helvetica')
-        .text(ordem.servico_realizado, {
+        .text(order.servico_realizado, {
           width: 500,
           align: 'left',
           lineGap: 5
         });
     }
 
-    // Rodapé
+    // Footer
     const pageHeight = doc.page.height;
     const pageWidth = doc.page.width;
-    const dataGeracao = new Date();
-    const dataFormatada = dataGeracao.toLocaleDateString('pt-BR', { 
+    const generationDate = new Date();
+    const formattedDate = generationDate.toLocaleDateString('pt-BR', { 
       day: '2-digit', 
       month: '2-digit', 
       year: 'numeric' 
     });
-    const horaFormatada = dataGeracao.toLocaleTimeString('pt-BR', { 
+    const formattedTime = generationDate.toLocaleTimeString('pt-BR', { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
@@ -207,13 +207,13 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
     doc.fontSize(8)
       .fillColor('#64748b')
       .text(
-        `Documento gerado em ${dataFormatada} às ${horaFormatada}`,
+        `Documento gerado em ${formattedDate} às ${formattedTime}`,
         50,
         pageHeight - 50,
         { align: 'center', width: pageWidth - 100 }
       );
 
-    // Finalizar PDF
+    // Finalize PDF
     doc.end();
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
@@ -226,12 +226,12 @@ export const generateOrdemServicoPDF = async (req: Request, res: Response): Prom
   }
 };
 
-// Gerar relatório PDF de múltiplas ordens de serviço
-export const generateRelatorioPDF = async (req: Request, res: Response): Promise<void> => {
+// Generate PDF report of multiple service orders
+export const generateReportPDF = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { status, search, dia, mes, ano, dataInicio, dataFim } = req.query;
+    const { status, search, day, month, year, startDate, endDate } = req.query;
 
-    // Construir filtros do Prisma
+    // Build Prisma filters
     const where: any = {};
 
     if (status && status !== 'todos') {
@@ -240,42 +240,42 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
 
     if (search) {
       where.OR = [
-        { numero_os: { contains: String(search) } },
-        { solicitante: { contains: String(search) } },
-        { ubs: { contains: String(search) } },
-        { setor: { contains: String(search) } },
-        { descricao_problema: { contains: String(search) } }
+        { order_number: { contains: String(search) } },
+        { requester: { contains: String(search) } },
+        { unit: { contains: String(search) } },
+        { department: { contains: String(search) } },
+        { problem_description: { contains: String(search) } }
       ];
     }
 
-    // Filtro por intervalo de datas
-    if (dataInicio || dataFim) {
-      where.data_abertura = {};
-      if (dataInicio) {
-        where.data_abertura.gte = new Date(String(dataInicio));
+    // Date range filter
+    if (startDate || endDate) {
+      where.opening_date = {};
+      if (startDate) {
+        where.opening_date.gte = new Date(String(startDate));
       }
-      if (dataFim) {
-        const dataFimDate = new Date(String(dataFim));
-        dataFimDate.setHours(23, 59, 59, 999);
-        where.data_abertura.lte = dataFimDate;
+      if (endDate) {
+        const endDateObj = new Date(String(endDate));
+        endDateObj.setHours(23, 59, 59, 999);
+        where.opening_date.lte = endDateObj;
       }
     } else {
-      // Filtros de data (dia, mês, ano)
-      if (dia || mes || ano) {
-        if (ano) {
-          const startOfYear = new Date(parseInt(String(ano)), 0, 1);
-          const endOfYear = new Date(parseInt(String(ano)), 11, 31, 23, 59, 59, 999);
-          where.data_abertura = { gte: startOfYear, lte: endOfYear };
+      // Date filters (day, month, year)
+      if (day || month || year) {
+        if (year) {
+          const startOfYear = new Date(parseInt(String(year)), 0, 1);
+          const endOfYear = new Date(parseInt(String(year)), 11, 31, 23, 59, 59, 999);
+          where.opening_date = { gte: startOfYear, lte: endOfYear };
           
-          if (mes) {
-            const startOfMonth = new Date(parseInt(String(ano)), parseInt(String(mes)) - 1, 1);
-            const endOfMonth = new Date(parseInt(String(ano)), parseInt(String(mes)), 0, 23, 59, 59, 999);
-            where.data_abertura = { gte: startOfMonth, lte: endOfMonth };
+          if (month) {
+            const startOfMonth = new Date(parseInt(String(year)), parseInt(String(month)) - 1, 1);
+            const endOfMonth = new Date(parseInt(String(year)), parseInt(String(month)), 0, 23, 59, 59, 999);
+            where.opening_date = { gte: startOfMonth, lte: endOfMonth };
             
-            if (dia) {
-              const specificDate = new Date(parseInt(String(ano)), parseInt(String(mes)) - 1, parseInt(String(dia)));
-              const endOfDay = new Date(parseInt(String(ano)), parseInt(String(mes)) - 1, parseInt(String(dia)), 23, 59, 59, 999);
-              where.data_abertura = { gte: specificDate, lte: endOfDay };
+            if (day) {
+              const specificDate = new Date(parseInt(String(year)), parseInt(String(month)) - 1, parseInt(String(day)));
+              const endOfDay = new Date(parseInt(String(year)), parseInt(String(month)) - 1, parseInt(String(day)), 23, 59, 59, 999);
+              where.opening_date = { gte: specificDate, lte: endOfDay };
             }
           }
         }
@@ -294,35 +294,35 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       return;
     }
 
-    const ordens = rows.map(formatOrdemServico).filter((ordem): ordem is OrdemServicoFormatada => ordem !== null);
+    const orders = rows.map(formatServiceOrder).filter((order): order is OrdemServicoFormatada => order !== null);
 
-    // Criar documento PDF
+    // Create PDF document
     const doc = new PDFDocument({
       size: 'A4',
       margin: 50
     });
 
-    // Definir nome do arquivo
-    const hoje = new Date();
-    const timestamp = `${String(hoje.getDate()).padStart(2, '0')}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${hoje.getFullYear()}`;
+    // Set filename
+    const today = new Date();
+    const timestamp = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=Relatorio-OS-${timestamp}.pdf`);
 
-    // Pipe do PDF para a resposta
+    // Pipe PDF to response
     doc.pipe(res);
 
-    // Variáveis para controle de página
+    // Variables for page control
     const pageHeight = doc.page.height;
 
-    // Cabeçalho
+    // Header
     doc.fontSize(24)
       .fillColor('#047857')
       .text('RELATÓRIO DE ORDENS DE SERVIÇO', { align: 'center' });
 
     doc.moveDown(0.5);
 
-    // Data de geração
-    const dataHojeBR = hoje.toLocaleDateString('pt-BR', { 
+    // Generation date
+    const todayBR = today.toLocaleDateString('pt-BR', { 
       day: '2-digit', 
       month: '2-digit', 
       year: 'numeric' 
@@ -330,82 +330,82 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
     
     doc.fontSize(12)
       .fillColor('#64748b')
-      .text(`Relatório gerado em: ${dataHojeBR}`, { align: 'center' });
+      .text(`Relatório gerado em: ${todayBR}`, { align: 'center' });
 
     doc.moveDown(1);
 
-    // Mostrar filtros aplicados
-    const filtrosAplicados: string[] = [];
+    // Show applied filters
+    const appliedFilters: string[] = [];
     
     if (status && status !== 'todos') {
-      filtrosAplicados.push(`Status: ${getStatusLabel(String(status))}`);
+      appliedFilters.push(`Status: ${getStatusLabel(String(status))}`);
     }
     
-    if (dataInicio || dataFim) {
-      const formatarDataBR = (dataStr: string): string => {
-        if (!dataStr) return '';
-        const [ano, mes, dia] = dataStr.split('-');
-        return `${dia}/${mes}/${ano}`;
+    if (startDate || endDate) {
+      const formatDateBR = (dateStr: string): string => {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
       };
       
-      let periodoTexto = 'Período: ';
-      if (dataInicio && dataFim) {
-        periodoTexto += `${formatarDataBR(String(dataInicio))} até ${formatarDataBR(String(dataFim))}`;
-      } else if (dataInicio) {
-        periodoTexto += `A partir de ${formatarDataBR(String(dataInicio))}`;
-      } else if (dataFim) {
-        periodoTexto += `Até ${formatarDataBR(String(dataFim))}`;
+      let periodText = 'Período: ';
+      if (startDate && endDate) {
+        periodText += `${formatDateBR(String(startDate))} até ${formatDateBR(String(endDate))}`;
+      } else if (startDate) {
+        periodText += `A partir de ${formatDateBR(String(startDate))}`;
+      } else if (endDate) {
+        periodText += `Até ${formatDateBR(String(endDate))}`;
       }
-      filtrosAplicados.push(periodoTexto);
-    } else if (dia || mes || ano) {
-      const filtrosData: string[] = [];
-      if (dia) filtrosData.push(`Dia: ${dia}`);
-      if (mes) {
-        const meses = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        filtrosData.push(`Mês: ${meses[parseInt(String(mes), 10)]}`);
+      appliedFilters.push(periodText);
+    } else if (day || month || year) {
+      const dateFilters: string[] = [];
+      if (day) dateFilters.push(`Dia: ${day}`);
+      if (month) {
+        const months = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        dateFilters.push(`Mês: ${months[parseInt(String(month), 10)]}`);
       }
-      if (ano) filtrosData.push(`Ano: ${ano}`);
-      filtrosAplicados.push(`Período: ${filtrosData.join(' / ')}`);
+      if (year) dateFilters.push(`Ano: ${year}`);
+      appliedFilters.push(`Período: ${dateFilters.join(' / ')}`);
     }
     
     if (search) {
-      filtrosAplicados.push(`Busca: "${search}"`);
+      appliedFilters.push(`Busca: "${search}"`);
     }
 
-    if (filtrosAplicados.length > 0) {
-      filtrosAplicados.forEach(filtro => {
+    if (appliedFilters.length > 0) {
+      appliedFilters.forEach(filter => {
         doc.fontSize(11)
           .fillColor('#64748b')
-          .text(filtro, { align: 'center' });
+          .text(filter, { align: 'center' });
       });
     }
 
-    // Se houver filtro de data, mostrar caixa destacada com estatísticas
-    if (dataInicio || dataFim) {
+    // If there's a date filter, show highlighted box with statistics
+    if (startDate || endDate) {
       doc.moveDown(0.8);
       
-      // Caixa de destaque
+      // Highlight box
       const boxY = doc.y;
       const boxHeight = 60;
       const boxX = 50;
       const boxWidth = 500;
       
-      // Fundo da caixa
+      // Box background
       doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 8)
         .fillAndStroke('#d1fae5', '#10b981');
       
-      // Título
+      // Title
       doc.fontSize(12)
         .fillColor('#047857')
         .font('Helvetica-Bold')
         .text('ESTATÍSTICAS DO PERÍODO', boxX + 20, boxY + 12, { width: boxWidth - 40, align: 'center' });
       
-      // Total de OS
+      // Total OS
       doc.fontSize(16)
         .fillColor('#065f46')
         .font('Helvetica-Bold')
         .text(
-          `${ordens.length} ${ordens.length === 1 ? 'Ordem de Serviço' : 'Ordens de Serviço'}`,
+          `${orders.length} ${orders.length === 1 ? 'Ordem de Serviço' : 'Ordens de Serviço'}`,
           boxX + 20,
           boxY + 32,
           { width: boxWidth - 40, align: 'center' }
@@ -413,28 +413,28 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       
       doc.y = boxY + boxHeight + 15;
     } else {
-      // Total simples quando não há filtro de período
+      // Simple total when there's no period filter
       doc.moveDown(0.5);
       doc.fontSize(12)
         .fillColor('#64748b')
-        .text(`Total de OS: ${ordens.length}`, { align: 'center' });
+        .text(`Total de OS: ${orders.length}`, { align: 'center' });
       doc.moveDown(1);
     }
 
-    // Lista de ordens de serviço
-    ordens.forEach((ordem, index) => {
-      // Verificar se precisa de nova página
+    // List of service orders
+    orders.forEach((order, index) => {
+      // Check if a new page is needed
       if (index > 0) {
-        const espacoMinimo = 120;
+        const minSpace = 120;
         
-        if (doc.y + espacoMinimo > pageHeight - 70) {
+        if (doc.y + minSpace > pageHeight - 70) {
           doc.addPage();
         }
       }
 
-      // Número da OS e Status
-      const statusLabel = getStatusLabel(ordem.status);
-      const statusColor = getStatusColor(ordem.status);
+      // Order number and Status
+      const statusLabel = getStatusLabel(order.status);
+      const statusColor = getStatusColor(order.status);
       const statusY = doc.y;
       
       doc.save();
@@ -445,7 +445,7 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       doc.fontSize(14)
         .fillColor('#1e293b')
         .font('Helvetica-Bold')
-        .text(`OS #${ordem.numero_os}`, 50, statusY);
+        .text(`OS #${order.numero_os}`, 50, statusY);
 
       const statusX = Math.max(420, 550 - statusWidth - 5);
       
@@ -456,7 +456,7 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
 
       doc.moveDown(0.5);
 
-      // Informações principais
+      // Main information
       const itemStartY = doc.y;
       const labelWidthRel = 85;
       const valueWidthRel = 170;
@@ -487,22 +487,22 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       };
       
       let relY = itemStartY;
-      const h1 = addRelLine('Solicitante:', ordem.solicitante || '-', col1XRel, relY);
-      addRelLine('Unidade:', ordem.ubs || '-', col2XRel, relY, 200);
+      const h1 = addRelLine('Solicitante:', order.solicitante || '-', col1XRel, relY);
+      addRelLine('Unidade:', order.unidade || '-', col2XRel, relY, 200);
       relY += h1;
       
-      const h2 = addRelLine('Setor:', ordem.setor || '-', col1XRel, relY);
-      addRelLine('Data Abertura:', ordem.data_abertura || '-', col2XRel, relY, 200);
+      const h2 = addRelLine('Setor:', order.setor || '-', col1XRel, relY);
+      addRelLine('Data Abertura:', order.data_abertura || '-', col2XRel, relY, 200);
       relY += h2;
       
-      if (ordem.data_fechamento) {
-        addRelLine('Data Fechamento:', ordem.data_fechamento, col2XRel, relY, 200);
+      if (order.data_fechamento) {
+        addRelLine('Data Fechamento:', order.data_fechamento, col2XRel, relY, 200);
         relY += 13;
       }
       
       doc.y = relY + 8;
 
-      // Descrição do Problema
+      // Problem Description
       doc.fontSize(9)
         .fillColor('#1e293b')
         .font('Helvetica-Bold')
@@ -513,13 +513,13 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       doc.fontSize(9)
         .fillColor('#1e293b')
         .font('Helvetica')
-        .text(ordem.descricao_problema || '-', {
+        .text(order.descricao_problema || '-', {
           width: 500,
           align: 'left',
           lineGap: 3
         });
 
-      if (ordem.servico_realizado) {
+      if (order.servico_realizado) {
         doc.moveDown(0.5);
         doc.fontSize(9)
           .fillColor('#1e293b')
@@ -531,7 +531,7 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
         doc.fontSize(9)
           .fillColor('#1e293b')
           .font('Helvetica')
-          .text(ordem.servico_realizado, {
+          .text(order.servico_realizado, {
             width: 500,
             align: 'left',
             lineGap: 3
@@ -540,8 +540,8 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
 
       doc.moveDown(1);
 
-      // Linha divisória
-      if (index < ordens.length - 1) {
+      // Divider line
+      if (index < orders.length - 1) {
         if (doc.y + 20 < pageHeight - 70) {
           doc.strokeColor('#e2e8f0')
             .lineWidth(0.5)
@@ -553,7 +553,7 @@ export const generateRelatorioPDF = async (req: Request, res: Response): Promise
       }
     });
 
-    // Finalizar PDF
+    // Finalize PDF
     doc.end();
   } catch (error) {
     console.error('Erro ao gerar relatório PDF:', error);

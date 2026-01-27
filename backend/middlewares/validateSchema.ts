@@ -2,14 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError, ZodType } from 'zod';
 
 /**
- * Middleware para validar requisições usando schemas Zod
- * @param schema - Schema Zod para validação
- * @returns Middleware Express
+ * Middleware to validate requests using Zod schemas
+ * @param schema - Zod schema for validation
+ * @returns Express middleware
  */
 export const validateSchema = (schema: ZodType<any>) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      // Validar a requisição completa (body, params, query)
+      // Validate the complete request (body, params, query)
       await schema.parseAsync({
         body: req.body,
         params: req.params,
@@ -19,7 +19,7 @@ export const validateSchema = (schema: ZodType<any>) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        // Formatar erros do Zod de forma amigável
+        // Format Zod errors in a friendly way
         const errors = error.issues.map((err) => ({
           campo: err.path.join('.'),
           mensagem: err.message
@@ -32,7 +32,7 @@ export const validateSchema = (schema: ZodType<any>) => {
         return;
       }
       
-      // Erro inesperado
+      // Unexpected error
       console.error('Erro no middleware de validação:', error);
       res.status(500).json({
         error: 'Erro interno ao validar dados',

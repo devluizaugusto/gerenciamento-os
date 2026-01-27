@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Schema para criar ordem de serviço
-export const createOrdemServicoSchema = z.object({
+// Schema to create service order
+export const createServiceOrderSchema = z.object({
   body: z.object({
     solicitante: z
       .string({ message: 'Solicitante deve ser um texto' })
@@ -31,10 +31,10 @@ export const createOrdemServicoSchema = z.object({
       .min(1, 'Campo obrigatório: data de abertura')
       .refine(
         (val) => {
-          // Aceitar formato DD/MM/YYYY ou YYYY-MM-DD
-          const formatoBR = /^\d{2}\/\d{2}\/\d{4}$/;
-          const formatoISO = /^\d{4}-\d{2}-\d{2}$/;
-          return formatoBR.test(val) || formatoISO.test(val);
+          // Accept DD/MM/YYYY or YYYY-MM-DD format
+          const brFormat = /^\d{2}\/\d{2}\/\d{4}$/;
+          const isoFormat = /^\d{4}-\d{2}-\d{2}$/;
+          return brFormat.test(val) || isoFormat.test(val);
         },
         { message: 'Data de abertura deve estar no formato DD/MM/YYYY ou YYYY-MM-DD' }
       ),
@@ -59,9 +59,9 @@ export const createOrdemServicoSchema = z.object({
       .refine(
         (val) => {
           if (!val || val === '') return true;
-          const formatoBR = /^\d{2}\/\d{2}\/\d{4}$/;
-          const formatoISO = /^\d{4}-\d{2}-\d{2}$/;
-          return formatoBR.test(val) || formatoISO.test(val);
+          const brFormat = /^\d{2}\/\d{2}\/\d{4}$/;
+          const isoFormat = /^\d{4}-\d{2}-\d{2}$/;
+          return brFormat.test(val) || isoFormat.test(val);
         },
         { message: 'Data de fechamento deve estar no formato DD/MM/YYYY ou YYYY-MM-DD' }
       )
@@ -69,8 +69,8 @@ export const createOrdemServicoSchema = z.object({
   })
 });
 
-// Schema para atualizar ordem de serviço
-export const updateOrdemServicoSchema = z.object({
+// Schema to update service order
+export const updateServiceOrderSchema = z.object({
   params: z.object({
     id: z
       .string()
@@ -110,9 +110,9 @@ export const updateOrdemServicoSchema = z.object({
       .string()
       .refine(
         (val) => {
-          const formatoBR = /^\d{2}\/\d{2}\/\d{4}$/;
-          const formatoISO = /^\d{4}-\d{2}-\d{2}$/;
-          return formatoBR.test(val) || formatoISO.test(val);
+          const brFormat = /^\d{2}\/\d{2}\/\d{4}$/;
+          const isoFormat = /^\d{4}-\d{2}-\d{2}$/;
+          return brFormat.test(val) || isoFormat.test(val);
         },
         { message: 'Data de abertura deve estar no formato DD/MM/YYYY ou YYYY-MM-DD' }
       )
@@ -137,9 +137,9 @@ export const updateOrdemServicoSchema = z.object({
       .refine(
         (val) => {
           if (!val || val === '') return true;
-          const formatoBR = /^\d{2}\/\d{2}\/\d{4}$/;
-          const formatoISO = /^\d{4}-\d{2}-\d{2}$/;
-          return formatoBR.test(val) || formatoISO.test(val);
+          const brFormat = /^\d{2}\/\d{2}\/\d{4}$/;
+          const isoFormat = /^\d{4}-\d{2}-\d{2}$/;
+          return brFormat.test(val) || isoFormat.test(val);
         },
         { message: 'Data de fechamento deve estar no formato DD/MM/YYYY ou YYYY-MM-DD' }
       )
@@ -151,7 +151,7 @@ export const updateOrdemServicoSchema = z.object({
   )
 });
 
-// Schema para validar ID nos parâmetros
+// Schema to validate ID in params
 export const idParamSchema = z.object({
   params: z.object({
     id: z
@@ -161,8 +161,8 @@ export const idParamSchema = z.object({
   })
 });
 
-// Schema para validar número da OS nos parâmetros
-export const numeroParamSchema = z.object({
+// Schema to validate order number in params
+export const orderNumberParamSchema = z.object({
   params: z.object({
     numero: z
       .string()
@@ -170,7 +170,7 @@ export const numeroParamSchema = z.object({
   })
 });
 
-// Schema para validar status nos parâmetros
+// Schema to validate status in params
 export const statusParamSchema = z.object({
   params: z.object({
     status: z.enum(['aberto', 'em_andamento', 'finalizado'], { 
@@ -179,8 +179,8 @@ export const statusParamSchema = z.object({
   })
 });
 
-// Schema para validar query params do relatório
-export const relatorioQuerySchema = z.object({
+// Schema to validate report query params
+export const reportQuerySchema = z.object({
   query: z.object({
     status: z
       .enum(['todos', 'aberto', 'em_andamento', 'finalizado'])

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-// Schema de validação para o formulário de ordem de serviço
-export const ordemServicoSchema = z.object({
+// Validation schema for service order form
+export const serviceOrderSchema = z.object({
   solicitante: z
     .string()
     .min(3, 'O nome do solicitante deve ter no mínimo 3 caracteres')
@@ -44,18 +44,18 @@ export const ordemServicoSchema = z.object({
     .nullable(),
 });
 
-// Tipo TypeScript inferido do schema
-export type OrdemServicoFormData = z.infer<typeof ordemServicoSchema>;
+// TypeScript type inferred from schema
+export type ServiceOrderFormData = z.infer<typeof serviceOrderSchema>;
 
-// Schema para filtros (opcional)
-export const filtroSchema = z.object({
+// Schema for filters (optional)
+export const filterSchema = z.object({
   status: z.string().optional(),
   searchTerm: z.string().optional(),
-  dia: z.string().optional(),
-  mes: z.string().optional(),
-  ano: z.string().optional(),
-  dataInicio: z.string().optional(),
-  dataFim: z.string().optional(),
+  day: z.string().optional(),
+  month: z.string().optional(),
+  year: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
-export type FiltroData = z.infer<typeof filtroSchema>;
+export type FilterData = z.infer<typeof filterSchema>;

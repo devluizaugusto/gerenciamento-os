@@ -1,4 +1,4 @@
-export interface OrdemServico {
+export interface ServiceOrder {
   id: number;
   numero_os: number;
   solicitante: string;

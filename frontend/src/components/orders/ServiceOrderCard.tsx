@@ -1,18 +1,19 @@
 import React, { memo } from 'react';
 import { getStatusConfig } from '../../utils/statusColors';
-import { OrdemServico } from '../../types';
+import { ServiceOrder } from '../../types';
 
 interface ServiceOrderCardProps {
-  ordem: OrdemServico;
-  onEdit: (ordem: OrdemServico) => void;
+  ordem: ServiceOrder;
+  onEdit: (ordem: ServiceOrder) => void;
   onDelete: (id: number) => void;
+
 }
 
 const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit, onDelete }) => {
   const status = getStatusConfig(ordem.status);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 border-2 border-green-200 hover:-translate-y-2 hover:shadow-2xl animate-fadeInUp group">
+    <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl animate-fadeInUp group">
       {/* Header com gradiente */}
       <div 
         className="relative px-6 py-5 bg-gradient-to-r overflow-hidden"

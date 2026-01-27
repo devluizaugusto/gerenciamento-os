@@ -1,12 +1,12 @@
 import React, { memo } from 'react';
 import { getStatusConfig } from '../../utils/statusColors';
-import { OrdemServico } from '../../types';
+import { ServiceOrder } from '../../types';
 
 interface ServiceOrderTableProps {
-  ordens: OrdemServico[];
-  onEdit: (ordem: OrdemServico) => void;
+  ordens: ServiceOrder[];
+  onEdit: (ordem: ServiceOrder) => void;
   onDelete: (id: number) => void;
-  onView: (ordem: OrdemServico) => void;
+  onView: (ordem: ServiceOrder) => void;
 }
 
 // Mapeamento de cores do quadrado baseado no status
@@ -72,46 +72,46 @@ const ServiceOrderTable: React.FC<ServiceOrderTableProps> = memo(({ ordens, onEd
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className={`flex-shrink-0 w-14 h-14 bg-gradient-to-br ${bgGradient} rounded-lg flex items-center justify-center shadow-md`}>
-                        <span className="text-white font-bold text-base">#{ordem.numero_os}</span>
+                        <span className="text-white font-bold text-base">#{ordem.order_number}</span>
                       </div>
                     </div>
                   </td>
 
                   {/* Solicitante */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-semibold text-gray-900">{ordem.solicitante}</div>
+                    <div className="text-sm font-semibold text-gray-900">{ordem.requester}</div>
                   </td>
 
                   {/* Unidade */}
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-700">{ordem.unidade}</div>
+                    <div className="text-sm text-gray-700">{ordem.unit}</div>
                   </td>
 
                   {/* Setor */}
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-700">{ordem.setor}</div>
+                    <div className="text-sm text-gray-700">{ordem.department}</div>
                   </td>
 
                   {/* Problema */}
                   <td className="px-6 py-4 max-w-xs">
-                    <div className="text-sm text-gray-600 truncate" title={ordem.descricao_problema}>
-                      {ordem.descricao_problema}
+                    <div className="text-sm text-gray-600 truncate" title={ordem.problem_description}>
+                      {ordem.problem_description}
                     </div>
                   </td>
 
                   {/* Serviço Realizado */}
                   <td className="px-6 py-4 max-w-xs">
-                    <div className="text-sm text-gray-600 truncate" title={ordem.servico_realizado || '-'}>
-                      {ordem.servico_realizado || '-'}
+                    <div className="text-sm text-gray-600 truncate" title={ordem.service_performed || '-'}>
+                      {ordem.service_performed || '-'}
                     </div>
                   </td>
 
                   {/* Data Abertura */}
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700 font-medium">{ordem.data_abertura}</div>
-                    {ordem.data_fechamento && (
+                    <div className="text-sm text-gray-700 font-medium">{ordem.opening_date}</div>
+                    {ordem.closing_date && (
                       <div className="text-xs text-success font-semibold mt-1">
-                        Fechado: {ordem.data_fechamento}
+                        Fechado: {ordem.closing_date}
                       </div>
                     )}
                   </td>

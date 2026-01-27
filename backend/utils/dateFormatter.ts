@@ -1,20 +1,19 @@
 import { OrdemServico, OrdemServicoFormatada } from '../types';
 
 /**
- * Formata uma data para o padrão brasileiro (DD/MM/YYYY)
- * @param date - Data a ser formatada
- * @returns Data formatada ou null
+ * Formats a date to Brazilian standard (DD/MM/YYYY)
+ * @param date - Date to be formatted
+ * @returns Formatted date or null
  */
 export function formatDateToBR(date: Date | string | null | undefined): string | null {
   if (!date) return null;
-  
   const dateObj = date instanceof Date ? date : new Date(date);
   
   if (isNaN(dateObj.getTime())) {
     return null;
   }
   
-  // Usar UTC para evitar problemas de timezone
+  // Use UTC to avoid timezone issues
   const day = String(dateObj.getUTCDate()).padStart(2, '0');
   const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
   const year = dateObj.getUTCFullYear();
@@ -23,9 +22,9 @@ export function formatDateToBR(date: Date | string | null | undefined): string |
 }
 
 /**
- * Converte uma data do formato brasileiro (DD/MM/YYYY) para Date
- * @param dateBR - Data no formato brasileiro
- * @returns Objeto Date ou null
+ * Converts a date from Brazilian format (DD/MM/YYYY) to Date
+ * @param dateBR - Date in Brazilian format
+ * @returns Date object or null
  */
 export function parseDateFromBR(dateBR: string | null | undefined): Date | null {
   if (!dateBR) return null;
@@ -47,27 +46,34 @@ export function parseDateFromBR(dateBR: string | null | undefined): Date | null 
 }
 
 /**
- * Formata um objeto de ordem de serviço formatando as datas
- * @param ordemServico - Objeto da ordem de serviço
- * @returns Objeto com datas formatadas
+ * Formats a service order object by formatting dates
+ * @param ordemServico - Service order object
+ * @returns Object with formatted dates
  */
-export function formatOrdemServico(ordemServico: OrdemServico | null): OrdemServicoFormatada | null {
+export function formatServiceOrder(ordemServico: OrdemServico | null): OrdemServicoFormatada | null {
   if (!ordemServico) return null;
   
   return {
-    ...ordemServico,
+    id: ordemServico.id,
+    numero_os: ordemServico.numero_os,
+    solicitante: ordemServico.solicitante,
+    unidade: ordemServico.unidade,
+    setor: ordemServico.setor,
+    descricao_problema: ordemServico.descricao_problema,
     data_abertura: formatDateToBR(ordemServico.data_abertura),
+    servico_realizado: ordemServico.servico_realizado,
+    status: ordemServico.status,
     data_fechamento: formatDateToBR(ordemServico.data_fechamento),
   };
 }
 
 /**
- * Formata um array de ordens de serviço
- * @param ordensServico - Array de ordens de serviço
- * @returns Array com datas formatadas
+ * Formats an array of service orders
+ * @param ordensServico - Array of service orders
+ * @returns Array with formatted dates
  */
-export function formatOrdensServico(ordensServico: OrdemServico[]): OrdemServicoFormatada[] {
+export function formatServiceOrders(ordensServico: OrdemServico[]): OrdemServicoFormatada[] {
   if (!Array.isArray(ordensServico)) return [];
   
-  return ordensServico.map(ordem => formatOrdemServico(ordem)).filter((ordem): ordem is OrdemServicoFormatada => ordem !== null);
+  return ordensServico.map(ordem => formatServiceOrder(ordem)).filter((ordem): ordem is OrdemServicoFormatada => ordem !== null);
 }

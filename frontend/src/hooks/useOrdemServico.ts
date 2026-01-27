@@ -1,91 +1,91 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ordemServicoAPI } from '../services/api';
-import { FormData as OrdemServicoFormData } from '../types';
+import { serviceOrderAPI } from '../services/api';
+import { FormData as ServiceOrderFormData } from '../types';
 
 // Query keys
-export const ordemServicoKeys = {
-  all: ['ordens-servico'] as const,
-  lists: () => [...ordemServicoKeys.all, 'list'] as const,
-  list: (filters?: any) => [...ordemServicoKeys.lists(), { filters }] as const,
-  details: () => [...ordemServicoKeys.all, 'detail'] as const,
-  detail: (id: number) => [...ordemServicoKeys.details(), id] as const,
+export const serviceOrderKeys = {
+  all: ['service-orders'] as const,
+  lists: () => [...serviceOrderKeys.all, 'list'] as const,
+  list: (filters?: any) => [...serviceOrderKeys.lists(), { filters }] as const,
+  details: () => [...serviceOrderKeys.all, 'detail'] as const,
+  detail: (id: number) => [...serviceOrderKeys.details(), id] as const,
 };
 
-// Hook para buscar todas as ordens de serviço
-export const useOrdensServico = () => {
+// Hook to fetch all service orders
+export const useServiceOrders = () => {
   return useQuery({
-    queryKey: ordemServicoKeys.lists(),
-    queryFn: () => ordemServicoAPI.getAll(),
-    staleTime: 1000 * 60 * 5, // 5 minutos - dados são válidos por 5 min
-    refetchOnMount: false, // Não refetch automático ao montar
-    refetchOnWindowFocus: false, // Não refetch ao focar janela
+    queryKey: serviceOrderKeys.lists(),
+    queryFn: () => serviceOrderAPI.getAll(),
+    staleTime: 1000 * 60 * 5, // 5 minutes - data is valid for 5 min
+    refetchOnMount: false, // No automatic refetch on mount
+    refetchOnWindowFocus: false, // No refetch on window focus
   });
 };
 
-// Hook para buscar uma ordem de serviço por ID
-export const useOrdemServico = (id: number) => {
+// Hook to fetch a service order by ID
+export const useServiceOrder = (id: number) => {
   return useQuery({
-    queryKey: ordemServicoKeys.detail(id),
-    queryFn: () => ordemServicoAPI.getById(id),
+    queryKey: serviceOrderKeys.detail(id),
+    queryFn: () => serviceOrderAPI.getById(id),
     enabled: !!id,
   });
 };
 
-// Hook para criar uma ordem de serviço
-export const useCreateOrdemServico = () => {
+// Hook to create a service order
+export const useCreateServiceOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: OrdemServicoFormData) => ordemServicoAPI.create(data),
+    mutationFn: (data: ServiceOrderFormData) => serviceOrderAPI.create(data),
     onSuccess: () => {
-      // Apenas invalidar - React Query fará refetch automaticamente se necessário
+      // Just invalidate - React Query will refetch automatically if needed
       queryClient.invalidateQueries({ 
-        queryKey: ordemServicoKeys.lists()
+        queryKey: serviceOrderKeys.lists()
       });
     },
   });
 };
 
-// Hook para atualizar uma ordem de serviço
-export const useUpdateOrdemServico = () => {
+// Hook to update a service order
+export const useUpdateServiceOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: OrdemServicoFormData }) =>
-      ordemServicoAPI.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: ServiceOrderFormData }) =>
+      serviceOrderAPI.update(id, data),
     onSuccess: (_, variables) => {
-      // Apenas invalidar - React Query fará refetch automaticamente se necessário
+      // Just invalidate - React Query will refetch automatically if needed
       queryClient.invalidateQueries({ 
-        queryKey: ordemServicoKeys.lists()
+        queryKey: serviceOrderKeys.lists()
       });
       queryClient.invalidateQueries({ 
-        queryKey: ordemServicoKeys.detail(variables.id)
+        queryKey: serviceOrderKeys.detail(variables.id)
       });
     },
   });
 };
 
-// Hook para deletar uma ordem de serviço
-export const useDeleteOrdemServico = () => {
+// Hook to delete a service order
+export const useDeleteServiceOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => ordemServicoAPI.delete(id),
+    mutationFn: (id: number) => serviceOrderAPI.delete(id),
     onSuccess: () => {
-      // Apenas invalidar - React Query fará refetch automaticamente se necessário
+      // Just invalidate - React Query will refetch automatically if needed
       queryClient.invalidateQueries({ 
-        queryKey: ordemServicoKeys.lists()
+        queryKey: serviceOrderKeys.lists()
       });
     },
   });
 };
 
-// Hook para gerar PDF de uma ordem de serviço
+// Hook to generate PDF of a service order
 export const useGeneratePDF = () => {
   return useMutation({
-    mutationFn: (id: number) => ordemServicoAPI.generatePDF(id),
+    mutationFn: (id: number) => serviceOrderAPI.generatePDF(id),
     onSuccess: (blob, id) => {
-      // Criar URL do blob e fazer download
+      // Create blob URL and download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -98,8 +98,8 @@ export const useGeneratePDF = () => {
   });
 };
 
-// Hook para gerar relatório PDF
-export const useGenerateRelatorioPDF = () => {
+// Hook to generate report PDF
+export const useGenerateReportPDF = () => {
   return useMutation({
     mutationFn: ({
       status,
@@ -118,7 +118,7 @@ export const useGenerateRelatorioPDF = () => {
       dataInicio?: string | null;
       dataFim?: string | null;
     }) =>
-      ordemServicoAPI.generateRelatorioPDF(
+      serviceOrderAPI.generateReportPDF(
         status,
         search,
         dia,
@@ -128,14 +128,14 @@ export const useGenerateRelatorioPDF = () => {
         dataFim
       ),
     onSuccess: (blob) => {
-      // Criar URL do blob e fazer download
+      // Create blob URL and download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const hoje = new Date();
-      const timestamp = `${String(hoje.getDate()).padStart(2, '0')}-${String(
-        hoje.getMonth() + 1
-      ).padStart(2, '0')}-${hoje.getFullYear()}`;
+      const today = new Date();
+      const timestamp = `${String(today.getDate()).padStart(2, '0')}-${String(
+        today.getMonth() + 1
+      ).padStart(2, '0')}-${today.getFullYear()}`;
       link.download = `Relatorio-OS-${timestamp}.pdf`;
       document.body.appendChild(link);
       link.click();

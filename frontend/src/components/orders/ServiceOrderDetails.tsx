@@ -1,9 +1,9 @@
 import React from 'react';
 import { getStatusConfig } from '../../utils/statusColors';
-import { OrdemServico } from '../../types';
+import { ServiceOrder } from '../../types';
 
 interface ServiceOrderDetailsProps {
-  ordem: OrdemServico;
+  ordem: ServiceOrder;
 }
 
 const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {

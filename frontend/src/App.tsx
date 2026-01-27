@@ -1,28 +1,28 @@
 import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
-import ServiceOrderTable from './components/orders/ServiceOrderTable';
 import Modal from './components/common/Modal';
 import Toast from './components/common/Toast';
 import Statistics from './components/common/Statistics';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
-// Lazy load componentes pesados do modal
+// Lazy load heavy modal components
 const ServiceOrderForm = lazy(() => import('./components/orders/ServiceOrderForm'));
 const ServiceOrderDetails = lazy(() => import('./components/orders/ServiceOrderDetails'));
-import { OrdemServico, StatusFilter } from './types';
-import { OrdemServicoFormData } from './schemas/ordemServicoSchema';
+import { ServiceOrder, StatusFilter } from './types';
+import { ServiceOrderFormData } from './schemas/ordemServicoSchema';
 import {
-  useOrdensServico,
-  useCreateOrdemServico,
-  useUpdateOrdemServico,
-  useDeleteOrdemServico,
-  useGenerateRelatorioPDF,
+  useServiceOrders,
+  useCreateServiceOrder,
+  useUpdateServiceOrder,
+  useDeleteServiceOrder,
+  useGenerateReportPDF,
 } from './hooks/useOrdemServico';
 import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
+import ServiceOrderCard from './components/orders/ServiceOrderCard';
 
-// Mapeamento de meses para nomes abreviados
-const MESES_ABREVIADOS: Record<string, string> = {
+// Month mapping to abbreviated names
+const ABBREVIATED_MONTHS: Record<string, string> = {
   '01': 'Jan',
   '02': 'Fev',
   '03': 'Mar',
@@ -37,192 +37,195 @@ const MESES_ABREVIADOS: Record<string, string> = {
   '12': 'Dez',
 };
 
-// Função utilitária para obter mês e ano atual
-const getDataAtual = () => {
-  const data = new Date();
+// Utility function to get current month and year
+const getCurrentDate = () => {
+  const date = new Date();
   return {
-    mes: String(data.getMonth() + 1).padStart(2, '0'),
-    ano: String(data.getFullYear())
+    month: String(date.getMonth() + 1).padStart(2, '0'),
+    year: String(date.getFullYear())
   };
 };
 
-// Função para formatar mês/ano para exibição
-const formatarMesAno = (mes: string, ano: string): string => {
-  const mesAbreviado = MESES_ABREVIADOS[mes] || mes;
-  return `${mesAbreviado}/${ano}`;
+// Function to format month/year for display
+const formatMonthYear = (month: string, year: string): string => {
+  const abbreviatedMonth = ABBREVIATED_MONTHS[month] || month;
+  return `${abbreviatedMonth}/${year}`;
 };
 
 function App() {
-  // Obter mês e ano atual para filtro padrão
-  const { mes: mesAtual, ano: anoAtual } = getDataAtual();
+  // Get current month and year for default filter
+  const { month: currentMonth, year: currentYear } = getCurrentDate();
 
-  // Estados de filtros
+  // Filter states
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [diaFilter, setDiaFilter] = useState<string>('');
-  const [mesFilter, setMesFilter] = useState<string>(mesAtual); // Mês atual por padrão
-  const [anoFilter, setAnoFilter] = useState<string>(anoAtual); // Ano atual por padrão
-  const [dataInicioFilter, setDataInicioFilter] = useState<string>('');
-  const [dataFimFilter, setDataFimFilter] = useState<string>('');
+  const [dayFilter, setDayFilter] = useState<string>('');
+  const [monthFilter, setMonthFilter] = useState<string>(currentMonth); // Current month by default
+  const [yearFilter, setYearFilter] = useState<string>(currentYear); // Current year by default
+  const [startDateFilter, setStartDateFilter] = useState<string>('');
+  const [endDateFilter, setEndDateFilter] = useState<string>('');
 
-  // Estados do modal
+  // Modal states
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<'create' | 'edit' | 'view' | null>(null);
   const [modalTitle, setModalTitle] = useState<string>('');
-  const [selectedOrdem, setSelectedOrdem] = useState<OrdemServico | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<ServiceOrder | null>(null);
 
   // React Query hooks
-  const { data: ordens = [], isLoading, error, refetch } = useOrdensServico();
-  const createMutation = useCreateOrdemServico();
-  const updateMutation = useUpdateOrdemServico();
-  const deleteMutation = useDeleteOrdemServico();
-  const generateRelatorioPDFMutation = useGenerateRelatorioPDF();
+  const { data: orders = [], isLoading, error, refetch } = useServiceOrders();
+  const createMutation = useCreateServiceOrder();
+  const updateMutation = useUpdateServiceOrder();
+  const deleteMutation = useDeleteServiceOrder();
+  const generateReportPDFMutation = useGenerateReportPDF();
 
   // Toast notifications
   const { toasts, removeToast, success, error: errorToast } = useToast();
 
-  // Debounce do searchTerm para evitar re-renders excessivos durante digitação
+  // Debounce searchTerm to avoid excessive re-renders during typing
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Filtrar ordens com useMemo para otimização
-  const filteredOrdens = useMemo(() => {
-    let filtered = [...ordens];
+  // Filter orders with useMemo for optimization
+  const filteredOrders = useMemo(() => {
+    let filtered = [...orders];
 
-    // Filtrar por status
+    // Filter by status
     if (statusFilter !== 'todos') {
-      filtered = filtered.filter(ordem => ordem.status === statusFilter);
+      filtered = filtered.filter(order => order.status === statusFilter);
     }
 
-    // Filtrar por busca (usando debounced value)
+    // Filter by search (using debounced value)
     if (debouncedSearchTerm) {
       const term = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(ordem =>
-        ordem.numero_os.toString().includes(term) ||
-        ordem.solicitante.toLowerCase().includes(term) ||
-        ordem.unidade.toLowerCase().includes(term) ||
-        ordem.setor.toLowerCase().includes(term) ||
-        ordem.descricao_problema.toLowerCase().includes(term)
+      filtered = filtered.filter(order =>
+        order.numero_os.toString().includes(term) ||
+        order.solicitante.toLowerCase().includes(term) ||
+        order.unidade.toLowerCase().includes(term) ||
+        order.setor.toLowerCase().includes(term) ||
+        order.descricao_problema.toLowerCase().includes(term)
       );
     }
 
-    // Filtrar por dia
-    if (diaFilter) {
-      filtered = filtered.filter(ordem => {
-        if (!ordem.data_abertura) return false;
-        const [dia] = ordem.data_abertura.split('/');
-        return parseInt(dia) === parseInt(diaFilter);
+    // Filter by day
+    if (dayFilter) {
+      filtered = filtered.filter(order => {
+        if (!order.data_abertura) return false;
+        const [day] = order.data_abertura.split('/');
+        return parseInt(day) === parseInt(dayFilter);
       });
     }
 
-    // Filtrar por mês
-    if (mesFilter) {
-      filtered = filtered.filter(ordem => {
-        if (!ordem.data_abertura) return false;
-        const [, mes] = ordem.data_abertura.split('/');
-        return parseInt(mes) === parseInt(mesFilter);
+    // Filter by month
+    if (monthFilter) {
+      filtered = filtered.filter(order => {
+        if (!order.data_abertura) return false;
+        const [, month] = order.data_abertura.split('/');
+        return parseInt(month) === parseInt(monthFilter);
       });
     }
 
-    // Filtrar por ano
-    if (anoFilter) {
-      filtered = filtered.filter(ordem => {
-        if (!ordem.data_abertura) return false;
-        const [, , ano] = ordem.data_abertura.split('/');
-        return parseInt(ano) === parseInt(anoFilter);
+    // Filter by year
+    if (yearFilter) {
+      filtered = filtered.filter(order => {
+        if (!order.data_abertura) return false;
+        const [, , year] = order.data_abertura.split('/');
+        return parseInt(year) === parseInt(yearFilter);
       });
     }
 
-    // Filtrar por intervalo de datas
-    if (dataInicioFilter || dataFimFilter) {
-      filtered = filtered.filter(ordem => {
-        if (!ordem.data_abertura) return false;
+    // Filter by date range
+    if (startDateFilter || endDateFilter) {
+      filtered = filtered.filter(order => {
+        if (!order.data_abertura) return false;
 
-        const [dia, mes, ano] = ordem.data_abertura.split('/');
-        const dataOrdem = Date.UTC(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+        const [day, month, year] = order.data_abertura.split('/');
+        const orderDate = Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day));
 
-        let dentroDoIntervalo = true;
+        let withinRange = true;
 
-        if (dataInicioFilter) {
-          const [anoInicio, mesInicio, diaInicio] = dataInicioFilter.split('-');
-          const dataInicio = Date.UTC(parseInt(anoInicio), parseInt(mesInicio) - 1, parseInt(diaInicio));
-          if (dataOrdem < dataInicio) {
-            dentroDoIntervalo = false;
+        if (startDateFilter) {
+          const [startYear, startMonth, startDay] = startDateFilter.split('-');
+          const startDate = Date.UTC(parseInt(startYear), parseInt(startMonth) - 1, parseInt(startDay));
+          if (orderDate < startDate) {
+            withinRange = false;
           }
         }
 
-        if (dataFimFilter && dentroDoIntervalo) {
-          const [anoFim, mesFim, diaFim] = dataFimFilter.split('-');
-          const dataFim = Date.UTC(parseInt(anoFim), parseInt(mesFim) - 1, parseInt(diaFim));
-          if (dataOrdem > dataFim) {
-            dentroDoIntervalo = false;
+        if (endDateFilter && withinRange) {
+          const [endYear, endMonth, endDay] = endDateFilter.split('-');
+          const endDate = Date.UTC(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDay));
+          if (orderDate > endDate) {
+            withinRange = false;
           }
         }
-        return dentroDoIntervalo;
+        return withinRange;
       });
     }
 
-    // Ordenar por data de abertura (crescente - do primeiro dia ao último)
+    // Sort by opening date (ascending - from first day to last)
     filtered.sort((a, b) => {
       if (!a.data_abertura) return 1;
       if (!b.data_abertura) return -1;
       
-      const [diaA, mesA, anoA] = a.data_abertura.split('/');
-      const [diaB, mesB, anoB] = b.data_abertura.split('/');
+      const [dayA, monthA, yearA] = a.data_abertura.split('/');
+      const [dayB, monthB, yearB] = b.data_abertura.split('/');
       
-      const dataA = Date.UTC(parseInt(anoA), parseInt(mesA) - 1, parseInt(diaA));
-      const dataB = Date.UTC(parseInt(anoB), parseInt(mesB) - 1, parseInt(diaB));
+      const dateA = Date.UTC(parseInt(yearA), parseInt(monthA) - 1, parseInt(dayA));
+      const dateB = Date.UTC(parseInt(yearB), parseInt(monthB) - 1, parseInt(dayB));
       
-      return dataA - dataB;
+      return dateA - dateB;
     });
 
     return filtered;
-  }, [ordens, statusFilter, debouncedSearchTerm, diaFilter, mesFilter, anoFilter, dataInicioFilter, dataFimFilter]);
+  }, [orders, statusFilter, debouncedSearchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter]);
 
-  // Handlers com useCallback para evitar re-renders
+  // Handlers with useCallback to avoid re-renders
   const closeModal = useCallback(() => {
     setShowModal(false);
     setModalContent(null);
     setModalTitle('');
-    setSelectedOrdem(null);
+    setSelectedOrder(null);
   }, []);
 
   const handleCreate = useCallback(() => {
-    setSelectedOrdem(null);
+    setSelectedOrder(null);
     setModalContent('create');
     setModalTitle('Nova Ordem de Serviço');
     setShowModal(true);
   }, []);
 
-  const handleEdit = useCallback((ordem: OrdemServico) => {
-    setSelectedOrdem(ordem);
+  const handleEdit = useCallback((order: ServiceOrder) => {
+    setSelectedOrder(order);
     setModalContent('edit');
-    setModalTitle(`Editar OS #${ordem.numero_os}`);
+    setModalTitle(`Editar OS #${order.numero_os}`);
     setShowModal(true);
   }, []);
+  /* 
+    Function to view service order details
 
-  const handleView = useCallback((ordem: OrdemServico) => {
-    setSelectedOrdem(ordem);
+  const handleView = useCallback((order: ServiceOrder) => {
+    setSelectedOrder(order);
     setModalContent('view');
-    setModalTitle(`Detalhes da OS #${ordem.numero_os}`);
+    setModalTitle(`Detalhes da OS #${order.order_number}`);
     setShowModal(true);
   }, []);
+  */
 
-  const handleSubmit = async (formData: OrdemServicoFormData) => {
+  const handleSubmit = async (formData: ServiceOrderFormData) => {
     try {
-      if (modalContent === 'edit' && selectedOrdem) {
-        // Atualizar ordem existente
+      if (modalContent === 'edit' && selectedOrder) {
+        // Update existing order
         await updateMutation.mutateAsync({
-          id: selectedOrdem.id,
+          id: selectedOrder.id,
           data: formData,
         });
-        success(`✅ Ordem de Serviço #${selectedOrdem.numero_os} atualizada com sucesso!`);
+        success(`✅ Ordem de Serviço #${selectedOrder.numero_os} atualizada com sucesso!`);
       } else {
-        // Criar nova ordem
-        const novaOrdem = await createMutation.mutateAsync(formData);
-        success(`🎉 Ordem de Serviço #${novaOrdem.numero_os} criada com sucesso!`);
+        // Create new order
+        const newOrder = await createMutation.mutateAsync(formData);
+        success(`🎉 Ordem de Serviço #${newOrder.numero_os} criada com sucesso!`);
       }
       
-      // Aguardar um pouco para garantir que o refetch foi completado
+      // Wait a bit to ensure refetch is completed
       await new Promise(resolve => setTimeout(resolve, 300));
       closeModal();
     } catch (err: any) {
@@ -243,64 +246,64 @@ function App() {
     }
   }, [deleteMutation, success, errorToast]);
 
-  const handleGenerateRelatorioPDF = useCallback(async () => {
+  const handleGenerateReportPDF = useCallback(async () => {
     try {
-      await generateRelatorioPDFMutation.mutateAsync({
+      await generateReportPDFMutation.mutateAsync({
         status: statusFilter !== 'todos' ? statusFilter : null,
         search: searchTerm || null,
-        dia: diaFilter || null,
-        mes: mesFilter || null,
-        ano: anoFilter || null,
-        dataInicio: dataInicioFilter || null,
-        dataFim: dataFimFilter || null,
+        dia: dayFilter || null,
+        mes: monthFilter || null,
+        ano: yearFilter || null,
+        dataInicio: startDateFilter || null,
+        dataFim: endDateFilter || null,
       });
       success('📊 Relatório PDF gerado com sucesso!');
     } catch (err: any) {
       console.error('Erro ao gerar relatório PDF:', err);
       errorToast(err.response?.data?.error || '❌ Erro ao gerar relatório PDF');
     }
-  }, [generateRelatorioPDFMutation, statusFilter, searchTerm, diaFilter, mesFilter, anoFilter, dataInicioFilter, dataFimFilter, success, errorToast]);
+  }, [generateReportPDFMutation, statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, success, errorToast]);
 
-  const limparFiltros = useCallback(() => {
-    const { mes, ano } = getDataAtual();
+  const clearFilters = useCallback(() => {
+    const { month, year } = getCurrentDate();
     
     setStatusFilter('todos');
     setSearchTerm('');
-    setDiaFilter('');
-    setMesFilter(mes);
-    setAnoFilter(ano);
-    setDataInicioFilter('');
-    setDataFimFilter('');
+    setDayFilter('');
+    setMonthFilter(month);
+    setYearFilter(year);
+    setStartDateFilter('');
+    setEndDateFilter('');
   }, []);
 
-  const verTodoHistorico = useCallback(() => {
+  const viewAllHistory = useCallback(() => {
     setStatusFilter('todos');
     setSearchTerm('');
-    setDiaFilter('');
-    setMesFilter(''); // Remove filtro de mês
-    setAnoFilter(''); // Remove filtro de ano
-    setDataInicioFilter('');
-    setDataFimFilter('');
+    setDayFilter('');
+    setMonthFilter(''); // Remove month filter
+    setYearFilter(''); // Remove year filter
+    setStartDateFilter('');
+    setEndDateFilter('');
   }, []);
 
-  // Verificar se há filtros ativos além do padrão (mês e ano atual)
-  const temFiltrosAtivos = useMemo(() => {
+  // Check if there are active filters besides default (current month and year)
+  const hasActiveFilters = useMemo(() => {
     return statusFilter !== 'todos' || 
            searchTerm !== '' || 
-           diaFilter !== '' || 
-           mesFilter !== mesAtual || 
-           anoFilter !== anoAtual || 
-           dataInicioFilter !== '' || 
-           dataFimFilter !== '';
-  }, [statusFilter, searchTerm, diaFilter, mesFilter, anoFilter, dataInicioFilter, dataFimFilter, mesAtual, anoAtual]);
+           dayFilter !== '' || 
+           monthFilter !== currentMonth || 
+           yearFilter !== currentYear || 
+           startDateFilter !== '' || 
+           endDateFilter !== '';
+  }, [statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, currentMonth, currentYear]);
 
-  // Renderizar conteúdo do modal com Suspense
+  // Render modal content with Suspense
   const renderModalContent = () => {
     if (modalContent === 'create' || modalContent === 'edit') {
       return (
         <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
           <ServiceOrderForm
-            ordem={selectedOrdem}
+            order={selectedOrder}
             onSubmit={handleSubmit}
             onCancel={closeModal}
             isLoading={createMutation.isPending || updateMutation.isPending}
@@ -309,10 +312,10 @@ function App() {
       );
     }
     
-    if (modalContent === 'view' && selectedOrdem) {
+    if (modalContent === 'view' && selectedOrder) {
       return (
         <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
-          <ServiceOrderDetails ordem={selectedOrdem} />
+          <ServiceOrderDetails ordem={selectedOrder} />
         </Suspense>
       );
     }
@@ -324,20 +327,20 @@ function App() {
     <div className="min-h-screen flex flex-col">
       <Header
         onNewOS={handleCreate}
-        onGeneratePDF={handleGenerateRelatorioPDF}
-        canGeneratePDF={filteredOrdens.length > 0}
+        onGeneratePDF={handleGenerateReportPDF}
+        canGeneratePDF={filteredOrders.length > 0}
       />
 
       <main className="min-h-[calc(100vh-280px)] pb-12 flex-1 pt-8">
         <div className="container p-4 md:p-6 lg:p-8">
-          {/* Estatísticas */}
+          {/* Statistics */}
           <Statistics 
-            ordens={ordens} 
-            diaFilter={diaFilter}
-            mesFilter={mesFilter}
-            anoFilter={anoFilter}
-            dataInicioFilter={dataInicioFilter}
-            dataFimFilter={dataFimFilter}
+            orders={orders} 
+            dayFilter={dayFilter}
+            monthFilter={monthFilter}
+            yearFilter={yearFilter}
+            startDateFilter={startDateFilter}
+            endDateFilter={endDateFilter}
           />
 
           {/* Card de Filtros */}
@@ -348,7 +351,7 @@ function App() {
               Filtros e Buscas
             </h2>
             
-            {/* Filtros de Status */}
+            {/* Status Filters */}
             <div className="flex flex-wrap gap-2 mb-4">
               <button
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
@@ -358,7 +361,7 @@ function App() {
                 }`}
                 onClick={() => setStatusFilter('todos')}
               >
-                Todos ({ordens.length})
+                Todos ({orders.length})
               </button>
               <button
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -368,7 +371,7 @@ function App() {
                 }`}
                 onClick={() => setStatusFilter('aberto')}
               >
-                Abertos ({ordens.filter(o => o.status === 'aberto').length})
+                Abertos ({orders.filter(o => o.status === 'aberto').length})
               </button>
               <button
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -378,7 +381,7 @@ function App() {
                 }`}
                 onClick={() => setStatusFilter('em_andamento')}
               >
-                Em Andamento ({ordens.filter(o => o.status === 'em_andamento').length})
+                Em Andamento ({orders.filter(o => o.status === 'em_andamento').length})
               </button>
               <button
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -388,7 +391,7 @@ function App() {
                 }`}
                 onClick={() => setStatusFilter('finalizado')}
               >
-                Finalizados ({ordens.filter(o => o.status === 'finalizado').length})
+                Finalizados ({orders.filter(o => o.status === 'finalizado').length})
               </button>
             </div>
 
@@ -419,25 +422,25 @@ function App() {
               />
             </div>
 
-            {/* Primeira linha: Dia, Mês, Ano */}
+            {/* First row: Day, Month, Year */}
             <div className="grid grid-cols-3 gap-3 mb-3">
               <div>
-                <label htmlFor="diaFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="dayFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Dia:
                 </label>
                 <input
                   type="number"
-                  id="diaFilter"
-                  value={diaFilter}
+                  id="dayFilter"
+                  value={dayFilter}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Permite vazio ou apenas valores positivos entre 1 e 31
+                    // Allow empty or only positive values between 1 and 31
                     if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 31 && !value.includes('-'))) {
-                      setDiaFilter(value);
+                      setDayFilter(value);
                     }
                   }}
                   onKeyDown={(e) => {
-                    // Bloqueia teclas de menos (-), mais (+) e 'e'
+                    // Block minus (-), plus (+) and 'e' keys
                     if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
                       e.preventDefault();
                     }
@@ -450,13 +453,13 @@ function App() {
               </div>
 
               <div>
-                <label htmlFor="mesFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="monthFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Mês:
                 </label>
                 <select
-                  id="mesFilter"
-                  value={mesFilter}
-                  onChange={(e) => setMesFilter(e.target.value)}
+                  id="monthFilter"
+                  value={monthFilter}
+                  onChange={(e) => setMonthFilter(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors cursor-pointer"
                 >
                   <option value="">Todos</option>
@@ -476,22 +479,22 @@ function App() {
               </div>
 
               <div>
-                <label htmlFor="anoFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="yearFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Ano:
                 </label>
                 <input
                   type="number"
-                  id="anoFilter"
-                  value={anoFilter}
+                  id="yearFilter"
+                  value={yearFilter}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Permite vazio ou apenas valores positivos entre 2020 e 2100
+                    // Allow empty or only positive values between 2020 and 2100
                     if (value === '' || (parseInt(value) >= 2020 && parseInt(value) <= 2100 && !value.includes('-'))) {
-                      setAnoFilter(value);
+                      setYearFilter(value);
                     }
                   }}
                   onKeyDown={(e) => {
-                    // Bloqueia teclas de menos (-), mais (+) e 'e'
+                    // Block minus (-), plus (+) and 'e' keys
                     if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
                       e.preventDefault();
                     }
@@ -504,32 +507,32 @@ function App() {
               </div>
             </div>
 
-            {/* Segunda linha: Data Inicial, Data Final, Limpar Filtros */}
+            {/* Second row: Start Date, End Date, Clear Filters */}
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label htmlFor="dataInicioFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="startDateFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Data Inicial:
                 </label>
                 <input
                   type="date"
-                  id="dataInicioFilter"
-                  value={dataInicioFilter}
-                  onChange={(e) => setDataInicioFilter(e.target.value)}
-                  max={dataFimFilter || undefined}
+                  id="startDateFilter"
+                  value={startDateFilter}
+                  onChange={(e) => setStartDateFilter(e.target.value)}
+                  max={endDateFilter || undefined}
                   className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                 />
               </div>
 
               <div>
-                <label htmlFor="dataFimFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
+                <label htmlFor="endDateFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
                   Data Final:
                 </label>
                 <input
                   type="date"
-                  id="dataFimFilter"
-                  value={dataFimFilter}
-                  onChange={(e) => setDataFimFilter(e.target.value)}
-                  min={dataInicioFilter || undefined}
+                  id="endDateFilter"
+                  value={endDateFilter}
+                  onChange={(e) => setEndDateFilter(e.target.value)}
+                  min={startDateFilter || undefined}
                   className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                 />
               </div>
@@ -537,26 +540,26 @@ function App() {
               <div className="flex items-end gap-2">
                 <button
                   className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={limparFiltros}
-                  disabled={!temFiltrosAtivos}
+                  onClick={clearFilters}
+                  disabled={!hasActiveFilters}
                 >
                   📅 Mês Atual
                 </button>
                 <button
                   className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                  onClick={verTodoHistorico}
+                  onClick={viewAllHistory}
                 >
                   📚 Todo Histórico
                 </button>
               </div>
             </div>
             
-            {/* Indicador de filtro ativo */}
-            {mesFilter && anoFilter && (
+            {/* Active filter indicator */}
+            {monthFilter && yearFilter && (
               <div className="mt-4 bg-green-100 border-2 border-green-300 rounded-lg p-3 flex items-center gap-2">
                 <span className="text-lg">📌</span>
                 <p className="text-sm font-semibold text-green-800">
-                  Mostrando Ordens de Serviços de: <span className="font-bold">{formatarMesAno(mesFilter, anoFilter)}</span>
+                  Mostrando Ordens de Serviços de: <span className="font-bold">{formatMonthYear(monthFilter, yearFilter)}</span>
                 </p>
               </div>
             )}
@@ -584,30 +587,35 @@ function App() {
           {/* Cards */}
           {!isLoading && !error && (
             <>
-              {filteredOrdens.length === 0 ? (
+              {filteredOrders.length === 0 ? (
                 <div className="text-center py-16 px-4 md:px-8">
                   <div className="text-8xl mb-6">📋</div>
                   <h3 className="text-2xl font-bold text-text-primary mb-3">
                     Nenhuma ordem de serviço encontrada
                   </h3>
                   <p className="text-text-muted mb-6 text-base md:text-lg">
-                    {temFiltrosAtivos
+                    {hasActiveFilters
                       ? 'Tente ajustar os filtros ou limpe-os para ver todas as ordens.'
                       : 'Crie sua primeira ordem de serviço clicando no botão "Nova OS" acima.'}
                   </p>
-                  {temFiltrosAtivos && (
-                    <button onClick={limparFiltros} className="btn btn-secondary">
+                  {hasActiveFilters && (
+                    <button onClick={clearFilters} className="btn btn-secondary">
                       Limpar Filtros
                     </button>
                   )}
                 </div>
               ) : (
-                <ServiceOrderTable
-                  ordens={filteredOrdens}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onView={handleView}
-                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                  {filteredOrders.map((order) => (
+                    <ServiceOrderCard
+                      key={order.id}
+                      ordem={order}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      
+                    />
+                  ))}
+                </div>
               )}
             </>
           )}

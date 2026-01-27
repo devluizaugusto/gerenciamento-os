@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma';
-import { formatOrdemServico, formatOrdensServico } from '../utils/dateFormatter';
+import { formatServiceOrder, formatServiceOrders } from '../utils/dateFormatter';
 import { StatusOrdemServico } from '../types';
 
-// Obter todas as ordens de serviço
-export const getAllOrdensServico = async (_req: Request, res: Response): Promise<void> => {
+// Get all service orders
+export const getAllServiceOrders = async (_req: Request, res: Response): Promise<void> => {
   try {
     const rows = await prisma.ordemServico.findMany({
       orderBy: {
@@ -12,8 +12,8 @@ export const getAllOrdensServico = async (_req: Request, res: Response): Promise
       }
     });
     
-    const ordensFormatadas = formatOrdensServico(rows);
-    res.json(ordensFormatadas);
+    const formattedOrders = formatServiceOrders(rows);
+    res.json(formattedOrders);
   } catch (error) {
     console.error('Erro ao buscar ordens de serviço:', error);
     res.status(500).json({ 
@@ -23,22 +23,22 @@ export const getAllOrdensServico = async (_req: Request, res: Response): Promise
   }
 };
 
-// Obter ordem de serviço por ID
-export const getOrdemServicoById = async (req: Request, res: Response): Promise<void> => {
+// Get service order by ID
+export const getServiceOrderById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     
-    const ordem = await prisma.ordemServico.findUnique({
+    const order = await prisma.ordemServico.findUnique({
       where: { id: parseInt(String(id)) }
     });
     
-    if (!ordem) {
+    if (!order) {
       res.status(404).json({ error: 'Ordem de serviço não encontrada' });
       return;
     }
     
-    const ordemFormatada = formatOrdemServico(ordem);
-    res.json(ordemFormatada);
+    const formattedOrder = formatServiceOrder(order);
+    res.json(formattedOrder);
   } catch (error) {
     console.error('Erro ao buscar ordem de serviço:', error);
     res.status(500).json({ 
@@ -48,22 +48,22 @@ export const getOrdemServicoById = async (req: Request, res: Response): Promise<
   }
 };
 
-// Obter ordem de serviço por número
-export const getOrdemServicoByNumero = async (req: Request, res: Response): Promise<void> => {
+// Get service order by number
+export const getServiceOrderByNumber = async (req: Request, res: Response): Promise<void> => {
   try {
     const { numero } = req.params;
     
-    const ordem = await prisma.ordemServico.findUnique({
+    const order = await prisma.ordemServico.findUnique({
       where: { numero_os: parseInt(String(numero)) }
     });
     
-    if (!ordem) {
+    if (!order) {
       res.status(404).json({ error: 'Ordem de serviço não encontrada' });
       return;
     }
     
-    const ordemFormatada = formatOrdemServico(ordem);
-    res.json(ordemFormatada);
+    const formattedOrder = formatServiceOrder(order);
+    res.json(formattedOrder);
   } catch (error) {
     console.error('Erro ao buscar ordem de serviço:', error);
     res.status(500).json({ 
@@ -73,8 +73,8 @@ export const getOrdemServicoByNumero = async (req: Request, res: Response): Prom
   }
 };
 
-// Criar nova ordem de serviço
-export const createOrdemServico = async (req: Request, res: Response): Promise<void> => {
+// Create new service order
+export const createServiceOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       solicitante,
@@ -87,8 +87,8 @@ export const createOrdemServico = async (req: Request, res: Response): Promise<v
       data_fechamento
     } = req.body;
     
-    // Gerar número da OS automaticamente
-    const maxOrdem = await prisma.ordemServico.findFirst({
+    // Generate OS number automatically
+    const maxOrder = await prisma.ordemServico.findFirst({
       orderBy: {
         numero_os: 'desc'
       },
@@ -97,60 +97,60 @@ export const createOrdemServico = async (req: Request, res: Response): Promise<v
       }
     });
     
-    let numeroOS: number;
-    if (!maxOrdem || !maxOrdem.numero_os) {
-      numeroOS = 1027;
+    let orderNumber: number;
+    if (!maxOrder || !maxOrder.numero_os) {
+      orderNumber = 1027;
     } else {
-      numeroOS = parseInt(String(maxOrdem.numero_os), 10) + 1;
-      if (numeroOS < 1027) {
-        numeroOS = 1027;
+      orderNumber = parseInt(String(maxOrder.numero_os), 10) + 1;
+      if (orderNumber < 1027) {
+        orderNumber = 1027;
       }
     }
     
-    // Validar status
-    const statusValidos: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
-    const statusFinal: StatusOrdemServico = status && statusValidos.includes(status) ? status : 'aberto';
+    // Validate status
+    const validStatuses: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
+    const finalStatus: StatusOrdemServico = status && validStatuses.includes(status) ? status : 'aberto';
     
-    // Converter data_abertura se vier no formato brasileiro
-    let dataAberturaFormatada = data_abertura;
+    // Convert data_abertura if it comes in Brazilian format
+    let formattedOpeningDate = data_abertura;
     if (data_abertura && data_abertura.includes('/')) {
       const parts = data_abertura.split('/');
       if (parts.length === 3) {
-        dataAberturaFormatada = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
+        formattedOpeningDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
       }
     } else if (data_abertura && data_abertura.includes('-')) {
-      dataAberturaFormatada = `${data_abertura}T12:00:00.000Z`;
+      formattedOpeningDate = `${data_abertura}T12:00:00.000Z`;
     }
     
-    // Converter data_fechamento se vier no formato brasileiro
-    let dataFechamentoFormatada: string | null = null;
+    // Convert data_fechamento if it comes in Brazilian format
+    let formattedClosingDate: string | null = null;
     if (data_fechamento && data_fechamento.trim() !== '') {
       if (data_fechamento.includes('/')) {
         const parts = data_fechamento.split('/');
         if (parts.length === 3) {
-          dataFechamentoFormatada = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
+          formattedClosingDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
         }
       } else if (data_fechamento.includes('-')) {
-        dataFechamentoFormatada = `${data_fechamento}T12:00:00.000Z`;
+        formattedClosingDate = `${data_fechamento}T12:00:00.000Z`;
       }
     }
     
-    const novaOrdem = await prisma.ordemServico.create({
+    const newOrder = await prisma.ordemServico.create({
       data: {
-        numero_os: numeroOS,
+        numero_os: orderNumber,
         solicitante,
         unidade,
         setor,
         descricao_problema,
-        data_abertura: new Date(dataAberturaFormatada),
+        data_abertura: new Date(formattedOpeningDate),
         servico_realizado: servico_realizado || null,
-        status: statusFinal,
-        data_fechamento: dataFechamentoFormatada ? new Date(dataFechamentoFormatada) : null
+        status: finalStatus,
+        data_fechamento: formattedClosingDate ? new Date(formattedClosingDate) : null
       }
     });
     
-    const ordemFormatada = formatOrdemServico(novaOrdem);
-    res.status(201).json(ordemFormatada);
+    const formattedOrder = formatServiceOrder(newOrder);
+    res.status(201).json(formattedOrder);
   } catch (error) {
     console.error('Erro ao criar ordem de serviço:', error);
     
@@ -161,8 +161,8 @@ export const createOrdemServico = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Atualizar ordem de serviço
-export const updateOrdemServico = async (req: Request, res: Response): Promise<void> => {
+// Update service order
+export const updateServiceOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const {
@@ -176,7 +176,7 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
       data_fechamento
     } = req.body;
     
-    // Verificar se a ordem existe
+    // Check if order exists
     const existing = await prisma.ordemServico.findUnique({
       where: { id: parseInt(String(id)) }
     });
@@ -186,7 +186,7 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
       return;
     }
     
-    // Preparar dados para atualização
+    // Prepare data for update
     const updateData: any = {};
     
     if (solicitante !== undefined) updateData.solicitante = solicitante;
@@ -195,50 +195,50 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
     if (descricao_problema !== undefined) updateData.descricao_problema = descricao_problema;
     if (servico_realizado !== undefined) updateData.servico_realizado = servico_realizado;
     
-    // Processar data_abertura
+    // Process data_abertura
     if (data_abertura !== undefined && data_abertura !== null && String(data_abertura).trim() !== '') {
-      let dataAberturaFormatada = String(data_abertura);
-      if (dataAberturaFormatada.includes('/')) {
-        const parts = dataAberturaFormatada.split('/');
+      let formattedOpeningDate = String(data_abertura);
+      if (formattedOpeningDate.includes('/')) {
+        const parts = formattedOpeningDate.split('/');
         if (parts.length === 3) {
-          dataAberturaFormatada = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
+          formattedOpeningDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
         }
-      } else if (dataAberturaFormatada.includes('-')) {
-        dataAberturaFormatada = `${dataAberturaFormatada}T12:00:00.000Z`;
+      } else if (formattedOpeningDate.includes('-')) {
+        formattedOpeningDate = `${formattedOpeningDate}T12:00:00.000Z`;
       }
-      updateData.data_abertura = new Date(dataAberturaFormatada);
+      updateData.data_abertura = new Date(formattedOpeningDate);
     }
     
-    // Processar data_fechamento
+    // Process data_fechamento
     if (data_fechamento !== undefined) {
       if (data_fechamento === null || String(data_fechamento).trim() === '') {
         updateData.data_fechamento = null;
       } else {
-        let dataFechamentoFormatada = String(data_fechamento);
-        if (dataFechamentoFormatada.includes('/')) {
-          const parts = dataFechamentoFormatada.split('/');
+        let formattedClosingDate = String(data_fechamento);
+        if (formattedClosingDate.includes('/')) {
+          const parts = formattedClosingDate.split('/');
           if (parts.length === 3) {
-            dataFechamentoFormatada = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
+            formattedClosingDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
           }
-        } else if (dataFechamentoFormatada.includes('-')) {
-          dataFechamentoFormatada = `${dataFechamentoFormatada}T12:00:00.000Z`;
+        } else if (formattedClosingDate.includes('-')) {
+          formattedClosingDate = `${formattedClosingDate}T12:00:00.000Z`;
         }
-        updateData.data_fechamento = new Date(dataFechamentoFormatada);
+        updateData.data_fechamento = new Date(formattedClosingDate);
       }
     }
     
-    // Processar status
+    // Process status
     if (status !== undefined) {
-      const statusValidos: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
-      if (statusValidos.includes(status)) {
+      const validStatuses: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
+      if (validStatuses.includes(status)) {
         updateData.status = status;
         
-        // Se finalizar e data_fechamento não foi informada, adicionar data atual
+        // If finalizing and data_fechamento was not provided, add current date
         if (status === 'finalizado' && data_fechamento === undefined) {
           updateData.data_fechamento = new Date();
         }
         
-        // Se não estiver finalizado e data_fechamento não foi informada, remover data de fechamento
+        // If not finalized and data_fechamento was not provided, remove closing date
         if (status !== 'finalizado' && data_fechamento === undefined) {
           updateData.data_fechamento = null;
         }
@@ -250,13 +250,13 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
       return;
     }
     
-    const ordemAtualizada = await prisma.ordemServico.update({
+    const updatedOrder = await prisma.ordemServico.update({
       where: { id: parseInt(String(id)) },
       data: updateData
     });
     
-    const ordemFormatada = formatOrdemServico(ordemAtualizada);
-    res.json(ordemFormatada);
+    const formattedOrder = formatServiceOrder(updatedOrder);
+    res.json(formattedOrder);
   } catch (error) {
     console.error('Erro ao atualizar ordem de serviço:', error);
     
@@ -267,8 +267,8 @@ export const updateOrdemServico = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Deletar ordem de serviço
-export const deleteOrdemServico = async (req: Request, res: Response): Promise<void> => {
+// Delete service order
+export const deleteServiceOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     
@@ -296,13 +296,13 @@ export const deleteOrdemServico = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Filtrar por status
-export const getOrdensServicoByStatus = async (req: Request, res: Response): Promise<void> => {
+// Filter by status
+export const getServiceOrdersByStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { status } = req.params;
     
-    const statusValidos: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
-    if (!statusValidos.includes(status as StatusOrdemServico)) {
+    const validStatuses: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
+    if (!validStatuses.includes(status as StatusOrdemServico)) {
       res.status(400).json({ error: 'Status inválido' });
       return;
     }
@@ -314,8 +314,8 @@ export const getOrdensServicoByStatus = async (req: Request, res: Response): Pro
       }
     });
     
-    const ordensFormatadas = formatOrdensServico(rows);
-    res.json(ordensFormatadas);
+    const formattedOrders = formatServiceOrders(rows);
+    res.json(formattedOrders);
   } catch (error) {
     console.error('Erro ao buscar ordens de serviço por status:', error);
     res.status(500).json({ 

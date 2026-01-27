@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (_req: Request, res: Response) => {
   res.json({ 
     message: 'API do Sistema de Ordem de Serviços',
-    version: '1.0.2',
+    version: '2.1.3',
     endpoints: {
       ordensServico: '/api/ordens-servico'
     }
