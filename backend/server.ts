@@ -8,6 +8,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Middlewares
 app.use(compression()); // Compressão de respostas HTTP
@@ -44,7 +45,8 @@ app.use((_req: Request, res: Response) => {
 });
 
 // Iniciar servidor
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-  console.log(`📍 API disponível em http://localhost:${PORT}/api/ordens-servico`);
+app.listen(Number(PORT), HOST, () => {
+  console.log(`🚀 Servidor rodando em todas as interfaces (0.0.0.0:${PORT})`);
+  console.log(`📍 Local: http://localhost:${PORT}`);
+  console.log(`📍 Rede:  http://172.16.1.155:${PORT}`);
 });
