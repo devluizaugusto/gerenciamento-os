@@ -8,11 +8,15 @@ export default defineConfig({
     port: 4175,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://172.16.1.155:3301',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path
       }
     }
-  }
+  },
+  preview: {
+	allowedHosts: ['os.tisaude.tec.br'],
+ 	port: 2222
+ }
 })
