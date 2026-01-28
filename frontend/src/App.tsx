@@ -297,6 +297,16 @@ function App() {
            endDateFilter !== '';
   }, [statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, currentMonth, currentYear]);
 
+  // Check if date filters (dia/mes/ano) are being used
+  const isUsingDateFilters = useMemo(() => {
+    return dayFilter !== '' || monthFilter !== '' || yearFilter !== '';
+  }, [dayFilter, monthFilter, yearFilter]);
+
+  // Check if date range filters are being used
+  const isUsingDateRangeFilters = useMemo(() => {
+    return startDateFilter !== '' || endDateFilter !== '';
+  }, [startDateFilter, endDateFilter]);
+
   // Render modal content with Suspense
   const renderModalContent = () => {
     if (modalContent === 'create' || modalContent === 'edit') {
@@ -448,7 +458,8 @@ function App() {
                   placeholder="Dia (1-31)"
                   min="1"
                   max="31"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  disabled={isUsingDateRangeFilters}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -460,7 +471,8 @@ function App() {
                   id="monthFilter"
                   value={monthFilter}
                   onChange={(e) => setMonthFilter(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors cursor-pointer"
+                  disabled={isUsingDateRangeFilters}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <option value="">Todos</option>
                   <option value="01">Janeiro</option>
@@ -502,7 +514,8 @@ function App() {
                   placeholder="Ano (2020-2100)"
                   min="2020"
                   max="2100"
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  disabled={isUsingDateRangeFilters}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
             </div>
@@ -519,7 +532,8 @@ function App() {
                   value={startDateFilter}
                   onChange={(e) => setStartDateFilter(e.target.value)}
                   max={endDateFilter || undefined}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  disabled={isUsingDateFilters}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -533,7 +547,8 @@ function App() {
                   value={endDateFilter}
                   onChange={(e) => setEndDateFilter(e.target.value)}
                   min={startDateFilter || undefined}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
+                  disabled={isUsingDateFilters}
+                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -612,7 +627,6 @@ function App() {
                       ordem={order}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
-                      
                     />
                   ))}
                 </div>
