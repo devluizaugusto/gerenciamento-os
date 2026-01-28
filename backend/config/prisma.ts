@@ -5,7 +5,7 @@ dotenv.config();
 
 // Inicializar Prisma Client (lê DATABASE_URL automaticamente do .env)
 const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
+  log: ['warn', 'error'],
 });
 
 // Tratamento de erros e desconexão ao encerrar
