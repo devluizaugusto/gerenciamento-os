@@ -42,7 +42,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     },
   });
 
-  // Predefined options lists
+  // Predefined options lists (sorted alphabetically)
   const unidadesPredefinidas = [
     'URUCUBA', 'MENDES', 'GAMELEIRA', 'JUA', 'LAGOA AZUL',
     'RIBEIRO DO MEL', 'SANTANA', 'SANTA CRUZ', 'ALEGRIA', 'REDENTOR',
@@ -51,15 +51,15 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     'PONTO CERTO', 'CTA', 'CER', 'CEO', 'POLICLINICA', 'SAMU',
     'HOSPITAL DE CAMPANHA', 'VISA', 'VIGILANCIA AMBIENTAL', 'CAPS',
     'RESIDENCIA TERAPEUTICA', 'UNIDADE DE ACOLHIMENTO', 'SEDE DA SECRETARIA',
-    'CAF', 'LABORATÓRIO', 'CAPS DAS 3 PONTES'
-  ];
+    'CAF', 'LABORATÓRIO', 'CAPS III DAS PONTES'
+  ].sort();
 
   const setoresPredefinidos = [
     'VACINA', 'MEDICO', 'DENTISTA', 'ENFERMEIRA', 'RECEPÇÃO',
     'SALA ADM', 'VIGILÂNCIA EPIDEMIOLOGICA', 'REGULAÇÃO', 'RH',
     'ATENÇÃO BÁSICA', 'UBS', 'GABINETE', 'PNI', 'OUVIDORIA',
     'ADMINISTRAÇÃO', 'TELECARDIO', 'FINCANCEIRO/ADM'
-  ];
+  ].sort();
 
   // Watch current values
   const unidadeValue = watch('unidade');

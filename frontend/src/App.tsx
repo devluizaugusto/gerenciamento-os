@@ -5,7 +5,6 @@ import Statistics from './components/common/Statistics';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 
-// Lazy load heavy modal components
 const ServiceOrderForm = lazy(() => import('./components/orders/ServiceOrderForm'));
 const ServiceOrderDetails = lazy(() => import('./components/orders/ServiceOrderDetails'));
 import { ServiceOrder, StatusFilter } from './types';
@@ -21,7 +20,7 @@ import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 import ServiceOrderCard from './components/orders/ServiceOrderCard';
 
-// Month mapping to abbreviated names
+
 const ABBREVIATED_MONTHS: Record<string, string> = {
   '01': 'Jan',
   '02': 'Fev',
@@ -199,6 +198,7 @@ function App() {
     setModalTitle(`Editar OS #${order.numero_os}`);
     setShowModal(true);
   }, []);
+  
   /* 
     Function to view service order details
 
