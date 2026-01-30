@@ -354,7 +354,7 @@ function App() {
           />
 
           {/* Card de Filtros */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 shadow-lg mb-6">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 shadow-lg mb-6">
             {/* Título */}
             <h2 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
               <span className="text-3xl">🔍</span>
