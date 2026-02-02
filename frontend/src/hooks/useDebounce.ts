@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
 
-/**
- * Hook customizado para adicionar debounce em valores
- * Útil para otimizar buscas e filtros que disparam re-renders
- */
 export function useDebounce<T>(value: T, delay: number = 300): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 

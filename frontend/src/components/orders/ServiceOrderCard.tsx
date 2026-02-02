@@ -14,7 +14,6 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
 
   return (
     <div className="bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl animate-fadeInUp group">
-      {/* Header com gradiente */}
       <div 
         className="relative px-6 py-5 bg-gradient-to-r overflow-hidden"
         style={{
@@ -45,9 +44,7 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
         </div>
       </div>
 
-      {/* Conteúdo principal */}
       <div className="p-6 bg-gradient-to-br from-white to-gray-50/50">
-        {/* Informações principais em grid */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-border-light/50 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
             <div className="flex items-center gap-2 mb-1">
@@ -90,7 +87,6 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
           </div>
         </div>
 
-        {/* Data de fechamento se existir */}
         {ordem.data_fechamento && (
           <div className="mb-4 bg-gradient-to-r from-success/10 to-success/5 rounded-xl p-3 border border-success/20">
             <div className="flex items-center gap-2">
@@ -103,7 +99,6 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
           </div>
         )}
 
-        {/* Descrição do problema */}
         <div className="mb-4 bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-border-light/50 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-primary text-lg">🔧</span>
@@ -114,7 +109,6 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
           </p>
         </div>
 
-        {/* Serviço realizado se existir */}
         {ordem.servico_realizado && (
           <div className="mb-4 bg-gradient-to-br from-success/5 to-success/10 rounded-xl p-4 border border-success/20">
             <div className="flex items-center gap-2 mb-2">
@@ -128,7 +122,6 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
         )}
       </div>
 
-      {/* Botões de ação */}
       <div className="px-6 py-4 bg-gradient-to-br from-gray-50 to-white border-t-2 border-border-light/50">
         <div className="grid grid-cols-2 gap-2">
           <button 

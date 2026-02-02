@@ -10,8 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Middlewares
-app.use(compression()); // Compressão de respostas HTTP
+app.use(compression());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,10 +26,8 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
-// Rotas da API
 app.use('/api/ordens-servico', ordemServicoRoutes);
 
-// Middleware de tratamento de erros
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Erro:', err);
   res.status(500).json({ 
@@ -39,12 +36,10 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   });
 });
 
-// Middleware para rotas não encontradas
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
-// Iniciar servidor
 app.listen(Number(PORT), HOST, () => {
   console.log(`🚀 Servidor rodando em todas as interfaces (0.0.0.0:${PORT})`);
   console.log(`📍 Local: http://localhost:${PORT}`);

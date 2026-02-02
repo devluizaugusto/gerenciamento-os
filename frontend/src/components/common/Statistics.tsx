@@ -22,7 +22,6 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
     let osYear = 0;
     let osPeriod = 0;
 
-    // If there's a period filter, count only OS within range
     const hasPeriodFilter = startDateFilter || endDateFilter;
     let startDate: Date | null = null;
     let endDate: Date | null = null;
@@ -35,7 +34,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
     if (endDateFilter) {
       const [year, month, day] = endDateFilter.split('-');
       endDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-      endDate.setHours(23, 59, 59, 999); // Include the entire day
+      endDate.setHours(23, 59, 59, 999);
     }
 
     orders.forEach(order => {
@@ -44,7 +43,6 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
       const [day, month, year] = order.data_abertura.split('/').map(Number);
       const orderDate = new Date(year, month - 1, day);
 
-      // If there's a period filter, count for the period
       if (hasPeriodFilter) {
         let withinRange = true;
 
@@ -60,15 +58,12 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
         }
       }
 
-      // Count by year
       if (year === currentYear) {
         osYear++;
 
-        // Count by month
         if (month === currentMonth) {
           osMonth++;
 
-          // Count by day
           if (day === currentDay) {
             osDay++;
           }
@@ -79,7 +74,6 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
     return { osDay, osMonth, osYear, osPeriod, currentDay, currentMonth, currentYear, hasPeriodFilter };
   }, [orders, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter]);
 
-  // Function to format month name
   const getMonthName = (month: number) => {
     const months = [
       '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -88,10 +82,8 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
     return months[month];
   };
 
-  // Check if there are applied filters
   const hasFilters = dayFilter || monthFilter || yearFilter || startDateFilter || endDateFilter;
 
-  // Format dates from period for display
   const formatDateBR = (isoDate: string): string => {
     const [year, month, day] = isoDate.split('-');
     return `${day}/${month}/${year}`;
@@ -106,7 +98,6 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
       </h2>
       
       <div className={`grid grid-cols-1 ${statistics.hasPeriodFilter ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
-        {/* Day OS */}
         <div className="group bg-gradient-to-br from-emerald-100 via-emerald-200 to-emerald-100 rounded-xl p-5 border-2 border-emerald-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-extrabold text-emerald-800 uppercase tracking-widest drop-shadow-sm">
@@ -122,7 +113,6 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
           </p>
         </div>
 
-        {/* Month OS */}
         <div className="group bg-gradient-to-br from-green-100 via-green-200 to-green-100 rounded-xl p-5 border-2 border-green-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-extrabold text-green-800 uppercase tracking-widest drop-shadow-sm">
@@ -138,7 +128,6 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
           </p>
         </div>
 
-        {/* Year OS */}
         <div className="group bg-gradient-to-br from-teal-100 via-teal-200 to-teal-100 rounded-xl p-5 border-2 border-teal-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-extrabold text-teal-800 uppercase tracking-widest drop-shadow-sm">
@@ -154,7 +143,6 @@ const Statistics: React.FC<StatisticsProps> = memo(({ orders, dayFilter, monthFi
           </p>
         </div>
 
-        {/* Period OS (if there's a filter) */}
         {statistics.hasPeriodFilter && (
           <div className="group bg-gradient-to-br from-cyan-100 via-cyan-200 to-cyan-100 rounded-xl p-5 border-2 border-cyan-300 shadow-lg hover:shadow-xl hover:scale-[1.03] transition-all duration-300 cursor-default">
             <div className="flex items-center justify-between mb-3">

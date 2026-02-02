@@ -1,10 +1,5 @@
 import { OrdemServico, OrdemServicoFormatada } from '../types';
 
-/**
- * Formats a date to Brazilian standard (DD/MM/YYYY)
- * @param date - Date to be formatted
- * @returns Formatted date or null
- */
 export function formatDateToBR(date: Date | string | null | undefined): string | null {
   if (!date) return null;
   const dateObj = date instanceof Date ? date : new Date(date);
@@ -13,7 +8,6 @@ export function formatDateToBR(date: Date | string | null | undefined): string |
     return null;
   }
   
-  // Use UTC to avoid timezone issues
   const day = String(dateObj.getUTCDate()).padStart(2, '0');
   const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
   const year = dateObj.getUTCFullYear();
@@ -21,11 +15,6 @@ export function formatDateToBR(date: Date | string | null | undefined): string |
   return `${day}/${month}/${year}`;
 }
 
-/**
- * Converts a date from Brazilian format (DD/MM/YYYY) to Date
- * @param dateBR - Date in Brazilian format
- * @returns Date object or null
- */
 export function parseDateFromBR(dateBR: string | null | undefined): Date | null {
   if (!dateBR) return null;
   
@@ -67,11 +56,6 @@ export function formatServiceOrder(ordemServico: OrdemServico | null): OrdemServ
   };
 }
 
-/**
- * Formats an array of service orders
- * @param ordensServico - Array of service orders
- * @returns Array with formatted dates
- */
 export function formatServiceOrders(ordensServico: OrdemServico[]): OrdemServicoFormatada[] {
   if (!Array.isArray(ordensServico)) return [];
   

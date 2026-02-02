@@ -11,7 +11,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Informações Gerais */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border-2 border-blue-100 animate-fadeInUp">
         <h3 className="text-xl font-extrabold text-blue-900 mb-6 flex items-center gap-3">
           <span className="text-3xl">📊</span>
@@ -19,7 +18,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
         </h3>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Número da OS */}
           <div className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🔢</span>
@@ -28,7 +26,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
             <span className="text-blue-950 text-2xl font-extrabold">{ordem.numero_os}</span>
           </div>
 
-          {/* Status */}
           <div className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🔄</span>
@@ -45,7 +42,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
             </span>
           </div>
 
-          {/* Solicitante */}
           <div className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">👤</span>
@@ -54,7 +50,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
             <span className="text-blue-950 text-base font-bold">{ordem.solicitante}</span>
           </div>
 
-          {/* Unidade */}
           <div className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🏥</span>
@@ -63,7 +58,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
             <span className="text-blue-950 text-base font-bold">{ordem.unidade}</span>
           </div>
 
-          {/* Setor */}
           <div className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-2xl">🏢</span>
@@ -81,7 +75,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
             <span className="text-blue-950 text-base font-bold">{ordem.data_abertura}</span>
           </div>
 
-          {/* Data de Fechamento */}
           {ordem.data_fechamento && (
             <div className="bg-white/80 backdrop-blur-sm p-5 rounded-xl border-2 border-blue-200/50 hover:border-blue-300 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
               <div className="flex items-center gap-2 mb-2">
@@ -105,7 +98,6 @@ const ServiceOrderDetails: React.FC<ServiceOrderDetailsProps> = ({ ordem }) => {
         </div>
       </div>
 
-      {/* Serviço Realizado */}
       {ordem.servico_realizado && (
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-100 animate-fadeInUp">
           <h3 className="text-xl font-extrabold text-green-900 mb-6 flex items-center gap-3">

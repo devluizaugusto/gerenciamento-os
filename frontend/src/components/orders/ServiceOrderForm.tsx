@@ -20,7 +20,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   const [showUnidadeInput, setShowUnidadeInput] = useState(false);
   const [showSetorInput, setShowSetorInput] = useState(false);
 
-  // Configure React Hook Form with Zod validation
   const {
     register,
     handleSubmit,
@@ -42,7 +41,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     },
   });
 
-  // Predefined options lists (sorted alphabetically)
   const unidadesPredefinidas = [
     'URUCUBA', 'MENDES', 'GAMELEIRA', 'JUA', 'LAGOA AZUL',
     'RIBEIRO DO MEL', 'SANTANA', 'SANTA CRUZ', 'ALEGRIA', 'REDENTOR',
@@ -61,11 +59,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     'ADMINISTRAÇÃO', 'TELECARDIO', 'FINCANCEIRO/ADM'
   ].sort();
 
-  // Watch current values
   const unidadeValue = watch('unidade');
   const setorValue = watch('setor');
 
-  // Convert date from Brazilian format (DD/MM/YYYY) to input format (YYYY-MM-DD)
   const formatDateForInput = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '';
     if (dateStr.includes('/')) {
@@ -75,7 +71,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     return dateStr;
   };
 
-  // Convert date from input format (YYYY-MM-DD) to Brazilian format (DD/MM/YYYY)
   const formatDateToBR = (dateStr: string): string => {
     if (!dateStr) return '';
     if (dateStr.includes('-')) {
@@ -87,7 +82,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     return dateStr;
   };
 
-  // Fill form when there's an order for editing
   useEffect(() => {
     if (order) {
       const unidadeVal = order.unidade || '';
@@ -110,11 +104,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     }
   }, [order, reset]);
 
-  // Form submit handler
   const handleFormSubmit = (data: ServiceOrderFormData) => {
     console.log('📝 [FORM] Form data (raw):', data);
     
-    // Convert dates to Brazilian format
     const formattedData: ServiceOrderFormData = {
       ...data,
       data_abertura: formatDateToBR(data.data_abertura),
@@ -130,7 +122,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     onSubmit(formattedData);
   };
 
-  // Handlers to toggle between select and custom input
   const handleUnidadeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     if (value === '__custom__') {
@@ -155,7 +146,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      {/* Section: Requester Information */}
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-100">
         <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">👤</span>
@@ -163,7 +153,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Solicitante */}
           <div className="md:col-span-2">
             <label htmlFor="solicitante" className="label text-blue-900">
               <span className="text-lg mr-2">📝</span>
@@ -187,7 +176,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
             )}
           </div>
 
-          {/* Unidade */}
           <div>
             <label htmlFor="unidade" className="label text-blue-900">
               <span className="text-lg mr-2">🏥</span>
@@ -236,7 +224,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
             )}
           </div>
 
-          {/* Setor */}
           <div>
             <label htmlFor="setor" className="label text-blue-900">
               <span className="text-lg mr-2">🏢</span>
@@ -287,7 +274,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Section: Problem Description */}
       <div className="bg-gradient-to-br from-red-50 to-orange-50 p-6 rounded-xl border-2 border-red-100">
         <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">🔧</span>
@@ -318,7 +304,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Section: Dates and Status */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl border-2 border-purple-100">
         <h3 className="text-lg font-bold text-purple-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">📅</span>
@@ -326,7 +311,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Data de Abertura */}
           <div>
             <label htmlFor="data_abertura" className="label text-purple-900">
               <span className="text-lg mr-2">📆</span>
@@ -367,7 +351,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
             )}
           </div>
 
-          {/* Data de Fechamento */}
           <div>
             <label htmlFor="data_fechamento" className="label text-purple-900">
               <span className="text-lg mr-2">✅</span>
@@ -383,7 +366,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Section: Service Performed */}
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-100">
         <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
           <span className="text-2xl">✅</span>
@@ -409,7 +391,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-4 justify-end pt-6 border-t-2 border-gray-200">
         <button
           type="button"

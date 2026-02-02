@@ -20,7 +20,6 @@ import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 import ServiceOrderCard from './components/orders/ServiceOrderCard';
 
-
 const ABBREVIATED_MONTHS: Record<string, string> = {
   '01': 'Jan',
   '02': 'Fev',
@@ -36,7 +35,6 @@ const ABBREVIATED_MONTHS: Record<string, string> = {
   '12': 'Dez',
 };
 
-// Utility function to get current month and year
 const getCurrentDate = () => {
   const date = new Date();
   return {
@@ -45,54 +43,44 @@ const getCurrentDate = () => {
   };
 };
 
-// Function to format month/year for display
 const formatMonthYear = (month: string, year: string): string => {
   const abbreviatedMonth = ABBREVIATED_MONTHS[month] || month;
   return `${abbreviatedMonth}/${year}`;
 };
 
 function App() {
-  // Get current month and year for default filter
   const { month: currentMonth, year: currentYear } = getCurrentDate();
 
-  // Filter states
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dayFilter, setDayFilter] = useState<string>('');
-  const [monthFilter, setMonthFilter] = useState<string>(currentMonth); // Current month by default
-  const [yearFilter, setYearFilter] = useState<string>(currentYear); // Current year by default
+  const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
+  const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
 
-  // Modal states
   const [showModal, setShowModal] = useState<boolean>(false);
   const [modalContent, setModalContent] = useState<'create' | 'edit' | 'view' | null>(null);
   const [modalTitle, setModalTitle] = useState<string>('');
   const [selectedOrder, setSelectedOrder] = useState<ServiceOrder | null>(null);
 
-  // React Query hooks
   const { data: orders = [], isLoading, error, refetch } = useServiceOrders();
   const createMutation = useCreateServiceOrder();
   const updateMutation = useUpdateServiceOrder();
   const deleteMutation = useDeleteServiceOrder();
   const generateReportPDFMutation = useGenerateReportPDF();
 
-  // Toast notifications
   const { toasts, removeToast, success, error: errorToast } = useToast();
 
-  // Debounce searchTerm to avoid excessive re-renders during typing
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Filter orders with useMemo for optimization
   const filteredOrders = useMemo(() => {
     let filtered = [...orders];
 
-    // Filter by status
     if (statusFilter !== 'todos') {
       filtered = filtered.filter(order => order.status === statusFilter);
     }
 
-    // Filter by search (using debounced value)
     if (debouncedSearchTerm) {
       const term = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(order =>
@@ -104,7 +92,6 @@ function App() {
       );
     }
 
-    // Filter by day
     if (dayFilter) {
       filtered = filtered.filter(order => {
         if (!order.data_abertura) return false;
@@ -113,7 +100,6 @@ function App() {
       });
     }
 
-    // Filter by month
     if (monthFilter) {
       filtered = filtered.filter(order => {
         if (!order.data_abertura) return false;
@@ -122,7 +108,6 @@ function App() {
       });
     }
 
-    // Filter by year
     if (yearFilter) {
       filtered = filtered.filter(order => {
         if (!order.data_abertura) return false;
@@ -131,7 +116,6 @@ function App() {
       });
     }
 
-    // Filter by date range
     if (startDateFilter || endDateFilter) {
       filtered = filtered.filter(order => {
         if (!order.data_abertura) return false;
@@ -160,7 +144,6 @@ function App() {
       });
     }
 
-    // Sort by opening date (ascending - from first day to last)
     filtered.sort((a, b) => {
       if (!a.data_abertura) return 1;
       if (!b.data_abertura) return -1;
@@ -177,7 +160,6 @@ function App() {
     return filtered;
   }, [orders, statusFilter, debouncedSearchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter]);
 
-  // Handlers with useCallback to avoid re-renders
   const closeModal = useCallback(() => {
     setShowModal(false);
     setModalContent(null);
@@ -198,34 +180,20 @@ function App() {
     setModalTitle(`Editar OS #${order.numero_os}`);
     setShowModal(true);
   }, []);
-  
-  /* 
-    Function to view service order details
-
-  const handleView = useCallback((order: ServiceOrder) => {
-    setSelectedOrder(order);
-    setModalContent('view');
-    setModalTitle(`Detalhes da OS #${order.order_number}`);
-    setShowModal(true);
-  }, []);
-  */
 
   const handleSubmit = async (formData: ServiceOrderFormData) => {
     try {
       if (modalContent === 'edit' && selectedOrder) {
-        // Update existing order
         await updateMutation.mutateAsync({
           id: selectedOrder.id,
           data: formData,
         });
         success(`✅ Ordem de Serviço #${selectedOrder.numero_os} atualizada com sucesso!`);
       } else {
-        // Create new order
         const newOrder = await createMutation.mutateAsync(formData);
         success(`🎉 Ordem de Serviço #${newOrder.numero_os} criada com sucesso!`);
       }
       
-      // Wait a bit to ensure refetch is completed
       await new Promise(resolve => setTimeout(resolve, 300));
       closeModal();
     } catch (err: any) {
@@ -280,13 +248,12 @@ function App() {
     setStatusFilter('todos');
     setSearchTerm('');
     setDayFilter('');
-    setMonthFilter(''); // Remove month filter
-    setYearFilter(''); // Remove year filter
+    setMonthFilter('');
+    setYearFilter('');
     setStartDateFilter('');
     setEndDateFilter('');
   }, []);
 
-  // Check if there are active filters besides default (current month and year)
   const hasActiveFilters = useMemo(() => {
     return statusFilter !== 'todos' || 
            searchTerm !== '' || 
@@ -297,17 +264,14 @@ function App() {
            endDateFilter !== '';
   }, [statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, currentMonth, currentYear]);
 
-  // Check if date filters (dia/mes/ano) are being used
   const isUsingDateFilters = useMemo(() => {
     return dayFilter !== '' || monthFilter !== '' || yearFilter !== '';
   }, [dayFilter, monthFilter, yearFilter]);
 
-  // Check if date range filters are being used
   const isUsingDateRangeFilters = useMemo(() => {
     return startDateFilter !== '' || endDateFilter !== '';
   }, [startDateFilter, endDateFilter]);
 
-  // Render modal content with Suspense
   const renderModalContent = () => {
     if (modalContent === 'create' || modalContent === 'edit') {
       return (
@@ -343,7 +307,6 @@ function App() {
 
       <main className="min-h-[calc(100vh-280px)] pb-12 flex-1 pt-8">
         <div className="container p-4 md:p-6 lg:p-8">
-          {/* Statistics */}
           <Statistics 
             orders={orders} 
             dayFilter={dayFilter}
@@ -353,15 +316,12 @@ function App() {
             endDateFilter={endDateFilter}
           />
 
-          {/* Card de Filtros */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 shadow-lg mb-6">
-            {/* Título */}
             <h2 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
               <span className="text-3xl">🔍</span>
               Filtros e Buscas
             </h2>
             
-            {/* Status Filters */}
             <div className="flex flex-wrap gap-2 mb-4">
               <button
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
@@ -386,8 +346,8 @@ function App() {
               <button
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   statusFilter === 'em_andamento' 
-                    ? 'bg-amber-700 text-white hover:bg-amber-800' 
-                    : 'bg-amber-200 text-amber-900 hover:bg-amber-300'
+                    ? 'bg-yellow-700 text-white hover:bg-yellow-800' 
+                    : 'bg-yellow-200 text-yellow-900 hover:bg-yellow-300'
                 }`}
                 onClick={() => setStatusFilter('em_andamento')}
               >
@@ -405,7 +365,6 @@ function App() {
               </button>
             </div>
 
-            {/* Busca */}
             <div className="mb-4 relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,12 +377,10 @@ function App() {
                 value={searchTerm}
                 onChange={(e) => {
                   const value = e.target.value;
-                  // Remove caracteres negativos (-)
                   const sanitizedValue = value.replace(/-/g, '');
                   setSearchTerm(sanitizedValue);
                 }}
                 onKeyDown={(e) => {
-                  // Bloqueia a tecla de menos (-)
                   if (e.key === '-') {
                     e.preventDefault();
                   }
@@ -432,7 +389,6 @@ function App() {
               />
             </div>
 
-            {/* First row: Day, Month, Year */}
             <div className="grid grid-cols-3 gap-3 mb-3">
               <div>
                 <label htmlFor="dayFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
@@ -444,7 +400,6 @@ function App() {
                   value={dayFilter}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Allow empty or only positive values between 1 and 31
                     if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 31 && !value.includes('-'))) {
                       setDayFilter(value);
                     }
@@ -500,13 +455,11 @@ function App() {
                   value={yearFilter}
                   onChange={(e) => {
                     const value = e.target.value;
-                    // Allow empty or only positive values between 2020 and 2100
                     if (value === '' || (parseInt(value) >= 2020 && parseInt(value) <= 2100 && !value.includes('-'))) {
                       setYearFilter(value);
                     }
                   }}
                   onKeyDown={(e) => {
-                    // Block minus (-), plus (+) and 'e' keys
                     if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
                       e.preventDefault();
                     }
@@ -520,7 +473,6 @@ function App() {
               </div>
             </div>
 
-            {/* Second row: Start Date, End Date, Clear Filters */}
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label htmlFor="startDateFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
@@ -569,7 +521,6 @@ function App() {
               </div>
             </div>
             
-            {/* Active filter indicator */}
             {monthFilter && yearFilter && (
               <div className="mt-4 bg-green-100 border-2 border-green-300 rounded-lg p-3 flex items-center gap-2">
                 <span className="text-lg">📌</span>
@@ -588,7 +539,6 @@ function App() {
             </div>
           )}
 
-          {/* Error State */}
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 text-center">
               <p className="text-red-600 text-lg font-semibold mb-2">❌ Erro ao carregar dados</p>
@@ -599,7 +549,6 @@ function App() {
             </div>
           )}
 
-          {/* Cards */}
           {!isLoading && !error && (
             <>
               {filteredOrders.length === 0 ? (
@@ -643,7 +592,6 @@ function App() {
         {renderModalContent()}
       </Modal>
 
-      {/* Toast Notifications */}
       {toasts.map((toast) => (
         <Toast
           key={toast.id}

@@ -7,7 +7,6 @@ const Footer: React.FC = () => {
     <footer className="bg-gradient-to-br from-primary-hover via-primary to-primary-light mt-auto py-8 border-t-4 border-primary-hover/30">
       <div className="container px-4">
         <div className="max-w-4xl mx-auto">
-          {/* Título Principal */}
           <div className="text-center mb-4">
             <h3 className="text-white font-bold text-lg mb-1 tracking-wide">
               Help Desk TI
@@ -17,10 +16,8 @@ const Footer: React.FC = () => {
             </p>
           </div>
 
-          {/* Divisor */}
           <div className="w-24 h-0.5 bg-white/30 mx-auto mb-4"></div>
 
-          {/* Informações do Desenvolvedor e Copyright */}
           <div className="text-center space-y-2">
             <p className="text-white/95 text-sm">
               Desenvolvido por{' '}

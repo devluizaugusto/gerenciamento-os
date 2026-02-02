@@ -3,7 +3,6 @@ import prisma from '../config/prisma';
 import { formatServiceOrder, formatServiceOrders } from '../utils/dateFormatter';
 import { StatusOrdemServico } from '../types';
 
-// Get all service orders
 export const getAllServiceOrders = async (_req: Request, res: Response): Promise<void> => {
   try {
     const rows = await prisma.ordemServico.findMany({
@@ -23,7 +22,6 @@ export const getAllServiceOrders = async (_req: Request, res: Response): Promise
   }
 };
 
-// Get service order by ID
 export const getServiceOrderById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -48,7 +46,6 @@ export const getServiceOrderById = async (req: Request, res: Response): Promise<
   }
 };
 
-// Get service order by number
 export const getServiceOrderByNumber = async (req: Request, res: Response): Promise<void> => {
   try {
     const { numero } = req.params;
@@ -73,7 +70,6 @@ export const getServiceOrderByNumber = async (req: Request, res: Response): Prom
   }
 };
 
-// Create new service order
 export const createServiceOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
@@ -87,7 +83,6 @@ export const createServiceOrder = async (req: Request, res: Response): Promise<v
       data_fechamento
     } = req.body;
     
-    // Generate OS number automatically
     const maxOrder = await prisma.ordemServico.findFirst({
       orderBy: {
         numero_os: 'desc'
@@ -107,11 +102,9 @@ export const createServiceOrder = async (req: Request, res: Response): Promise<v
       }
     }
     
-    // Validate status
     const validStatuses: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
     const finalStatus: StatusOrdemServico = status && validStatuses.includes(status) ? status : 'aberto';
     
-    // Convert data_abertura if it comes in Brazilian format
     let formattedOpeningDate = data_abertura;
     if (data_abertura && data_abertura.includes('/')) {
       const parts = data_abertura.split('/');
@@ -122,7 +115,6 @@ export const createServiceOrder = async (req: Request, res: Response): Promise<v
       formattedOpeningDate = `${data_abertura}T12:00:00.000Z`;
     }
     
-    // Convert data_fechamento if it comes in Brazilian format
     let formattedClosingDate: string | null = null;
     if (data_fechamento && data_fechamento.trim() !== '') {
       if (data_fechamento.includes('/')) {
@@ -161,7 +153,6 @@ export const createServiceOrder = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Update service order
 export const updateServiceOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -176,7 +167,6 @@ export const updateServiceOrder = async (req: Request, res: Response): Promise<v
       data_fechamento
     } = req.body;
     
-    // Check if order exists
     const existing = await prisma.ordemServico.findUnique({
       where: { id: parseInt(String(id)) }
     });
@@ -186,7 +176,6 @@ export const updateServiceOrder = async (req: Request, res: Response): Promise<v
       return;
     }
     
-    // Prepare data for update
     const updateData: any = {};
     
     if (solicitante !== undefined) updateData.solicitante = solicitante;
@@ -195,7 +184,6 @@ export const updateServiceOrder = async (req: Request, res: Response): Promise<v
     if (descricao_problema !== undefined) updateData.descricao_problema = descricao_problema;
     if (servico_realizado !== undefined) updateData.servico_realizado = servico_realizado;
     
-    // Process data_abertura
     if (data_abertura !== undefined && data_abertura !== null && String(data_abertura).trim() !== '') {
       let formattedOpeningDate = String(data_abertura);
       if (formattedOpeningDate.includes('/')) {
@@ -209,7 +197,6 @@ export const updateServiceOrder = async (req: Request, res: Response): Promise<v
       updateData.data_abertura = new Date(formattedOpeningDate);
     }
     
-    // Process data_fechamento
     if (data_fechamento !== undefined) {
       if (data_fechamento === null || String(data_fechamento).trim() === '') {
         updateData.data_fechamento = null;
@@ -233,7 +220,6 @@ export const updateServiceOrder = async (req: Request, res: Response): Promise<v
       if (validStatuses.includes(status)) {
         updateData.status = status;
         
-        // If finalizing and data_fechamento was not provided, add current date
         if (status === 'finalizado' && data_fechamento === undefined) {
           updateData.data_fechamento = new Date();
         }
@@ -267,7 +253,6 @@ export const updateServiceOrder = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Delete service order
 export const deleteServiceOrder = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -296,7 +281,6 @@ export const deleteServiceOrder = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Filter by status
 export const getServiceOrdersByStatus = async (req: Request, res: Response): Promise<void> => {
   try {
     const { status } = req.params;

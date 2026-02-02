@@ -37,9 +37,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
         className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn border-2 border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header com gradiente */}
         <div className="relative flex justify-between items-center px-8 py-6 bg-gradient-to-br from-primary via-primary to-primary-light overflow-hidden">
-          {/* Decorative background pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-32 translate-x-32"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-24 -translate-x-24"></div>
@@ -59,7 +57,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
           </button>
         </div>
         
-        {/* Content */}
         <div className="overflow-y-auto p-8 flex-1 bg-gradient-to-br from-gray-50/50 to-white">
           {children}
         </div>
