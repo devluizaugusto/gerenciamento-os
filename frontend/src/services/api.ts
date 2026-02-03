@@ -1,7 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { ServiceOrder, FormData } from '../types';
 
-// Use /api in development (Vite proxy) and production
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
@@ -10,48 +9,40 @@ const api: AxiosInstance = axios.create({
 });
 
 export const serviceOrderAPI = {
-  // List all service orders
   getAll: async (): Promise<ServiceOrder[]> => {
     const response = await api.get<ServiceOrder[]>('/ordens-servico');
     return response.data;
   },
 
-  // Get by ID
   getById: async (id: number): Promise<ServiceOrder> => {
     const response = await api.get<ServiceOrder>(`/ordens-servico/${id}`);
     return response.data;
   },
 
-  // Get by number
   getByNumber: async (number: number): Promise<ServiceOrder> => {
     const response = await api.get<ServiceOrder>(`/ordens-servico/numero/${number}`);
     return response.data;
   },
 
-  // Filter by status
   getByStatus: async (status: string): Promise<ServiceOrder[]> => {
     const response = await api.get<ServiceOrder[]>(`/ordens-servico/status/${status}`);
     return response.data;
   },
 
-  // Create new service order
   create: async (data: FormData): Promise<ServiceOrder> => {
     const response = await api.post<ServiceOrder>('/ordens-servico', data);
     return response.data;
   },
 
-  // Update service order
   update: async (id: number, data: FormData): Promise<ServiceOrder> => {
     const response = await api.put<ServiceOrder>(`/ordens-servico/${id}`, data);
     return response.data;
   },
 
-  // Delete service order
   delete: async (id: number): Promise<void> => {
     await api.delete(`/ordens-servico/${id}`);
   },
 
-  // Generate PDF of a service order
   generatePDF: async (id: number): Promise<Blob> => {
     const response = await api.get(`/ordens-servico/pdf/${id}`, {
       responseType: 'blob'
@@ -59,7 +50,6 @@ export const serviceOrderAPI = {
     return response.data;
   },
 
-  // Generate report PDF
   generateReportPDF: async (
     status: string | null = null,
     search: string | null = null,

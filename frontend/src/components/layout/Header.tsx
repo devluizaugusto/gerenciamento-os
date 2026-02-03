@@ -13,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ onNewOS, onGeneratePDF, canGeneratePDF 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
           <div className="text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-              <span className="text-4xl md:text-5xl drop-shadow-lg">📋</span>
+              <span className="text-4xl md:text-5xl drop-shadow-lg">💻</span>
               <div>
                 <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">
                   Help Desk TI
