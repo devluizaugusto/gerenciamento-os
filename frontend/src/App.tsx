@@ -405,7 +405,6 @@ function App() {
                     }
                   }}
                   onKeyDown={(e) => {
-                    // Block minus (-), plus (+) and 'e' keys
                     if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
                       e.preventDefault();
                     }

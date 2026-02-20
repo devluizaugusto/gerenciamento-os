@@ -212,7 +212,8 @@ export const generateServiceOrderPDF = async (req: Request, res: Response): Prom
 
 export const generateReportPDF = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { status, search, day, month, year, startDate, endDate } = req.query;
+    // Nomes de parâmetros alinhados com o schema (reportQuerySchema) e com o front
+    const { status, search, dia, mes, ano, dataInicio, dataFim } = req.query;
 
     const where: any = {};
 
@@ -230,36 +231,39 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
       ];
     }
 
-    if (startDate || endDate) {
-      where.opening_date = {};
-      if (startDate) {
-        where.opening_date.gte = new Date(String(startDate));
+    // Filtro por intervalo de datas (dataInicio / dataFim) tem prioridade
+    if (dataInicio || dataFim) {
+      where.data_abertura = {};
+      if (dataInicio) {
+        where.data_abertura.gte = new Date(String(dataInicio));
       }
-      if (endDate) {
-        const endDateObj = new Date(String(endDate));
+      if (dataFim) {
+        const endDateObj = new Date(String(dataFim));
         endDateObj.setHours(23, 59, 59, 999);
-        where.opening_date.lte = endDateObj;
+        where.data_abertura.lte = endDateObj;
       }
-    } else {
-      if (day || month || year) {
-        if (year) {
-          const startOfYear = new Date(parseInt(String(year)), 0, 1);
-          const endOfYear = new Date(parseInt(String(year)), 11, 31, 23, 59, 59, 999);
-          where.opening_date = { gte: startOfYear, lte: endOfYear };
-          
-          if (month) {
-            const startOfMonth = new Date(parseInt(String(year)), parseInt(String(month)) - 1, 1);
-            const endOfMonth = new Date(parseInt(String(year)), parseInt(String(month)), 0, 23, 59, 59, 999);
-            where.opening_date = { gte: startOfMonth, lte: endOfMonth };
-            
-            if (day) {
-              const specificDate = new Date(parseInt(String(year)), parseInt(String(month)) - 1, parseInt(String(day)));
-              const endOfDay = new Date(parseInt(String(year)), parseInt(String(month)) - 1, parseInt(String(day)), 23, 59, 59, 999);
-              where.opening_date = { gte: specificDate, lte: endOfDay };
-            }
-          }
-        }
+    } else if (ano) {
+      // Quando não há intervalo explícito, usa dia / mês / ano
+      const yearNum = parseInt(String(ano), 10);
+      const monthNum = mes ? parseInt(String(mes), 10) - 1 : 0;
+      const dayNum = dia ? parseInt(String(dia), 10) : 1;
+
+      let start = new Date(yearNum, monthNum, dayNum);
+      let end: Date;
+
+      if (dia) {
+        // Dia específico
+        end = new Date(yearNum, monthNum, dayNum, 23, 59, 59, 999);
+      } else if (mes) {
+        // Mês inteiro
+        end = new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999);
+      } else {
+        // Ano inteiro
+        start = new Date(yearNum, 0, 1);
+        end = new Date(yearNum, 11, 31, 23, 59, 59, 999);
       }
+
+      where.data_abertura = { gte: start, lte: end };
     }
 
     const rows = await prisma.ordemServico.findMany({
@@ -314,7 +318,7 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
       appliedFilters.push(`Status: ${getStatusLabel(String(status))}`);
     }
     
-    if (startDate || endDate) {
+    if (dataInicio || dataFim) {
       const formatDateBR = (dateStr: string): string => {
         if (!dateStr) return '';
         const [year, month, day] = dateStr.split('-');
@@ -322,22 +326,22 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
       };
       
       let periodText = 'Período: ';
-      if (startDate && endDate) {
-        periodText += `${formatDateBR(String(startDate))} até ${formatDateBR(String(endDate))}`;
-      } else if (startDate) {
-        periodText += `A partir de ${formatDateBR(String(startDate))}`;
-      } else if (endDate) {
-        periodText += `Até ${formatDateBR(String(endDate))}`;
+      if (dataInicio && dataFim) {
+        periodText += `${formatDateBR(String(dataInicio))} até ${formatDateBR(String(dataFim))}`;
+      } else if (dataInicio) {
+        periodText += `A partir de ${formatDateBR(String(dataInicio))}`;
+      } else if (dataFim) {
+        periodText += `Até ${formatDateBR(String(dataFim))}`;
       }
       appliedFilters.push(periodText);
-    } else if (day || month || year) {
+    } else if (dia || mes || ano) {
       const dateFilters: string[] = [];
-      if (day) dateFilters.push(`Dia: ${day}`);
-      if (month) {
+      if (dia) dateFilters.push(`Dia: ${dia}`);
+      if (mes) {
         const months = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-        dateFilters.push(`Mês: ${months[parseInt(String(month), 10)]}`);
+        dateFilters.push(`Mês: ${months[parseInt(String(mes), 10)]}`);
       }
-      if (year) dateFilters.push(`Ano: ${year}`);
+      if (ano) dateFilters.push(`Ano: ${ano}`);
       appliedFilters.push(`Período: ${dateFilters.join(' / ')}`);
     }
     
@@ -353,7 +357,7 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
       });
     }
 
-    if (startDate || endDate) {
+    if (dataInicio || dataFim) {
       doc.moveDown(0.8);
       
       const boxY = doc.y;
