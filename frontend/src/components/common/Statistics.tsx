@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { ServiceOrder } from '../../types';
 
 interface StatisticsProps {

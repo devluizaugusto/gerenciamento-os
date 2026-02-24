@@ -45,7 +45,8 @@ export const generateServiceOrderPDF = async (req: Request, res: Response): Prom
 
     const doc = new PDFDocument({
       size: 'A4',
-      margin: 50
+      // Margem um pouco menor para aproveitar melhor a folha
+      margin: 40
     });
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -164,7 +165,7 @@ export const generateServiceOrderPDF = async (req: Request, res: Response): Prom
         .font('Helvetica-Bold')
         .text('Serviço Realizado:', 50, doc.y);
       
-      doc.moveDown(0.5);
+      doc.moveDown(0.3);
 
       doc.fontSize(11)
         .fillColor('#1e293b')
@@ -223,11 +224,11 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
 
     if (search) {
       where.OR = [
-        { order_number: { contains: String(search) } },
-        { requester: { contains: String(search) } },
-        { unit: { contains: String(search) } },
-        { department: { contains: String(search) } },
-        { problem_description: { contains: String(search) } }
+        { numero_os: { contains: String(search) } },
+        { solicitante: { contains: String(search) } },
+        { unidade: { contains: String(search) } },
+        { setor: { contains: String(search) } },
+        { descricao_problema: { contains: String(search) } }
       ];
     }
 
@@ -292,9 +293,10 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
 
     doc.pipe(res);
 
-    const pageHeight = doc.page.height;
+    let pageHeight = doc.page.height;
 
-    doc.fontSize(24)
+    // Títulos menores para ganhar mais espaço na página
+    doc.fontSize(18)
       .fillColor('#047857')
       .text('RELATÓRIO DE ORDENS DE SERVIÇO', { align: 'center' });
 
@@ -306,11 +308,17 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
       year: 'numeric' 
     });
     
-    doc.fontSize(12)
+    doc.fontSize(10)
       .fillColor('#64748b')
       .text(`Relatório gerado em: ${todayBR}`, { align: 'center' });
 
-    doc.moveDown(1);
+    // Total de OS logo abaixo da data, para ficar visualmente próximo
+    doc.moveDown(0.2);
+    doc.fontSize(10)
+      .fillColor('#64748b')
+      .text(`Total de OS: ${orders.length}`, { align: 'center' });
+
+    doc.moveDown(0.8);
 
     const appliedFilters: string[] = [];
     
@@ -351,54 +359,102 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
 
     if (appliedFilters.length > 0) {
       appliedFilters.forEach(filter => {
-        doc.fontSize(11)
+        doc.fontSize(9)
           .fillColor('#64748b')
           .text(filter, { align: 'center' });
       });
     }
 
-    if (dataInicio || dataFim) {
-      doc.moveDown(0.8);
-      
-      const boxY = doc.y;
-      const boxHeight = 60;
-      const boxX = 50;
-      const boxWidth = 500;
-      
-      doc.roundedRect(boxX, boxY, boxWidth, boxHeight, 8)
-        .fillAndStroke('#d1fae5', '#10b981');
-      
-      doc.fontSize(12)
-        .fillColor('#047857')
-        .font('Helvetica-Bold')
-        .text('ESTATÍSTICAS DO PERÍODO', boxX + 20, boxY + 12, { width: boxWidth - 40, align: 'center' });
-      
-      // Total OS
-      doc.fontSize(16)
-        .fillColor('#065f46')
-        .font('Helvetica-Bold')
-        .text(
-          `${orders.length} ${orders.length === 1 ? 'Ordem de Serviço' : 'Ordens de Serviço'}`,
-          boxX + 20,
-          boxY + 32,
-          { width: boxWidth - 40, align: 'center' }
-        );
-      
-      doc.y = boxY + boxHeight + 15;
-    } else {
-      doc.moveDown(0.5);
-      doc.fontSize(12)
-        .fillColor('#64748b')
-        .text(`Total de OS: ${orders.length}`, { align: 'center' });
-      doc.moveDown(1);
-    }
+    // Controle de quantidade de ordens por página
+    let ordersOnCurrentPage = 0;
+
+    // Texto resumido para o relatório (mantido), apenas para não ficar muito grande no papel
+    const truncateTextForReport = (text: string | null | undefined, maxChars: number): string => {
+      if (!text || text.trim() === '') return '-';
+      const normalized = text.toString();
+      if (normalized.length <= maxChars) return normalized;
+      return normalized.slice(0, Math.max(0, maxChars - 3)) + '...';
+    };
+
+    // Estimativa de altura que uma OS ocupa na página,
+    // para aproveitar melhor o espaço e minimizar sobras no fim da folha.
+    const estimateOrderHeight = (order: OrdemServicoFormatada): number => {
+      let totalHeight = 0;
+
+      // Cabeçalho "OS #..." + status na mesma linha
+      doc.fontSize(10).font('Helvetica-Bold');
+      const headerLineHeight = doc.currentLineHeight();
+      totalHeight += headerLineHeight;      // linha do cabeçalho
+      totalHeight += headerLineHeight * 0.3; // moveDown(0.3) logo após o cabeçalho
+
+      // Duas linhas de informações principais
+      const solicitanteText = `Solicitante: ${order.solicitante || '-'}`;
+      const unidadeText = `Unidade: ${order.unidade || '-'}`;
+      const infoLine1 = `${solicitanteText}  |  ${unidadeText}`;
+
+      const setorPart = `Setor: ${order.setor || '-'}`;
+      const aberturaPart = `Data Abertura: ${order.data_abertura || '-'}`;
+      const fechamentoPart = order.data_fechamento
+        ? `Data Fechamento: ${order.data_fechamento}`
+        : '';
+      const infoLine2Parts = [setorPart, aberturaPart];
+      if (fechamentoPart) {
+        infoLine2Parts.push(fechamentoPart);
+      }
+      const infoLine2 = infoLine2Parts.join('  |  ');
+
+      doc.fontSize(8).font('Helvetica');
+      totalHeight += doc.heightOfString(infoLine1, { width: 500 });
+      totalHeight += headerLineHeight * 0.2; // moveDown(0.2)
+      totalHeight += doc.heightOfString(infoLine2, { width: 500 });
+      totalHeight += headerLineHeight * 0.3; // moveDown(0.3)
+
+      // Bloco "Problema"
+      const problemaText = truncateTextForReport(order.descricao_problema || '-', 400);
+
+      doc.fontSize(8).font('Helvetica-Bold');
+      const labelLineHeight = doc.currentLineHeight();
+      totalHeight += labelLineHeight;        // linha "Problema:"
+      totalHeight += labelLineHeight * 0.3;  // moveDown(0.3)
+
+      doc.fontSize(8).font('Helvetica');
+      totalHeight += doc.heightOfString(problemaText, {
+        width: 500,
+        lineGap: 3
+      });
+
+      // Bloco "Serviço Realizado" (se existir)
+      if (order.servico_realizado) {
+        const servicoText = truncateTextForReport(order.servico_realizado, 300);
+
+        totalHeight += labelLineHeight * 0.3; // moveDown(0.3) antes do label
+        totalHeight += labelLineHeight;       // linha "Serviço Realizado:"
+        totalHeight += labelLineHeight * 0.3; // moveDown(0.3) antes do texto
+
+        totalHeight += doc.heightOfString(servicoText, {
+          width: 500,
+          lineGap: 3
+        });
+      }
+
+      // Espaço final entre esta OS e a próxima (moveDown(0.3))
+      totalHeight += labelLineHeight * 0.3;
+
+      return totalHeight;
+    };
 
     orders.forEach((order, index) => {
       if (index > 0) {
-        const minSpace = 120;
-        
-        if (doc.y + minSpace > pageHeight - 70) {
+        const bottomMargin = 50; // margem inferior de segurança
+        const availableHeight = pageHeight - bottomMargin - doc.y;
+        const orderHeight = estimateOrderHeight(order);
+
+        // Quebra de página somente se a próxima OS não couber inteira
+        // E apenas se já houver pelo menos 1 OS na página atual (para evitar página em branco)
+        if (ordersOnCurrentPage > 0 && orderHeight > availableHeight) {
           doc.addPage();
+          pageHeight = doc.page.height;
+          ordersOnCurrentPage = 0;
         }
       }
 
@@ -407,108 +463,143 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
       const statusY = doc.y;
       
       doc.save();
-      doc.fontSize(10).font('Helvetica-Bold');
+      doc.fontSize(9).font('Helvetica-Bold');
       const statusWidth = doc.widthOfString(statusLabel);
       doc.restore();
       
-      doc.fontSize(14)
+      // Cabeçalho da OS com número menor
+      doc.fontSize(10)
         .fillColor('#1e293b')
         .font('Helvetica-Bold')
         .text(`OS #${order.numero_os}`, 50, statusY);
 
       const statusX = Math.max(420, 550 - statusWidth - 5);
       
-      doc.fontSize(10)
+      doc.fontSize(9)
         .font('Helvetica-Bold')
         .fillColor(statusColor)
         .text(statusLabel, statusX, statusY);
 
-      doc.moveDown(0.5);
+      doc.moveDown(0.3);
 
-      const itemStartY = doc.y;
-      const labelWidthRel = 85;
-      const valueWidthRel = 170;
-      const col1XRel = 50;
-      const col2XRel = 310;
+      // Informações principais condensadas em 2 linhas para caber mais OS por página
+      // Labels em negrito, valores em normal
+      const infoY = doc.y;
       
-      const addRelLine = (label: string, value: string | null | number, x: number, y: number, maxWidth: number = valueWidthRel): number => {
-        const labelX = x;
-        const valueX = x + labelWidthRel;
-        const valueText = (value || '-').toString();
-        
-        doc.fontSize(9)
-          .fillColor('#64748b')
-          .text(label, labelX, y);
-        
-        const textHeight = doc.heightOfString(valueText, {
-          width: maxWidth
-        });
-        
-        doc.fontSize(9)
-          .fillColor('#1e293b')
-          .text(valueText, valueX, y, {
-            width: maxWidth,
-            align: 'left'
-          });
-        
-        return Math.max(13, textHeight + 1);
-      };
+      // Linha 1: Solicitante | Unidade
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica-Bold')
+        .text('Solicitante: ', 50, infoY);
       
-      let relY = itemStartY;
-      const h1 = addRelLine('Solicitante:', order.solicitante || '-', col1XRel, relY);
-      addRelLine('Unidade:', order.unidade || '-', col2XRel, relY, 200);
-      relY += h1;
+      const solicitanteX = 50 + doc.widthOfString('Solicitante: ');
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica')
+        .text(order.solicitante || '-', solicitanteX, infoY);
       
-      const h2 = addRelLine('Setor:', order.setor || '-', col1XRel, relY);
-      addRelLine('Data Abertura:', order.data_abertura || '-', col2XRel, relY, 200);
-      relY += h2;
+      const unidadeLabelX = solicitanteX + doc.widthOfString(order.solicitante || '-') + 10;
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica-Bold')
+        .text('Unidade: ', unidadeLabelX, infoY);
+      
+      const unidadeX = unidadeLabelX + doc.widthOfString('Unidade: ');
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica')
+        .text(order.unidade || '-', unidadeX, infoY);
+
+      doc.moveDown(0.2);
+
+      // Linha 2: Setor | Data Abertura | Data Fechamento (se existir)
+      const infoY2 = doc.y;
+      
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica-Bold')
+        .text('Setor: ', 50, infoY2);
+      
+      const setorX = 50 + doc.widthOfString('Setor: ');
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica')
+        .text(order.setor || '-', setorX, infoY2);
+      
+      const aberturaLabelX = setorX + doc.widthOfString(order.setor || '-') + 10;
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica-Bold')
+        .text('Data Abertura: ', aberturaLabelX, infoY2);
+      
+      const aberturaX = aberturaLabelX + doc.widthOfString('Data Abertura: ');
+      doc.fontSize(8)
+        .fillColor('#1e293b')
+        .font('Helvetica')
+        .text(order.data_abertura || '-', aberturaX, infoY2);
       
       if (order.data_fechamento) {
-        addRelLine('Data Fechamento:', order.data_fechamento, col2XRel, relY, 200);
-        relY += 13;
+        const fechamentoLabelX = aberturaX + doc.widthOfString(order.data_abertura || '-') + 10;
+        doc.fontSize(8)
+          .fillColor('#1e293b')
+          .font('Helvetica-Bold')
+          .text('Data Fechamento: ', fechamentoLabelX, infoY2);
+        
+        const fechamentoX = fechamentoLabelX + doc.widthOfString('Data Fechamento: ');
+        doc.fontSize(8)
+          .fillColor('#1e293b')
+          .font('Helvetica')
+          .text(order.data_fechamento, fechamentoX, infoY2);
       }
-      
-      doc.y = relY + 8;
 
-      doc.fontSize(9)
+      doc.moveDown(0.3);
+
+      const problemaText = truncateTextForReport(order.descricao_problema || '-', 400);
+
+      doc.fontSize(8)
         .fillColor('#1e293b')
         .font('Helvetica-Bold')
         .text('Problema:', 50, doc.y);
       
       doc.moveDown(0.3);
 
-      doc.fontSize(9)
+      doc.fontSize(8)
         .fillColor('#1e293b')
         .font('Helvetica')
-        .text(order.descricao_problema || '-', {
+        .text(problemaText, {
           width: 500,
           align: 'left',
           lineGap: 3
         });
 
+      const servicoText = truncateTextForReport(order.servico_realizado, 300);
+
       if (order.servico_realizado) {
-        doc.moveDown(0.5);
-        doc.fontSize(9)
+        doc.moveDown(0.3);
+        doc.fontSize(8)
           .fillColor('#1e293b')
           .font('Helvetica-Bold')
           .text('Serviço Realizado:', 50, doc.y);
         
         doc.moveDown(0.3);
 
-        doc.fontSize(9)
+        doc.fontSize(8)
           .fillColor('#1e293b')
           .font('Helvetica')
-          .text(order.servico_realizado, {
+          .text(servicoText, {
             width: 500,
             align: 'left',
             lineGap: 3
           });
       }
 
-      doc.moveDown(1);
+      doc.moveDown(0.3);
+
+      // Atualiza contador de ordens desta página
+      ordersOnCurrentPage += 1;
 
       if (index < orders.length - 1) {
-        if (doc.y + 20 < pageHeight - 70) {
+        if (doc.y + 20 < pageHeight - 50) {
           doc.strokeColor('#e2e8f0')
             .lineWidth(0.5)
             .moveTo(50, doc.y)

@@ -38,8 +38,9 @@ const ABBREVIATED_MONTHS: Record<string, string> = {
 const getCurrentDate = () => {
   const date = new Date();
   return {
+    day: String(date.getDate()).padStart(2, '0'),
     month: String(date.getMonth() + 1).padStart(2, '0'),
-    year: String(date.getFullYear())
+    year: String(date.getFullYear()),
   };
 };
 
@@ -49,11 +50,11 @@ const formatMonthYear = (month: string, year: string): string => {
 };
 
 function App() {
-  const { month: currentMonth, year: currentYear } = getCurrentDate();
+  const { day: currentDay, month: currentMonth, year: currentYear } = getCurrentDate();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [dayFilter, setDayFilter] = useState<string>('');
+  const [dayFilter, setDayFilter] = useState<string>(currentDay);
   const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [startDateFilter, setStartDateFilter] = useState<string>('');
@@ -233,11 +234,11 @@ function App() {
   }, [generateReportPDFMutation, statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, success, errorToast]);
 
   const clearFilters = useCallback(() => {
-    const { month, year } = getCurrentDate();
+    const { day, month, year } = getCurrentDate();
     
     setStatusFilter('todos');
     setSearchTerm('');
-    setDayFilter('');
+    setDayFilter(day);
     setMonthFilter(month);
     setYearFilter(year);
     setStartDateFilter('');
@@ -257,12 +258,12 @@ function App() {
   const hasActiveFilters = useMemo(() => {
     return statusFilter !== 'todos' || 
            searchTerm !== '' || 
-           dayFilter !== '' || 
+           dayFilter !== currentDay || 
            monthFilter !== currentMonth || 
            yearFilter !== currentYear || 
            startDateFilter !== '' || 
            endDateFilter !== '';
-  }, [statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, currentMonth, currentYear]);
+  }, [statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, currentDay, currentMonth, currentYear]);
 
   const isUsingDateFilters = useMemo(() => {
     return dayFilter !== '' || monthFilter !== '' || yearFilter !== '';
@@ -509,7 +510,7 @@ function App() {
                   onClick={clearFilters}
                   disabled={!hasActiveFilters}
                 >
-                  📅 Mês Atual
+                  📅 Hoje
                 </button>
                 <button
                   className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
@@ -520,11 +521,25 @@ function App() {
               </div>
             </div>
             
-            {monthFilter && yearFilter && (
+            {(dayFilter || (monthFilter && yearFilter)) && (
               <div className="mt-4 bg-green-100 border-2 border-green-300 rounded-lg p-3 flex items-center gap-2">
                 <span className="text-lg">📌</span>
                 <p className="text-sm font-semibold text-green-800">
-                  Mostrando Ordens de Serviços de: <span className="font-bold">{formatMonthYear(monthFilter, yearFilter)}</span>
+                  {dayFilter && monthFilter && yearFilter ? (
+                    <>
+                      Mostrando Ordens de Serviço do dia:{' '}
+                      <span className="font-bold">
+                        {String(dayFilter).padStart(2, '0')}/{monthFilter}/{yearFilter}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Mostrando Ordens de Serviço de:{' '}
+                      <span className="font-bold">
+                        {monthFilter && yearFilter ? formatMonthYear(monthFilter, yearFilter) : 'Todo período'}
+                      </span>
+                    </>
+                  )}
                 </p>
               </div>
             )}

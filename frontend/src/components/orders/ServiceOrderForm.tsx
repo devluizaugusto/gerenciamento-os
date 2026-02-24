@@ -76,7 +76,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     if (dateStr.includes('-')) {
       const [year, month, day] = dateStr.split('-');
       const formatted = `${day}/${month}/${year}`;
-      console.log(`📅 [FORMAT] ${dateStr} => ${formatted}`);
       return formatted;
     }
     return dateStr;
@@ -105,8 +104,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
   }, [order, reset]);
 
   const handleFormSubmit = (data: ServiceOrderFormData) => {
-    console.log('📝 [FORM] Form data (raw):', data);
-    
     const formattedData: ServiceOrderFormData = {
       ...data,
       data_abertura: formatDateToBR(data.data_abertura),
@@ -117,8 +114,6 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         ? data.servico_realizado.trim()
         : null,
     };
-
-    console.log('📤 [FORM] Formatted data to send:', formattedData);
     onSubmit(formattedData);
   };
 
