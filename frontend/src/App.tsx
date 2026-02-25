@@ -410,6 +410,7 @@ function App() {
                       e.preventDefault();
                     }
                   }}
+                  onWheel={(e) => e.currentTarget.blur()}
                   placeholder="Dia (1-31)"
                   min="1"
                   max="31"
@@ -464,6 +465,7 @@ function App() {
                       e.preventDefault();
                     }
                   }}
+                  onWheel={(e) => e.currentTarget.blur()}
                   placeholder="Ano (2020-2100)"
                   min="2020"
                   max="2100"
