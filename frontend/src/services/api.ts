@@ -83,10 +83,30 @@ export const serviceOrderAPI = {
     }
     
     const url = `/ordens-servico/pdf/relatorio/geral${params.toString() ? '?' + params.toString() : ''}`;
-    const response = await api.get(url, {
-      responseType: 'blob'
-    });
-    return response.data;
+
+    try {
+      const response = await api.get(url, {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (err: any) {
+      // When responseType is 'blob', error responses are also Blobs.
+      // We need to read the Blob to extract the actual JSON error message.
+      if (err.response?.data instanceof Blob) {
+        const text = await err.response.data.text();
+        try {
+          const json = JSON.parse(text);
+          const message = json.error || json.message || 'Erro ao gerar relatório PDF';
+          const error = new Error(message) as any;
+          error.response = { data: json, status: err.response.status };
+          throw error;
+        } catch (parseErr) {
+          // If it's not valid JSON, re-throw the original error
+          throw err;
+        }
+      }
+      throw err;
+    }
   },
 };
 

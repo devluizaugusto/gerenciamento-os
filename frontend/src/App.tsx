@@ -229,7 +229,13 @@ function App() {
       success('📊 Relatório PDF gerado com sucesso!');
     } catch (err: any) {
       console.error('Erro ao gerar relatório PDF:', err);
-      errorToast(err.response?.data?.error || '❌ Erro ao gerar relatório PDF');
+      // err.message already contains the parsed error from the blob response (handled in api.ts)
+      // err.response?.data?.error is also available when blob is parsed
+      const errorMessage =
+        err.response?.data?.error ||
+        err.message ||
+        '❌ Erro ao gerar relatório PDF';
+      errorToast(errorMessage);
     }
   }, [generateReportPDFMutation, statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, success, errorToast]);
 

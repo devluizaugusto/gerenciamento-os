@@ -223,8 +223,9 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
     }
 
     if (search) {
+      const searchNum = parseInt(String(search), 10);
       where.OR = [
-        { numero_os: { contains: String(search) } },
+        ...(!isNaN(searchNum) ? [{ numero_os: searchNum }] : []),
         { solicitante: { contains: String(search) } },
         { unidade: { contains: String(search) } },
         { setor: { contains: String(search) } },
@@ -236,32 +237,41 @@ export const generateReportPDF = async (req: Request, res: Response): Promise<vo
     if (dataInicio || dataFim) {
       where.data_abertura = {};
       if (dataInicio) {
-        where.data_abertura.gte = new Date(String(dataInicio));
+        where.data_abertura.gte = new Date(String(dataInicio) + 'T00:00:00.000Z');
       }
       if (dataFim) {
-        const endDateObj = new Date(String(dataFim));
-        endDateObj.setHours(23, 59, 59, 999);
-        where.data_abertura.lte = endDateObj;
+        where.data_abertura.lte = new Date(String(dataFim) + 'T23:59:59.999Z');
       }
-    } else if (ano) {
+    } else if (dia || mes || ano) {
       // Quando não há intervalo explícito, usa dia / mês / ano
-      const yearNum = parseInt(String(ano), 10);
-      const monthNum = mes ? parseInt(String(mes), 10) - 1 : 0;
-      const dayNum = dia ? parseInt(String(dia), 10) : 1;
+      // Usa o ano atual como fallback se não fornecido
+      const now = new Date();
+      const yearNum = ano ? parseInt(String(ano), 10) : now.getUTCFullYear();
+      const mesNum = mes ? parseInt(String(mes), 10) : null;
+      const diaNum = dia ? parseInt(String(dia), 10) : null;
 
-      let start = new Date(yearNum, monthNum, dayNum);
+      let start: Date;
       let end: Date;
 
-      if (dia) {
-        // Dia específico
-        end = new Date(yearNum, monthNum, dayNum, 23, 59, 59, 999);
-      } else if (mes) {
+      if (diaNum && mesNum) {
+        // Dia + Mês específicos (com ou sem ano)
+        start = new Date(Date.UTC(yearNum, mesNum - 1, diaNum, 0, 0, 0, 0));
+        end = new Date(Date.UTC(yearNum, mesNum - 1, diaNum, 23, 59, 59, 999));
+      } else if (diaNum && !mesNum) {
+        // Apenas dia — busca esse dia em todos os meses do ano
+        // Não é possível mapear diretamente no Prisma, então filtramos pelo ano
+        // e o filtro por dia é aplicado após a query (fallback: retorna o mês atual)
+        const currentMonth = now.getUTCMonth(); // 0-indexed
+        start = new Date(Date.UTC(yearNum, currentMonth, diaNum, 0, 0, 0, 0));
+        end = new Date(Date.UTC(yearNum, currentMonth, diaNum, 23, 59, 59, 999));
+      } else if (mesNum && !diaNum) {
         // Mês inteiro
-        end = new Date(yearNum, monthNum + 1, 0, 23, 59, 59, 999);
+        start = new Date(Date.UTC(yearNum, mesNum - 1, 1, 0, 0, 0, 0));
+        end = new Date(Date.UTC(yearNum, mesNum, 0, 23, 59, 59, 999));
       } else {
-        // Ano inteiro
-        start = new Date(yearNum, 0, 1);
-        end = new Date(yearNum, 11, 31, 23, 59, 59, 999);
+        // Apenas ano
+        start = new Date(Date.UTC(yearNum, 0, 1, 0, 0, 0, 0));
+        end = new Date(Date.UTC(yearNum, 11, 31, 23, 59, 59, 999));
       }
 
       where.data_abertura = { gte: start, lte: end };

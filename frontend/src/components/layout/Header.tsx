@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ onNewOS, onGeneratePDF, canGeneratePDF 
 
           <div className="flex gap-2 md:gap-3 flex-wrap justify-center md:justify-end">
             <button
-              className="btn bg-white text-primary font-bold px-4 md:px-6 py-2.5 md:py-3 rounded-lg flex items-center gap-2 text-sm md:text-base shadow-md border-2 border-transparent transition-all duration-300 ease-in-out hover:bg-gradient-to-br hover:from-white hover:to-gray-50 hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 hover:border-primary/20 active:scale-100 active:translate-y-0 active:shadow-md"
+              className="btn bg-white text-primary font-bold px-4 md:px-6 py-2.5 md:py-3 rounded-lg flex items-center gap-2 text-sm md:text-base shadow-md border-2 border-transparent transition-all duration-300 ease-in-out hover:bg-gradient-to-br hover:from-white hover:to-gray-50 hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 active:scale-100 active:translate-y-0 active:shadow-md"
               onClick={onNewOS}
               title="Criar nova ordem de serviço"
             >
@@ -37,7 +37,7 @@ const Header: React.FC<HeaderProps> = ({ onNewOS, onGeneratePDF, canGeneratePDF 
             <button
               className={`btn font-bold px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all duration-300 ease-in-out flex items-center gap-2 text-sm md:text-base shadow-md border-2 ${
                 canGeneratePDF
-                  ? 'bg-white text-primary border-transparent hover:bg-gradient-to-br hover:from-white hover:to-gray-50 hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 hover:border-primary/20 active:scale-100 active:translate-y-0 active:shadow-md cursor-pointer'
+                  ? 'bg-white text-primary border-transparent hover:bg-gradient-to-br hover:from-white hover:to-gray-50 hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 active:scale-100 active:translate-y-0 active:shadow-md cursor-pointer'
                   : 'bg-white/50 text-primary/40 cursor-not-allowed opacity-60'
               }`}
               onClick={onGeneratePDF}
