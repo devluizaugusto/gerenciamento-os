@@ -61,6 +61,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
 
   const unidadeValue = watch('unidade');
   const setorValue = watch('setor');
+  const statusValue = watch('status');
+  const dataAberturaValue = watch('data_abertura');
+
+  // Verifica se o status permite data de fechamento
+  const isFinalizado = statusValue === 'finalizado';
 
   const formatDateForInput = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '';
@@ -102,6 +107,13 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       setShowSetorInput(!!setorVal && !setoresPredefinidos.includes(setorVal));
     }
   }, [order, reset]);
+
+  // Limpa a data de fechamento sempre que o status mudar para aberto ou em andamento
+  useEffect(() => {
+    if (!isFinalizado) {
+      setValue('data_fechamento', '');
+    }
+  }, [statusValue, isFinalizado, setValue]);
 
   const handleFormSubmit = (data: ServiceOrderFormData) => {
     const formattedData: ServiceOrderFormData = {
@@ -346,17 +358,38 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
             )}
           </div>
 
-          <div>
-            <label htmlFor="data_fechamento" className="label text-purple-900">
+          {/* Data de Fechamento — visível e obrigatória somente quando status = finalizado */}
+          <div className={`transition-all duration-300 ${isFinalizado ? 'opacity-100' : 'opacity-50'}`}>
+            <label htmlFor="data_fechamento" className={`label ${isFinalizado ? 'text-purple-900' : 'text-gray-400'}`}>
               <span className="text-lg mr-2">✅</span>
               Data de Fechamento
+              {isFinalizado && <span className="text-danger"> *</span>}
             </label>
             <input
               type="date"
               id="data_fechamento"
               {...register('data_fechamento')}
-              className="input border-purple-200 focus:border-purple-500"
+              disabled={!isFinalizado}
+              min={dataAberturaValue || undefined}
+              className={`input transition-all duration-200 ${
+                !isFinalizado
+                  ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                  : errors.data_fechamento
+                  ? 'border-danger ring-2 ring-danger/20'
+                  : 'border-purple-200 focus:border-purple-500'
+              }`}
             />
+            {!isFinalizado && (
+              <p className="text-gray-400 text-xs mt-2 flex items-center gap-1">
+                <span>ℹ️</span>
+                Disponível apenas quando o status for <strong className="text-gray-500 ml-1">Finalizado</strong>
+              </p>
+            )}
+            {isFinalizado && errors.data_fechamento && (
+              <p className="text-danger text-sm mt-2 flex items-center gap-1 animate-slideDown">
+                <span>⚠️</span> {errors.data_fechamento.message}
+              </p>
+            )}
           </div>
         </div>
       </div>
