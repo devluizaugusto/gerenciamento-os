@@ -346,7 +346,14 @@ function App() {
                     ? 'bg-red-800 text-white hover:bg-red-900' 
                     : 'bg-red-200 text-red-900 hover:bg-red-300'
                 }`}
-                onClick={() => setStatusFilter('aberto')}
+                onClick={() => {
+                  setStatusFilter('aberto');
+                  setDayFilter('');
+                  setMonthFilter('');
+                  setYearFilter('');
+                  setStartDateFilter('');
+                  setEndDateFilter('');
+                }}
               >
                 Abertos ({orders.filter(o => o.status === 'aberto').length})
               </button>
@@ -356,7 +363,14 @@ function App() {
                     ? 'bg-yellow-700 text-white hover:bg-yellow-800' 
                     : 'bg-yellow-200 text-yellow-900 hover:bg-yellow-300'
                 }`}
-                onClick={() => setStatusFilter('em_andamento')}
+                onClick={() => {
+                  setStatusFilter('em_andamento');
+                  setDayFilter('');
+                  setMonthFilter('');
+                  setYearFilter('');
+                  setStartDateFilter('');
+                  setEndDateFilter('');
+                }}
               >
                 Em Andamento ({orders.filter(o => o.status === 'em_andamento').length})
               </button>
@@ -366,7 +380,14 @@ function App() {
                     ? 'bg-green-800 text-white hover:bg-green-900' 
                     : 'bg-green-200 text-green-900 hover:bg-green-300'
                 }`}
-                onClick={() => setStatusFilter('finalizado')}
+                onClick={() => {
+                  setStatusFilter('finalizado');
+                  setDayFilter('');
+                  setMonthFilter('');
+                  setYearFilter('');
+                  setStartDateFilter('');
+                  setEndDateFilter('');
+                }}
               >
                 Finalizados ({orders.filter(o => o.status === 'finalizado').length})
               </button>
