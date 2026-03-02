@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serviceOrderSchema, ServiceOrderFormData } from '../../schemas/ordemServicoSchema';
@@ -19,6 +19,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
 }) => {
   const [showUnidadeInput, setShowUnidadeInput] = useState(false);
   const [showSetorInput, setShowSetorInput] = useState(false);
+
+  // Controla se a mudança de status veio do reset (carga inicial) ou do usuário
+  const isResettingRef = useRef(false);
 
   const {
     register,
@@ -90,7 +93,10 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     if (order) {
       const unidadeVal = order.unidade || '';
       const setorVal = order.setor || '';
-      
+
+      // Sinaliza que o próximo ciclo de watch é do reset, não do usuário
+      isResettingRef.current = true;
+
       reset({
         solicitante: order.solicitante || '',
         unidade: unidadeVal,
@@ -102,14 +108,19 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         data_fechamento: formatDateForInput(order.data_fechamento),
       });
       
-      // Check if values are customized
       setShowUnidadeInput(!!unidadeVal && !unidadesPredefinidas.includes(unidadeVal));
       setShowSetorInput(!!setorVal && !setoresPredefinidos.includes(setorVal));
     }
   }, [order, reset]);
 
-  // Limpa a data de fechamento sempre que o status mudar para aberto ou em andamento
+  // Limpa a data de fechamento apenas quando o USUÁRIO muda o status para aberto/em andamento
+  // (não dispara durante o reset/carga inicial da ordem)
   useEffect(() => {
+    if (isResettingRef.current) {
+      // Ignora o disparo causado pelo reset — reseta a flag e não limpa a data
+      isResettingRef.current = false;
+      return;
+    }
     if (!isFinalizado) {
       setValue('data_fechamento', '');
     }
