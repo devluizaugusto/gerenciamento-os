@@ -51,8 +51,6 @@ const formatDate = (isoOrBr: string): string => {
   return `${d}/${m}/${y}`;
 };
 
-const getTodayISO = () => new Date().toISOString().split('T')[0];
-
 // ─── Card de estoque ─────────────────────────────────────────
 interface EstoqueCardProps {
   estoque: EstoqueTinta;
