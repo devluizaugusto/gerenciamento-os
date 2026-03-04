@@ -38,6 +38,7 @@ export interface SaidaTinta {
   id: number;
   estoque_id: number;
   quantidade: number;
+  unidade: string;
   setor: string;
   responsavel: string;
   observacao?: string | null;
@@ -77,6 +78,7 @@ export interface UpdateEstoqueData {
 export interface CreateSaidaData {
   estoque_id: number;
   quantidade: number;
+  unidade: string;
   setor: string;
   responsavel: string;
   observacao?: string | null;
@@ -85,6 +87,7 @@ export interface CreateSaidaData {
 
 export interface SaidasFilter {
   estoque_id?: number;
+  unidade?: string;
   setor?: string;
   dataInicio?: string;
   dataFim?: string;

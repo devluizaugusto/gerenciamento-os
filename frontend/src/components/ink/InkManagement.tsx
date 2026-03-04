@@ -233,7 +233,7 @@ const InkManagement: React.FC = () => {
 
   // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState<'saida' | 'estoque_create' | 'estoque_edit' | 'historico_item' | null>(null);
+  const [modalMode, setModalMode] = useState<'saida' | 'estoque_create' | 'estoque_edit' | null>(null);
   const [selectedEstoque, setSelectedEstoque] = useState<EstoqueTinta | null>(null);
 
   const { data: estoques = [], isLoading: estoqueLoading, error: estoqueError, refetch: refetchEstoque } = useEstoqueTintas();
@@ -292,11 +292,8 @@ const InkManagement: React.FC = () => {
   }, []);
 
   const handleViewHistory = useCallback((estoque: EstoqueTinta) => {
-    setSelectedEstoque(estoque);
-    setModalMode('historico_item');
     setActiveTab('historico');
     setHistModeloFilter(estoque.modelo_impressora);
-    setShowModal(false);
   }, []);
 
   // ── Submit saída ──
@@ -344,10 +341,11 @@ const InkManagement: React.FC = () => {
     try {
       await deleteSaidaMutation.mutateAsync(id);
       success('↩️ Saída estornada e estoque revertido!');
+      refetchSaidas();
     } catch (err: any) {
       errorToast(err.response?.data?.error || '❌ Erro ao estornar saída');
     }
-  }, [deleteSaidaMutation, success, errorToast]);
+  }, [deleteSaidaMutation, success, errorToast, refetchSaidas]);
 
   // ── Modal title ──
   const modalTitle = useMemo(() => {
@@ -360,7 +358,7 @@ const InkManagement: React.FC = () => {
   }, [modalMode, selectedEstoque]);
 
   // ── Modal content ──
-  const renderModalContent = () => {
+  const renderModalContent = useCallback(() => {
     if (modalMode === 'saida' && selectedEstoque) {
       return (
         <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" /></div>}>
@@ -386,7 +384,7 @@ const InkManagement: React.FC = () => {
       );
     }
     return null;
-  };
+  }, [modalMode, selectedEstoque, handleSubmitSaida, handleSubmitEstoque, closeModal, createSaidaMutation.isPending, createEstoqueMutation.isPending, updateEstoqueMutation.isPending]);
 
   return (
     <div className="min-h-screen pb-12">
