@@ -3,6 +3,7 @@ import cors from 'cors';
 import compression from 'compression';
 import dotenv from 'dotenv';
 import ordemServicoRoutes from './routes/ordemServicoRoutes';
+import tintaRoutes from './routes/tintaRoutes';
 
 dotenv.config();
 
@@ -21,12 +22,14 @@ app.get('/', (_req: Request, res: Response) => {
     message: 'API do Sistema de Ordem de Serviços',
     version: '2.1.3',
     endpoints: {
-      ordensServico: '/api/ordens-servico'
+      ordensServico: '/api/ordens-servico',
+      tintas: '/api/tintas'
     }
   });
 });
 
 app.use('/api/ordens-servico', ordemServicoRoutes);
+app.use('/api/tintas', tintaRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Erro:', err);

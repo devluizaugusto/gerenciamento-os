@@ -27,3 +27,39 @@ model OrdemServico {
   @@index([numero_os])
   @@map("ordem_servico")
 }
+
+model EstoqueTinta {
+  id              Int       @id @default(autoincrement())
+  modelo_impressora String  @db.VarChar(50)
+  cor_tinta       String    @db.VarChar(50)
+  codigo_tinta    String    @db.VarChar(50)
+  quantidade_atual Int      @default(0)
+  quantidade_minima Int     @default(2)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  saidas          SaidaTinta[]
+
+  @@unique([modelo_impressora, codigo_tinta])
+  @@index([modelo_impressora])
+  @@map("estoque_tinta")
+}
+
+model SaidaTinta {
+  id              Int       @id @default(autoincrement())
+  estoque_id      Int
+  quantidade      Int
+  unidade         String    @db.VarChar(255)
+  setor           String    @db.VarChar(255)
+  responsavel     String    @db.VarChar(255)
+  observacao      String?   @db.Text
+  data_saida      DateTime  @db.Date
+  created_at      DateTime  @default(now())
+
+  estoque         EstoqueTinta @relation(fields: [estoque_id], references: [id], onDelete: Cascade)
+
+  @@index([estoque_id])
+  @@index([data_saida])
+  @@index([setor])
+  @@map("saida_tinta")
+}

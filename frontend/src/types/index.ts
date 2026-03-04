@@ -30,3 +30,63 @@ export interface StatusConfig {
 }
 
 export type StatusFilter = 'todos' | 'aberto' | 'em_andamento' | 'finalizado';
+
+// ─── Ink Management Types ───────────────────────────────────
+export type ModeloImpressora = 'L3150' | 'L3250';
+
+export interface SaidaTinta {
+  id: number;
+  estoque_id: number;
+  quantidade: number;
+  setor: string;
+  responsavel: string;
+  observacao?: string | null;
+  data_saida: string;
+  created_at: string;
+  estoque?: EstoqueTinta;
+}
+
+export interface EstoqueTinta {
+  id: number;
+  modelo_impressora: ModeloImpressora;
+  cor_tinta: string;
+  codigo_tinta: string;
+  quantidade_atual: number;
+  quantidade_minima: number;
+  created_at: string;
+  updated_at: string;
+  saidas?: SaidaTinta[];
+}
+
+export interface CreateEstoqueData {
+  modelo_impressora: ModeloImpressora;
+  cor_tinta: string;
+  codigo_tinta: string;
+  quantidade_atual: number;
+  quantidade_minima?: number;
+}
+
+export interface UpdateEstoqueData {
+  modelo_impressora?: ModeloImpressora;
+  cor_tinta?: string;
+  codigo_tinta?: string;
+  quantidade_atual?: number;
+  quantidade_minima?: number;
+}
+
+export interface CreateSaidaData {
+  estoque_id: number;
+  quantidade: number;
+  setor: string;
+  responsavel: string;
+  observacao?: string | null;
+  data_saida: string;
+}
+
+export interface SaidasFilter {
+  estoque_id?: number;
+  setor?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  modelo?: ModeloImpressora;
+}

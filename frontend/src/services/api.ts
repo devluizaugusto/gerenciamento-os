@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { ServiceOrder, FormData } from '../types';
+import { ServiceOrder, FormData, EstoqueTinta, CreateEstoqueData, UpdateEstoqueData, SaidaTinta, CreateSaidaData, SaidasFilter } from '../types';
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -111,3 +111,54 @@ export const serviceOrderAPI = {
 };
 
 export default api;
+
+// ─── Ink / Tinta API ─────────────────────────────────────────
+export const tintaAPI = {
+  // Estoque
+  getAllEstoque: async (): Promise<EstoqueTinta[]> => {
+    const response = await api.get<EstoqueTinta[]>('/tintas/estoque');
+    return response.data;
+  },
+
+  getEstoqueById: async (id: number): Promise<EstoqueTinta> => {
+    const response = await api.get<EstoqueTinta>(`/tintas/estoque/${id}`);
+    return response.data;
+  },
+
+  createEstoque: async (data: CreateEstoqueData): Promise<EstoqueTinta> => {
+    const response = await api.post<EstoqueTinta>('/tintas/estoque', data);
+    return response.data;
+  },
+
+  updateEstoque: async (id: number, data: UpdateEstoqueData): Promise<EstoqueTinta> => {
+    const response = await api.put<EstoqueTinta>(`/tintas/estoque/${id}`, data);
+    return response.data;
+  },
+
+  deleteEstoque: async (id: number): Promise<void> => {
+    await api.delete(`/tintas/estoque/${id}`);
+  },
+
+  // Saídas
+  getAllSaidas: async (filters?: SaidasFilter): Promise<SaidaTinta[]> => {
+    const params = new URLSearchParams();
+    if (filters?.estoque_id) params.append('estoque_id', String(filters.estoque_id));
+    if (filters?.setor) params.append('setor', filters.setor);
+    if (filters?.dataInicio) params.append('dataInicio', filters.dataInicio);
+    if (filters?.dataFim) params.append('dataFim', filters.dataFim);
+    if (filters?.modelo) params.append('modelo', filters.modelo);
+
+    const url = `/tintas/saidas${params.toString() ? '?' + params.toString() : ''}`;
+    const response = await api.get<SaidaTinta[]>(url);
+    return response.data;
+  },
+
+  createSaida: async (data: CreateSaidaData): Promise<SaidaTinta> => {
+    const response = await api.post<SaidaTinta>('/tintas/saidas', data);
+    return response.data;
+  },
+
+  deleteSaida: async (id: number): Promise<void> => {
+    await api.delete(`/tintas/saidas/${id}`);
+  },
+};

@@ -7,6 +7,7 @@ import Footer from './components/layout/Footer';
 
 const ServiceOrderForm = lazy(() => import('./components/orders/ServiceOrderForm'));
 const ServiceOrderDetails = lazy(() => import('./components/orders/ServiceOrderDetails'));
+const InkManagement = lazy(() => import('./components/ink/InkManagement'));
 import { ServiceOrder, StatusFilter } from './types';
 import { ServiceOrderFormData } from './schemas/ordemServicoSchema';
 import {
@@ -51,6 +52,8 @@ const formatMonthYear = (month: string, year: string): string => {
 
 function App() {
   const { day: currentDay, month: currentMonth, year: currentYear } = getCurrentDate();
+
+  const [currentPage, setCurrentPage] = useState<'helpdesk' | 'tintas'>('helpdesk');
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -307,11 +310,28 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header
+        currentPage={currentPage}
+        onChangePage={setCurrentPage}
         onNewOS={handleCreate}
         onGeneratePDF={handleGenerateReportPDF}
         canGeneratePDF={filteredOrders.length > 0}
       />
 
+      {/* ─── Ink Management Page ─── */}
+      {currentPage === 'tintas' && (
+        <main className="flex-1">
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-24">
+              <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-cyan-500" />
+            </div>
+          }>
+            <InkManagement />
+          </Suspense>
+        </main>
+      )}
+
+      {/* ─── Help Desk Page ─── */}
+      {currentPage === 'helpdesk' && (
       <main className="min-h-[calc(100vh-280px)] pb-12 flex-1 pt-8">
         <div className="container p-4 md:p-6 lg:p-8">
           <Statistics 
@@ -627,6 +647,7 @@ function App() {
           )}
         </div>
       </main>
+      )} {/* end helpdesk page */}
 
       <Footer />
 

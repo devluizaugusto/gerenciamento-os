@@ -1,0 +1,35 @@
+import express from 'express';
+import {
+  getAllEstoque,
+  getEstoqueById,
+  createEstoque,
+  updateEstoque,
+  deleteEstoque,
+  getAllSaidas,
+  createSaida,
+  deleteSaida,
+} from '../controllers/tintaController';
+import { validateSchema } from '../middlewares/validateSchema';
+import {
+  createEstoqueTintaSchema,
+  updateEstoqueTintaSchema,
+  createSaidaTintaSchema,
+  idParamTintaSchema,
+  historicoQuerySchema,
+} from '../schemas/tintaSchema';
+
+const router = express.Router();
+
+// ─── Estoque ─────────────────────────────────
+router.get('/estoque', getAllEstoque);
+router.get('/estoque/:id', validateSchema(idParamTintaSchema), getEstoqueById);
+router.post('/estoque', validateSchema(createEstoqueTintaSchema), createEstoque);
+router.put('/estoque/:id', validateSchema(updateEstoqueTintaSchema), updateEstoque);
+router.delete('/estoque/:id', validateSchema(idParamTintaSchema), deleteEstoque);
+
+// ─── Saídas ──────────────────────────────────
+router.get('/saidas', validateSchema(historicoQuerySchema), getAllSaidas);
+router.post('/saidas', validateSchema(createSaidaTintaSchema), createSaida);
+router.delete('/saidas/:id', validateSchema(idParamTintaSchema), deleteSaida);
+
+export default router;
