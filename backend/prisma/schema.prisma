@@ -40,7 +40,6 @@ model EstoqueTinta {
 
   saidas          SaidaTinta[]
 
-  @@unique([modelo_impressora, codigo_tinta])
   @@index([modelo_impressora])
   @@map("estoque_tinta")
 }

@@ -414,9 +414,9 @@ const InkManagement: React.FC = () => {
           {/* Stats rápidas */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
             {[
-              { label: 'Total de itens', value: estoques.length, icon: '📦', color: 'bg-white/10' },
-              { label: 'L3150 no estoque', value: statsL3150.length, icon: '🖨️', color: 'bg-white/10' },
-              { label: 'L3250 no estoque', value: statsL3250.length, icon: '🖨️', color: 'bg-white/10' },
+              { label: 'Total de Tintas', value: estoques.length, icon: '📦', color: 'bg-white/10' },
+              { label: 'Tintas L3150 no estoque', value: statsL3150.length, icon: '🖨️', color: 'bg-white/10' },
+              { label: 'Tintas L3250 no estoque', value: statsL3250.length, icon: '🖨️', color: 'bg-white/10' },
               { label: 'Estoque crítico', value: criticalCount, icon: '⚠️', color: criticalCount > 0 ? 'bg-red-500/30' : 'bg-white/10' },
             ].map((stat) => (
               <div key={stat.label} className={`${stat.color} backdrop-blur-sm rounded-xl p-3 text-white border border-white/20`}>

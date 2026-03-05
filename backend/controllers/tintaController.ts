@@ -73,21 +73,7 @@ export const createEstoque = async (req: Request, res: Response): Promise<void> 
       req.body;
 
     // Verificar duplicata
-    const existing = await prisma.estoqueTinta.findUnique({
-      where: {
-        modelo_impressora_codigo_tinta: {
-          modelo_impressora,
-          codigo_tinta: codigo_tinta + '_' + cor_tinta,
-        },
-      },
-    });
 
-    if (existing) {
-      res.status(409).json({
-        error: `Tinta ${cor_tinta} (${codigo_tinta}) já cadastrada para a ${modelo_impressora}.`,
-      });
-      return;
-    }
 
     const estoque = await prisma.estoqueTinta.create({
       data: {
