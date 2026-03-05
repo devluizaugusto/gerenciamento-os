@@ -1,10 +1,28 @@
 import { z } from 'zod';
 
-export const CORES_TINTA = ['Preto', 'Ciano', 'Magenta', 'Amarelo'] as const;
+export const MODELOS_IMPRESSORA = ['L3150', 'L3250'] as const;
+
+export const TINTAS_POR_MODELO: Record<string, { cor: string; codigo: string }[]> = {
+  L3150: [
+    { cor: 'Preto',   codigo: '544' },
+    { cor: 'Ciano',   codigo: '544' },
+    { cor: 'Magenta', codigo: '544' },
+    { cor: 'Amarelo', codigo: '544' },
+  ],
+  L3250: [
+    { cor: 'Preto',   codigo: '544' },
+    { cor: 'Ciano',   codigo: '544' },
+    { cor: 'Magenta', codigo: '544' },
+    { cor: 'Amarelo', codigo: '544' },
+  ],
+};
 
 // Schema para criar estoque de tinta
 export const createEstoqueTintaSchema = z.object({
   body: z.object({
+    modelo_impressora: z.enum(MODELOS_IMPRESSORA, {
+      message: 'Modelo de impressora inválido. Use L3150 ou L3250.',
+    }),
     cor_tinta: z.string().min(1, 'Cor da tinta é obrigatória').max(50),
     codigo_tinta: z.string().min(1, 'Código da tinta é obrigatório').max(50),
     quantidade_atual: z
@@ -28,6 +46,11 @@ export const updateEstoqueTintaSchema = z.object({
       .transform(Number),
   }),
   body: z.object({
+    modelo_impressora: z
+      .enum(MODELOS_IMPRESSORA, {
+        message: 'Modelo de impressora inválido. Use L3150 ou L3250.',
+      })
+      .optional(),
     cor_tinta: z.string().min(1, 'Cor da tinta é obrigatória').max(50).optional(),
     codigo_tinta: z.string().min(1, 'Código da tinta é obrigatório').max(50).optional(),
     quantidade_atual: z
@@ -105,5 +128,6 @@ export const historicoQuerySchema = z.object({
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data fim deve estar no formato YYYY-MM-DD')
       .optional(),
+    modelo: z.enum(MODELOS_IMPRESSORA, { message: 'Modelo inválido' }).optional(),
   }),
 });
