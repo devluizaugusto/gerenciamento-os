@@ -123,6 +123,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     }
     if (!isFinalizado) {
       setValue('data_fechamento', '');
+      setValue('servico_realizado', '');
     }
   }, [statusValue, isFinalizado, setValue]);
 
@@ -405,28 +406,46 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-100">
-        <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2">
+      <div className={`bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 transition-all duration-300 ${isFinalizado ? 'border-green-200' : 'border-gray-200 opacity-60'}`}>
+        <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${isFinalizado ? 'text-green-900' : 'text-gray-400'}`}>
           <span className="text-2xl">✅</span>
           Serviço Realizado
+          {!isFinalizado && (
+            <span className="text-xs font-normal bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full ml-2">
+              Disponível apenas quando Finalizado
+            </span>
+          )}
         </h3>
         
         <div>
-          <label htmlFor="servico_realizado" className="label text-green-900">
+          <label htmlFor="servico_realizado" className={`label ${isFinalizado ? 'text-green-900' : 'text-gray-400'}`}>
             <span className="text-lg mr-2">🛠️</span>
             Descrição do Serviço
+            {isFinalizado && <span className="text-danger"> *</span>}
           </label>
           <textarea
             id="servico_realizado"
             {...register('servico_realizado')}
             rows={5}
-            className="input resize-none uppercase border-green-200 focus:border-green-500"
-            placeholder="Descreva o serviço realizado para resolução do problema..."
+            disabled={!isFinalizado}
+            className={`input resize-none uppercase transition-all duration-200 ${
+              !isFinalizado
+                ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+                : 'border-green-200 focus:border-green-500'
+            }`}
+            placeholder={isFinalizado ? 'Descreva o serviço realizado para resolução do problema...' : 'Altere o status para "Finalizado" para preencher este campo...'}
             onChange={(e) => {
+              if (!isFinalizado) return;
               e.target.value = e.target.value.toUpperCase();
               setValue('servico_realizado', e.target.value);
             }}
           />
+          {!isFinalizado && (
+            <p className="text-gray-400 text-xs mt-2 flex items-center gap-1">
+              <span>ℹ️</span>
+              Disponível apenas quando o status for <strong className="text-gray-500 ml-1">Finalizado</strong>
+            </p>
+          )}
         </div>
       </div>
 

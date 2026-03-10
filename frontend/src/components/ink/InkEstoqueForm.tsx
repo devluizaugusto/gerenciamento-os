@@ -8,7 +8,7 @@ interface InkEstoqueFormProps {
   isLoading: boolean;
 }
 
-const MODELOS: ModeloImpressora[] = ['L3150', 'L3250'];
+const MODELOS: ModeloImpressora[] = ['L3150 & L3250'];
 
 const CORES_PADRAO = [
   { cor: 'Preto',   codigo: '544' },
@@ -27,7 +27,7 @@ const COR_COLORS: Record<string, string> = {
 const InkEstoqueForm: React.FC<InkEstoqueFormProps> = ({ estoque, onSubmit, onCancel, isLoading }) => {
   const isEditing = !!estoque;
 
-  const [modelo, setModelo] = useState<ModeloImpressora>(estoque?.modelo_impressora ?? 'L3150');
+  const [modelo, setModelo] = useState<ModeloImpressora>(estoque?.modelo_impressora ?? 'L3150 & L3250');
   const [corTinta, setCorTinta] = useState<string>(estoque?.cor_tinta ?? 'Preto');
   const [codigoTinta, setCodigoTinta] = useState<string>(estoque?.codigo_tinta ?? '544');
   const [quantidadeAtual, setQuantidadeAtual] = useState<string>(
@@ -76,28 +76,14 @@ const InkEstoqueForm: React.FC<InkEstoqueFormProps> = ({ estoque, onSubmit, onCa
       {/* Modelo */}
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">
-          🖨️ Modelo da Impressora <span className="text-red-500">*</span>
+          🖨️ Modelo da Impressora
         </label>
         <div className="flex gap-3">
-          {MODELOS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setModelo(m)}
-              disabled={isEditing}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition-all ${
-                modelo === m
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-md'
-                  : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-50'
-              } ${isEditing ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-            >
-              Epson {m}
-            </button>
-          ))}
+          <div className="flex-1 py-3 px-4 rounded-xl font-bold text-sm border-2 bg-blue-600 text-white border-blue-600 shadow-md text-center">
+            Epson L3150 &amp; L3250
+          </div>
         </div>
-        {isEditing && (
-          <p className="mt-1 text-xs text-gray-500">Modelo não pode ser alterado após criação.</p>
-        )}
+        <p className="mt-1 text-xs text-gray-500">As tintas 544 são compatíveis com ambos os modelos.</p>
       </div>
 
       {/* Cor */}

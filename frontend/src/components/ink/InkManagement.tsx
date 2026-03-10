@@ -258,8 +258,7 @@ const InkManagement: React.FC = () => {
     return estoques.filter((e) => e.modelo_impressora === modeloFilter);
   }, [estoques, modeloFilter]);
 
-  const statsL3150 = useMemo(() => estoques.filter((e) => e.modelo_impressora === 'L3150'), [estoques]);
-  const statsL3250 = useMemo(() => estoques.filter((e) => e.modelo_impressora === 'L3250'), [estoques]);
+  const statsL3150e3250 = useMemo(() => estoques.filter((e) => e.modelo_impressora === 'L3150 & L3250'), [estoques]);
   const criticalCount = useMemo(
     () => estoques.filter((e) => e.quantidade_atual <= e.quantidade_minima).length,
     [estoques]
@@ -412,11 +411,10 @@ const InkManagement: React.FC = () => {
           </div>
 
           {/* Stats rápidas */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
             {[
               { label: 'Total de Tintas', value: estoques.length, icon: '📦', color: 'bg-white/10' },
-              { label: 'Tintas L3150 no estoque', value: statsL3150.length, icon: '🖨️', color: 'bg-white/10' },
-              { label: 'Tintas L3250 no estoque', value: statsL3250.length, icon: '🖨️', color: 'bg-white/10' },
+              { label: 'Tintas L3150 & L3250 no estoque', value: statsL3150e3250.length, icon: '🖨️', color: 'bg-white/10' },
               { label: 'Estoque crítico', value: criticalCount, icon: '⚠️', color: criticalCount > 0 ? 'bg-red-500/30' : 'bg-white/10' },
             ].map((stat) => (
               <div key={stat.label} className={`${stat.color} backdrop-blur-sm rounded-xl p-3 text-white border border-white/20`}>
@@ -461,7 +459,7 @@ const InkManagement: React.FC = () => {
           <>
             {/* Filtro modelo */}
             <div className="flex gap-2 mb-6 flex-wrap">
-              {(['todos', 'L3150', 'L3250'] as const).map((m) => (
+              {(['todos', 'L3150 & L3250'] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setModeloFilter(m)}
@@ -545,8 +543,7 @@ const InkManagement: React.FC = () => {
                     className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="todos">Todos os modelos</option>
-                    <option value="L3150">Epson L3150</option>
-                    <option value="L3250">Epson L3250</option>
+                    <option value="L3150 & L3250">Epson L3150 &amp; L3250</option>
                   </select>
                 </div>
 
