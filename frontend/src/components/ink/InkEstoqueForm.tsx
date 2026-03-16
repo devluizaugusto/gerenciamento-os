@@ -177,7 +177,7 @@ const InkEstoqueForm: React.FC<InkEstoqueFormProps> = ({ estoque, onSubmit, onCa
                 }`}
               >
                 <span className={`w-4 h-4 rounded-full ${colorClass.split(' ')[0]} flex-shrink-0`} />
-                <span className="text-gray-800">{c.icone} {c.cor}</span>
+                <span className="text-gray-800">{c.cor}</span>
                 {isSelected && <span className="ml-auto text-green-600 font-bold">✓</span>}
               </button>
             );
