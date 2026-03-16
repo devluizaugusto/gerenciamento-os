@@ -32,7 +32,28 @@ export interface StatusConfig {
 export type StatusFilter = 'todos' | 'aberto' | 'em_andamento' | 'finalizado';
 
 // ─── Ink Management Types ───────────────────────────────────
-export type ModeloImpressora = 'L3150 & L3250';
+export type ModeloImpressora = string;
+
+export interface ModeloImpressoraCadastro {
+  id: number;
+  nome: string;
+  descricao?: string | null;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+  _count?: { estoques: number };
+}
+
+export interface CreateModeloData {
+  nome: string;
+  descricao?: string | null;
+}
+
+export interface UpdateModeloData {
+  nome?: string;
+  descricao?: string | null;
+  ativo?: boolean;
+}
 
 export interface SaidaTinta {
   id: number;

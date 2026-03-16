@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { ServiceOrder, FormData, EstoqueTinta, CreateEstoqueData, UpdateEstoqueData, SaidaTinta, CreateSaidaData, SaidasFilter } from '../types';
+import { ServiceOrder, FormData, EstoqueTinta, CreateEstoqueData, UpdateEstoqueData, SaidaTinta, CreateSaidaData, SaidasFilter, ModeloImpressoraCadastro, CreateModeloData, UpdateModeloData } from '../types';
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -160,5 +160,33 @@ export const tintaAPI = {
 
   deleteSaida: async (id: number): Promise<void> => {
     await api.delete(`/tintas/saidas/${id}`);
+  },
+};
+
+// ─── Modelos de Impressora API ────────────────────────────────
+export const modeloImpressoraAPI = {
+  getAll: async (apenasAtivos = false): Promise<ModeloImpressoraCadastro[]> => {
+    const params = apenasAtivos ? '?ativo=true' : '';
+    const response = await api.get<ModeloImpressoraCadastro[]>(`/modelos-impressora${params}`);
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<ModeloImpressoraCadastro> => {
+    const response = await api.get<ModeloImpressoraCadastro>(`/modelos-impressora/${id}`);
+    return response.data;
+  },
+
+  create: async (data: CreateModeloData): Promise<ModeloImpressoraCadastro> => {
+    const response = await api.post<ModeloImpressoraCadastro>('/modelos-impressora', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: UpdateModeloData): Promise<ModeloImpressoraCadastro> => {
+    const response = await api.put<ModeloImpressoraCadastro>(`/modelos-impressora/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/modelos-impressora/${id}`);
   },
 };

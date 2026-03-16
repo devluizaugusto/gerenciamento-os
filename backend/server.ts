@@ -4,6 +4,7 @@ import compression from 'compression';
 import dotenv from 'dotenv';
 import ordemServicoRoutes from './routes/ordemServicoRoutes';
 import tintaRoutes from './routes/tintaRoutes';
+import modeloImpressoraRoutes from './routes/modeloImpressoraRoutes';
 
 dotenv.config();
 
@@ -23,13 +24,15 @@ app.get('/', (_req: Request, res: Response) => {
     version: '2.1.3',
     endpoints: {
       ordensServico: '/api/ordens-servico',
-      tintas: '/api/tintas'
+      tintas: '/api/tintas',
+      modelosImpressora: '/api/modelos-impressora'
     }
   });
 });
 
 app.use('/api/ordens-servico', ordemServicoRoutes);
 app.use('/api/tintas', tintaRoutes);
+app.use('/api/modelos-impressora', modeloImpressoraRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Erro:', err);

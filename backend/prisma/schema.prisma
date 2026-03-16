@@ -28,9 +28,23 @@ model OrdemServico {
   @@map("ordem_servico")
 }
 
+model ModeloImpressoraCadastro {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique @db.VarChar(100)
+  descricao String?  @db.VarChar(255)
+  ativo     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  estoques  EstoqueTinta[]
+
+  @@index([ativo])
+  @@map("modelo_impressora_cadastro")
+}
+
 model EstoqueTinta {
   id              Int       @id @default(autoincrement())
-  modelo_impressora String  @db.VarChar(50)
+  modelo_impressora String  @db.VarChar(100)
   cor_tinta       String    @db.VarChar(50)
   codigo_tinta    String    @db.VarChar(50)
   quantidade_atual Int      @default(0)
@@ -39,6 +53,7 @@ model EstoqueTinta {
   updated_at      DateTime  @updatedAt
 
   saidas          SaidaTinta[]
+  modelo_cadastro ModeloImpressoraCadastro? @relation(fields: [modelo_impressora], references: [nome])
 
   @@index([modelo_impressora])
   @@map("estoque_tinta")
