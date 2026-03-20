@@ -16,7 +16,7 @@ export default defineConfig({
     }
   },
   preview: {
-	allowedHosts: ['os.tisaude.tec.br'],
- 	port: 2222
- }
+    allowedHosts: ['os.tisaude.tec.br'],
+    port: 2222
+  }
 })

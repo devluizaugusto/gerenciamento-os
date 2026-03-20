@@ -1,5 +1,17 @@
 import axios, { AxiosInstance } from 'axios';
-import { ServiceOrder, FormData, EstoqueTinta, CreateEstoqueData, UpdateEstoqueData, SaidaTinta, CreateSaidaData, SaidasFilter, ModeloImpressoraCadastro, CreateModeloData, UpdateModeloData } from '../types';
+import {
+  ServiceOrder,
+  FormData,
+  EstoqueTinta,
+  CreateEstoqueData,
+  UpdateEstoqueData,
+  SaidaTinta,
+  CreateSaidaData,
+  SaidasFilter,
+  ModeloImpressoraCadastro,
+  CreateModeloData,
+  UpdateModeloData
+} from '../types';
 
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -81,7 +93,7 @@ export const serviceOrderAPI = {
     if (dataFim) {
       params.append('dataFim', dataFim);
     }
-    
+
     const url = `/ordens-servico/pdf/relatorio/geral${params.toString() ? '?' + params.toString() : ''}`;
 
     try {

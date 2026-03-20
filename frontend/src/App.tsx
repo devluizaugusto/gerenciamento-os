@@ -53,7 +53,15 @@ const formatMonthYear = (month: string, year: string): string => {
 function App() {
   const { day: currentDay, month: currentMonth, year: currentYear } = getCurrentDate();
 
-  const [currentPage, setCurrentPage] = useState<'helpdesk' | 'tintas'>('helpdesk');
+  const [currentPage, setCurrentPage] = useState<'helpdesk' | 'tintas'>(() => {
+    const saved = sessionStorage.getItem('currentPage');
+    return (saved === 'tintas' ? 'tintas' : 'helpdesk') as 'helpdesk' | 'tintas';
+  });
+
+  const handleChangePage = useCallback((page: 'helpdesk' | 'tintas') => {
+    sessionStorage.setItem('currentPage', page);
+    setCurrentPage(page);
+  }, []);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -311,7 +319,7 @@ function App() {
     <div className="min-h-screen flex flex-col">
       <Header
         currentPage={currentPage}
-        onChangePage={setCurrentPage}
+        onChangePage={handleChangePage}
         onNewOS={handleCreate}
         onGeneratePDF={handleGenerateReportPDF}
         canGeneratePDF={filteredOrders.length > 0}
