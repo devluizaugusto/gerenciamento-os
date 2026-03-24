@@ -167,13 +167,13 @@ function App() {
     filtered.sort((a, b) => {
       if (!a.data_abertura) return 1;
       if (!b.data_abertura) return -1;
-      
+
       const [dayA, monthA, yearA] = a.data_abertura.split('/');
       const [dayB, monthB, yearB] = b.data_abertura.split('/');
-      
+
       const dateA = Date.UTC(parseInt(yearA), parseInt(monthA) - 1, parseInt(dayA));
       const dateB = Date.UTC(parseInt(yearB), parseInt(monthB) - 1, parseInt(dayB));
-      
+
       return dateA - dateB;
     });
 
@@ -213,7 +213,7 @@ function App() {
         const newOrder = await createMutation.mutateAsync(formData);
         success(`🎉 Ordem de Serviço #${newOrder.numero_os} criada com sucesso!`);
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 300));
       closeModal();
     } catch (err: any) {
@@ -260,7 +260,7 @@ function App() {
 
   const clearFilters = useCallback(() => {
     const { day, month, year } = getCurrentDate();
-    
+
     setStatusFilter('todos');
     setSearchTerm('');
     setDayFilter(day);
@@ -281,13 +281,13 @@ function App() {
   }, []);
 
   const hasActiveFilters = useMemo(() => {
-    return statusFilter !== 'todos' || 
-           searchTerm !== '' || 
-           dayFilter !== currentDay || 
-           monthFilter !== currentMonth || 
-           yearFilter !== currentYear || 
-           startDateFilter !== '' || 
-           endDateFilter !== '';
+    return statusFilter !== 'todos' ||
+      searchTerm !== '' ||
+      dayFilter !== currentDay ||
+      monthFilter !== currentMonth ||
+      yearFilter !== currentYear ||
+      startDateFilter !== '' ||
+      endDateFilter !== '';
   }, [statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, currentDay, currentMonth, currentYear]);
 
   const isUsingDateFilters = useMemo(() => {
@@ -323,10 +323,10 @@ function App() {
 
   // ── Status filter pills config ─────────────────────────
   const statusPills = [
-    { value: 'todos',        label: 'Todos',        count: orders.length,                                      cls: 'border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50', activeCls: 'bg-slate-800 border-slate-800 text-white' },
-    { value: 'aberto',       label: 'Abertos',      count: orders.filter(o => o.status === 'aberto').length,       cls: 'border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50',       activeCls: 'bg-red-600 border-red-600 text-white' },
+    { value: 'todos', label: 'Todos', count: orders.length, cls: 'border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50', activeCls: 'bg-slate-800 border-slate-800 text-white' },
+    { value: 'aberto', label: 'Abertos', count: orders.filter(o => o.status === 'aberto').length, cls: 'border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50', activeCls: 'bg-red-600 border-red-600 text-white' },
     { value: 'em_andamento', label: 'Em Andamento', count: orders.filter(o => o.status === 'em_andamento').length, cls: 'border-amber-200 text-amber-600 hover:border-amber-300 hover:bg-amber-50', activeCls: 'bg-amber-500 border-amber-500 text-white' },
-    { value: 'finalizado',   label: 'Finalizados',  count: orders.filter(o => o.status === 'finalizado').length,  cls: 'border-emerald-200 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50', activeCls: 'bg-emerald-600 border-emerald-600 text-white' },
+    { value: 'finalizado', label: 'Finalizados', count: orders.filter(o => o.status === 'finalizado').length, cls: 'border-emerald-200 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50', activeCls: 'bg-emerald-600 border-emerald-600 text-white' },
   ] as const;
 
   return (
@@ -414,14 +414,12 @@ function App() {
                         setStartDateFilter(''); setEndDateFilter('');
                       }
                     }}
-                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${
-                      statusFilter === p.value ? p.activeCls : p.cls
-                    }`}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${statusFilter === p.value ? p.activeCls : p.cls
+                      }`}
                   >
                     {p.label}
-                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      statusFilter === p.value ? 'bg-white/25' : 'bg-slate-100 text-slate-500'
-                    }`}>{p.count}</span>
+                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${statusFilter === p.value ? 'bg-white/25' : 'bg-slate-100 text-slate-500'
+                      }`}>{p.count}</span>
                   </button>
                 ))}
               </div>
@@ -449,7 +447,7 @@ function App() {
                   <label className="label">Dia</label>
                   <input type="number" value={dayFilter}
                     onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 1 && +v <= 31)) setDayFilter(v); }}
-                    onKeyDown={(e) => { if (['-','+','e','E'].includes(e.key)) e.preventDefault(); }}
+                    onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="1 – 31" min="1" max="31"
                     disabled={isUsingDateRangeFilters}
@@ -462,8 +460,8 @@ function App() {
                   <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}
                     disabled={isUsingDateRangeFilters} className="input">
                     <option value="">Todos</option>
-                    {['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-                      .map((m, i) => <option key={m} value={String(i+1).padStart(2,'0')}>{m}</option>)}
+                    {['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+                      .map((m, i) => <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
                   </select>
                 </div>
                 {/* Ano */}
@@ -471,7 +469,7 @@ function App() {
                   <label className="label">Ano</label>
                   <input type="number" value={yearFilter}
                     onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 2020 && +v <= 2100)) setYearFilter(v); }}
-                    onKeyDown={(e) => { if (['-','+','e','E'].includes(e.key)) e.preventDefault(); }}
+                    onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
                     onWheel={(e) => e.currentTarget.blur()}
                     placeholder="2020 – 2100" min="2020" max="2100"
                     disabled={isUsingDateRangeFilters}
@@ -503,7 +501,7 @@ function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {dayFilter && monthFilter && yearFilter
-                    ? `Dia ${String(dayFilter).padStart(2,'0')}/${monthFilter}/${yearFilter}`
+                    ? `Dia ${String(dayFilter).padStart(2, '0')}/${monthFilter}/${yearFilter}`
                     : monthFilter && yearFilter ? formatMonthYear(monthFilter, yearFilter) : ''}
                 </div>
               )}
@@ -512,7 +510,18 @@ function App() {
             {/* ── Results count ── */}
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-slate-500">
-                <span className="font-semibold text-slate-700">{filteredOrders.length}</span> ordem{filteredOrders.length !== 1 ? 's' : ''} encontrada{filteredOrders.length !== 1 ? 's' : ''}
+                {filteredOrders.length === 0
+                  ? "Nenhuma ordem encontrada"
+                  : (
+                    <>
+                      <span className="font-semibold text-slate-700">
+                        {filteredOrders.length}
+                      </span>{" "}
+                      {filteredOrders.length === 1
+                        ? "ordem encontrada"
+                        : "ordens encontradas"}
+                    </>
+                  )}
               </p>
               {hasActiveFilters && (
                 <button onClick={clearFilters} className="text-xs text-slate-500 hover:text-slate-700 underline">
