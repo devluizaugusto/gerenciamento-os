@@ -10,79 +10,55 @@ interface HeaderProps {
   canGeneratePDF: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ currentPage, onChangePage, onNewOS, onGeneratePDF, canGeneratePDF }) => {
+const PAGE_META: Record<Page, { label: string; sub: string; icon: React.ReactNode }> = {
+  helpdesk: {
+    label: 'Ordens de Serviço',
+    sub: 'Gerenciamento de ordens de serviço - TI',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+    ),
+  },
+  tintas: {
+    label: 'Tintas Epson',
+    sub: 'Controle de estoque e saídas',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+      </svg>
+    ),
+  },
+};
+
+const Header: React.FC<HeaderProps> = ({ currentPage }) => {
+  const meta = PAGE_META[currentPage];
+
   return (
-    <header className="bg-gradient-to-br from-primary-hover via-primary to-primary-light shadow-xl sticky top-0 z-50 border-b-4 border-primary-hover/30">
-      <div className="container px-4 py-4 md:py-5">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-3 md:gap-6">
-          {/* Title + Nav */}
-          <div className="flex flex-col md:flex-row items-center md:items-start gap-3 w-full md:w-auto">
-            <div className="flex items-center gap-3">
-              <span className="text-4xl md:text-5xl drop-shadow-lg">💻</span>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-tight">
-                  Help Desk TI
-                </h1>
-                <p className="text-white/90 text-xs md:text-sm font-medium mt-0.5">
-                  Sistema de Gerenciamento
-                </p>
-              </div>
-            </div>
+    <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 gap-4 sticky top-0 z-30 shadow-sm">
+      {/* Icon */}
+      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+        {meta.icon}
+      </div>
 
-            {/* Navigation Tabs */}
-            <nav className="flex gap-1.5 md:ml-6 bg-white/15 backdrop-blur-sm rounded-xl p-1.5">
-              <button
-                onClick={() => onChangePage('helpdesk')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  currentPage === 'helpdesk'
-                    ? 'bg-white text-primary shadow-md'
-                    : 'text-white/90 hover:bg-white/20 hover:text-white'
-                }`}
-              >
-                <span className="text-base">🔧</span>
-                <span className="whitespace-nowrap">Ordens de Serviço</span>
-              </button>
-              <button
-                onClick={() => onChangePage('tintas')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  currentPage === 'tintas'
-                    ? 'bg-white text-cyan-700 shadow-md'
-                    : 'text-white/90 hover:bg-white/20 hover:text-white'
-                }`}
-              >
-                <span className="text-base">🖨️</span>
-                <span className="whitespace-nowrap">Tintas Epson</span>
-              </button>
-            </nav>
-          </div>
+      {/* Titles */}
+      <div className="min-w-0">
+        <h1 className="text-sm font-bold text-slate-800 leading-tight">{meta.label}</h1>
+        <p className="text-xs text-slate-500 leading-tight hidden sm:block">{meta.sub}</p>
+      </div>
 
-          {/* Action Buttons — only shown on OS page */}
-          {currentPage === 'helpdesk' && (
-            <div className="flex gap-2 md:gap-3 flex-wrap justify-center md:justify-end">
-              <button
-                className="btn bg-white text-primary font-bold px-4 md:px-6 py-2.5 md:py-3 rounded-lg flex items-center gap-2 text-sm md:text-base shadow-md border-2 border-transparent transition-all duration-300 ease-in-out hover:bg-gradient-to-br hover:from-white hover:to-gray-50 hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 active:scale-100 active:translate-y-0 active:shadow-md"
-                onClick={onNewOS}
-                title="Criar nova ordem de serviço"
-              >
-                <span className="text-lg transition-transform duration-300 group-hover:rotate-90">➕</span>
-                <span className="whitespace-nowrap">Nova OS</span>
-              </button>
-              <button
-                className={`btn font-bold px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all duration-300 ease-in-out flex items-center gap-2 text-sm md:text-base shadow-md border-2 ${
-                  canGeneratePDF
-                    ? 'bg-white text-primary border-transparent hover:bg-gradient-to-br hover:from-white hover:to-gray-50 hover:shadow-2xl hover:scale-105 hover:-translate-y-0.5 active:scale-100 active:translate-y-0 active:shadow-md cursor-pointer'
-                    : 'bg-white/50 text-primary/40 cursor-not-allowed opacity-60'
-                }`}
-                onClick={onGeneratePDF}
-                disabled={!canGeneratePDF}
-                title={canGeneratePDF ? 'Gerar relatório em PDF com filtros aplicados' : 'Nenhuma ordem disponível para gerar relatório'}
-              >
-                <span className="text-lg">📄</span>
-                <span className="whitespace-nowrap">Gerar Relatório</span>
-              </button>
-            </div>
-          )}
-        </div>
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Date chip */}
+      <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full">
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
       </div>
     </header>
   );

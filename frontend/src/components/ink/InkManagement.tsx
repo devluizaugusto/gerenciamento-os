@@ -14,53 +14,50 @@ import { useModelosImpressora } from '../../hooks/useModeloImpressora';
 import { useToast } from '../../hooks/useToast';
 import Toast from '../common/Toast';
 
-const InkSaidaForm = lazy(() => import('./InkSaidaForm'));
+const InkSaidaForm   = lazy(() => import('./InkSaidaForm'));
 const InkEstoqueForm = lazy(() => import('./InkEstoqueForm'));
 const PrinterModelManager = lazy(() => import('./PrinterModelManager'));
 
-// ─── Listas predefinidas ───────────────────────────────────────
-const UNIDADES_PREDEFINIDAS = [
-  'URUCUBA', 'MENDES', 'GAMELEIRA', 'JUA', 'LAGOA AZUL',
-  'RIBEIRO DO MEL', 'SANTANA', 'SANTA CRUZ', 'ALEGRIA', 'REDENTOR',
-  'JOAO ERNESTO', 'CONGAL', 'SANTA TEREZINHA', 'SANTO ANTONIO',
-  'N. SRA DE FATIMA', 'CONVALES', 'SAO SEBASTIAO', 'OTACIO DE LEMOS',
-  'PONTO CERTO', 'CTA', 'CER', 'CEO', 'POLICLINICA', 'SAMU',
-  'HOSPITAL DE CAMPANHA', 'VISA', 'VIGILANCIA AMBIENTAL', 'CAPS',
-  'RESIDENCIA TERAPEUTICA', 'UNIDADE DE ACOLHIMENTO', 'SEDE DA SECRETARIA',
-  'CAF', 'LABORATÓRIO', 'CAPS III DAS PONTES'
+// ─── Static lists ─────────────────────────────────────────────────────────────
+const UNIDADES = [
+  'URUCUBA','MENDES','GAMELEIRA','JUA','LAGOA AZUL','RIBEIRO DO MEL','SANTANA',
+  'SANTA CRUZ','ALEGRIA','REDENTOR','JOAO ERNESTO','CONGAL','SANTA TEREZINHA',
+  'SANTO ANTONIO','N. SRA DE FATIMA','CONVALES','SAO SEBASTIAO','OTACIO DE LEMOS',
+  'PONTO CERTO','CTA','CER','CEO','POLICLINICA','SAMU','HOSPITAL DE CAMPANHA',
+  'VISA','VIGILANCIA AMBIENTAL','CAPS','RESIDENCIA TERAPEUTICA',
+  'UNIDADE DE ACOLHIMENTO','SEDE DA SECRETARIA','CAF','LABORATÓRIO','CAPS III DAS PONTES',
 ].sort();
 
-const SETORES_PREDEFINIDOS = [
-  'VACINA', 'MEDICO', 'DENTISTA', 'ENFERMEIRA', 'RECEPÇÃO',
-  'SALA ADM', 'VIGILÂNCIA EPIDEMIOLOGICA', 'REGULAÇÃO', 'RH',
-  'ATENÇÃO BÁSICA', 'UBS', 'GABINETE', 'PNI', 'OUVIDORIA',
-  'ADMINISTRAÇÃO', 'TELECARDIO', 'FINCANCEIRO/ADM'
+const SETORES = [
+  'VACINA','MEDICO','DENTISTA','ENFERMEIRA','RECEPÇÃO','SALA ADM',
+  'VIGILÂNCIA EPIDEMIOLOGICA','REGULAÇÃO','RH','ATENÇÃO BÁSICA','UBS',
+  'GABINETE','PNI','OUVIDORIA','ADMINISTRAÇÃO','TELECARDIO','FINCANCEIRO/ADM',
 ].sort();
 
-// ─── Helpers ──────────────────────────────────────────────────
-const COR_STYLE: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-  Preto:   { bg: 'bg-gray-900',   border: 'border-gray-700',   text: 'text-white',       badge: 'bg-gray-800 text-white' },
-  Ciano:   { bg: 'bg-cyan-500',   border: 'border-cyan-600',   text: 'text-white',       badge: 'bg-cyan-100 text-cyan-800' },
-  Magenta: { bg: 'bg-pink-600',   border: 'border-pink-700',   text: 'text-white',       badge: 'bg-pink-100 text-pink-800' },
-  Amarelo: { bg: 'bg-yellow-400', border: 'border-yellow-500', text: 'text-yellow-900',  badge: 'bg-yellow-100 text-yellow-800' },
+// ─── Color map ────────────────────────────────────────────────────────────────
+const COR_MAP: Record<string, { dot: string; bar: string; badge: string }> = {
+  Preto:   { dot: 'bg-gray-800',   bar: 'bg-gray-800',   badge: 'bg-gray-100 text-gray-800 border-gray-200' },
+  Ciano:   { dot: 'bg-cyan-500',   bar: 'bg-cyan-500',   badge: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
+  Magenta: { dot: 'bg-pink-500',   bar: 'bg-pink-500',   badge: 'bg-pink-50 text-pink-700 border-pink-200' },
+  Amarelo: { dot: 'bg-yellow-400', bar: 'bg-yellow-400', badge: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
 };
+const getCor = (cor: string) =>
+  COR_MAP[cor] ?? { dot: 'bg-primary', bar: 'bg-primary', badge: 'bg-red-50 text-red-700 border-red-200' };
 
-const getCorStyle = (cor: string) =>
-  COR_STYLE[cor] ?? { bg: 'bg-primary', border: 'border-primary-hover', text: 'text-white', badge: 'bg-red-100 text-red-800' };
-
-const getCorEmoji = (cor: string) => {
-  const map: Record<string, string> = { Preto: '⬛', Ciano: '🔵', Magenta: '🟣', Amarelo: '🟡' };
-  return map[cor] ?? '🎨';
-};
-
-const formatDate = (isoOrBr: string): string => {
+const fmt = (isoOrBr: string): string => {
   if (!isoOrBr) return '—';
   if (isoOrBr.includes('/')) return isoOrBr;
   const [y, m, d] = isoOrBr.split('T')[0].split('-');
   return `${d}/${m}/${y}`;
 };
 
-// ─── Card de estoque ─────────────────────────────────────────
+const Spinner = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="w-8 h-8 border-2 border-slate-200 border-t-primary rounded-full animate-spin" />
+  </div>
+);
+
+// ─── EstoqueCard ──────────────────────────────────────────────────────────────
 interface EstoqueCardProps {
   estoque: EstoqueTinta;
   onSaida: (e: EstoqueTinta) => void;
@@ -70,185 +67,176 @@ interface EstoqueCardProps {
 }
 
 const EstoqueCard: React.FC<EstoqueCardProps> = ({ estoque, onSaida, onEdit, onDelete, onViewHistory }) => {
-  const style = getCorStyle(estoque.cor_tinta);
-  const isCritical = estoque.quantidade_atual <= estoque.quantidade_minima;
-  const isOut = estoque.quantidade_atual === 0;
+  const cor = getCor(estoque.cor_tinta);
+  const isOut      = estoque.quantidade_atual === 0;
+  const isCritical = !isOut && estoque.quantidade_atual <= estoque.quantidade_minima;
+  const pct = Math.min(100, Math.round((estoque.quantidade_atual / Math.max(estoque.quantidade_minima * 3, 1)) * 100));
 
   return (
-    <div className={`bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
-      isOut ? 'border-red-400' : isCritical ? 'border-orange-400' : 'border-gray-200'
-    }`}>
-      {/* Header colorido */}
-      <div className={`${style.bg} rounded-t-xl px-5 py-4 flex items-center justify-between`}>
-        <div className="flex items-center gap-3">
-          <span className={`text-2xl font-black ${style.text}`}>
-            {getCorEmoji(estoque.cor_tinta)}
-          </span>
-          <div>
-            <p className={`font-bold text-base ${style.text}`}>{estoque.cor_tinta}</p>
-            <p className={`text-xs opacity-80 ${style.text}`}>Código: {estoque.codigo_tinta}</p>
+    <div className={`card flex flex-col hover:-translate-y-0.5 ${isOut ? 'border-red-300' : isCritical ? 'border-amber-300' : ''}`}>
+      {/* Color stripe */}
+      <div className={`h-1 w-full ${cor.bar} rounded-t-xl`} />
+
+      {/* Top */}
+      <div className="px-4 pt-4 pb-3 flex items-center justify-between border-b border-slate-100">
+        <div className="flex items-center gap-2.5">
+          <div className={`w-8 h-8 rounded-lg ${cor.dot} flex items-center justify-center shrink-0`}>
+            <span className="text-white font-black text-xs leading-none">
+              {estoque.cor_tinta.slice(0, 1)}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-800 leading-tight">{estoque.cor_tinta}</p>
+            <p className="text-[11px] text-slate-400">{estoque.codigo_tinta}</p>
           </div>
         </div>
-        <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-full max-w-[110px] truncate" title={estoque.modelo_impressora}>
+        <span className={`badge border text-[10px] max-w-[100px] truncate ${cor.badge}`} title={estoque.modelo_impressora}>
           {estoque.modelo_impressora}
         </span>
       </div>
 
       {/* Body */}
-      <div className="p-5">
+      <div className="px-4 py-3 flex-1 flex flex-col gap-3">
+        {/* Alert banner */}
         {isOut && (
-          <div className="mb-3 bg-red-50 border border-red-300 rounded-lg px-3 py-2 flex items-center gap-2 text-red-700 text-sm font-semibold">
-            🚨 Sem estoque!
+          <div className="flex items-center gap-2 text-xs font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            Sem estoque
           </div>
         )}
-        {!isOut && isCritical && (
-          <div className="mb-3 bg-orange-50 border border-orange-300 rounded-lg px-3 py-2 flex items-center gap-2 text-orange-700 text-sm font-semibold">
-            ⚠️ Estoque crítico!
+        {isCritical && (
+          <div className="flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            </svg>
+            Estoque crítico
           </div>
         )}
 
-        {/* Quantidade */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-center">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Disponível</p>
-            <p className={`text-4xl font-black ${isOut ? 'text-red-600' : isCritical ? 'text-orange-600' : 'text-green-700'}`}>
-              {estoque.quantidade_atual}
-            </p>
-            <p className="text-xs text-gray-400">unidade{estoque.quantidade_atual !== 1 ? 's' : ''}</p>
-          </div>
-          <div className="w-px h-16 bg-gray-200" />
-          <div className="text-center">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Mínimo</p>
-            <p className="text-3xl font-bold text-gray-400">{estoque.quantidade_minima}</p>
-            <p className="text-xs text-gray-400">alerta</p>
-          </div>
-          <div className="w-px h-16 bg-gray-200" />
-          <div className="text-center">
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Últimas saídas</p>
-            <p className="text-3xl font-bold text-primary">{estoque.saidas?.length ?? 0}</p>
-            <p className="text-xs text-gray-400">registros</p>
-          </div>
+        {/* Metrics */}
+        <div className="grid grid-cols-3 gap-2 text-center">
+          {[
+            { label: 'Disponível', value: estoque.quantidade_atual, cls: isOut ? 'text-red-600' : isCritical ? 'text-amber-600' : 'text-emerald-600' },
+            { label: 'Mínimo',     value: estoque.quantidade_minima, cls: 'text-slate-400' },
+            { label: 'Saídas',     value: estoque.saidas?.length ?? 0, cls: 'text-primary' },
+          ].map(m => (
+            <div key={m.label} className="bg-slate-50 rounded-lg py-2 px-1 border border-slate-100">
+              <p className={`text-xl font-extrabold leading-none mb-0.5 ${m.cls}`}>{m.value}</p>
+              <p className="text-[10px] text-slate-400 font-medium">{m.label}</p>
+            </div>
+          ))}
         </div>
 
-        {/* Progress bar */}
-        <div className="mb-4">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Nível do estoque</span>
-            <span>{Math.min(100, Math.round((estoque.quantidade_atual / Math.max(estoque.quantidade_minima * 3, 1)) * 100))}%</span>
+        {/* Progress */}
+        <div>
+          <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+            <span>Nível</span><span>{pct}%</span>
           </div>
-          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${
-                isOut ? 'bg-red-500' : isCritical ? 'bg-orange-500' : 'bg-green-500'
-              }`}
-              style={{
-                width: `${Math.min(100, (estoque.quantidade_atual / Math.max(estoque.quantidade_minima * 3, 1)) * 100)}%`,
-              }}
+              className={`h-full rounded-full transition-all ${isOut ? 'bg-red-500' : isCritical ? 'bg-amber-500' : 'bg-emerald-500'}`}
+              style={{ width: `${pct}%` }}
             />
           </div>
         </div>
+      </div>
 
-        {/* Ações */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => onSaida(estoque)}
-            disabled={isOut}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold text-white bg-gradient-to-br from-primary-hover via-primary to-primary-light rounded-xl hover:from-primary-hover hover:to-primary-hover transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed"
-            title="Registrar saída de tinta"
-          >
-            🖨️ Registrar Saída
-          </button>
-          <button
-            onClick={() => onViewHistory(estoque)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold text-primary bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all"
-            title="Ver histórico de saídas"
-          >
-            📋 Histórico
-          </button>
-          <button
-            onClick={() => onEdit(estoque)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 rounded-xl hover:bg-orange-100 transition-all"
-            title="Editar estoque / registrar entrada"
-          >
-            ✏️ Entrada/Editar
-          </button>
-          <button
-            onClick={() => onDelete(estoque.id)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl hover:bg-red-100 transition-all"
-            title="Remover este item do estoque"
-          >
-            🗑️ Remover
-          </button>
-        </div>
+      {/* Actions */}
+      <div className="px-4 pb-4 grid grid-cols-2 gap-2">
+        <button onClick={() => onSaida(estoque)} disabled={isOut}
+          className="btn btn-primary text-xs py-2">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Saída
+        </button>
+        <button onClick={() => onViewHistory(estoque)}
+          className="btn btn-outline text-xs py-2 text-slate-600">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          Histórico
+        </button>
+        <button onClick={() => onEdit(estoque)}
+          className="btn btn-edit text-xs py-2">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          Entrada/Editar
+        </button>
+        <button onClick={() => onDelete(estoque.id)}
+          className="btn btn-delete text-xs py-2">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Remover
+        </button>
       </div>
     </div>
   );
 };
 
-// ─── Linha do histórico ───────────────────────────────────────
+// ─── SaidaRow ─────────────────────────────────────────────────────────────────
 interface SaidaRowProps {
   saida: SaidaTinta;
   onDelete: (id: number) => void;
 }
 
 const SaidaRow: React.FC<SaidaRowProps> = ({ saida, onDelete }) => {
-  const style = getCorStyle(saida.estoque?.cor_tinta ?? '');
+  const cor = getCor(saida.estoque?.cor_tinta ?? '');
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
-      <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{formatDate(saida.data_saida)}</td>
+    <tr className="hover:bg-slate-50 transition-colors">
+      <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{fmt(saida.data_saida)}</td>
       <td className="px-4 py-3">
-        <span className={`inline-block text-xs font-bold px-2.5 py-1 rounded-full ${style.badge}`}>
-          {saida.estoque?.cor_tinta ?? '—'}
-        </span>
+        <span className={`badge border ${cor.badge}`}>{saida.estoque?.cor_tinta ?? '—'}</span>
       </td>
-      <td className="px-4 py-3 text-sm font-medium text-gray-700 max-w-[120px] truncate" title={saida.estoque?.modelo_impressora}>
+      <td className="px-4 py-3 text-sm text-slate-600 max-w-[120px] truncate" title={saida.estoque?.modelo_impressora}>
         {saida.estoque?.modelo_impressora ?? '—'}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-700">{saida.unidade || '—'}</td>
-      <td className="px-4 py-3 text-sm text-gray-700">{saida.setor}</td>
-      <td className="px-4 py-3 text-sm text-gray-700">{saida.responsavel}</td>
+      <td className="px-4 py-3 text-sm text-slate-600">{saida.unidade || '—'}</td>
+      <td className="px-4 py-3 text-sm text-slate-600">{saida.setor}</td>
+      <td className="px-4 py-3 text-sm text-slate-600">{saida.responsavel}</td>
       <td className="px-4 py-3 text-center">
-        <span className="inline-block bg-red-100 text-red-800 font-bold text-sm px-3 py-1 rounded-full">
-          -{saida.quantidade}
-        </span>
+        <span className="badge badge-red">−{saida.quantidade}</span>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-500 max-w-[160px] truncate" title={saida.observacao ?? ''}>
-        {saida.observacao || <span className="italic text-gray-400">—</span>}
+      <td className="px-4 py-3 text-sm text-slate-400 max-w-[160px] truncate" title={saida.observacao ?? ''}>
+        {saida.observacao || <span className="italic">—</span>}
       </td>
       <td className="px-4 py-3 text-center">
         <button
           onClick={() => onDelete(saida.id)}
-          className="text-xs font-semibold text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
-          title="Estornar / cancelar esta saída"
+          className="text-xs font-semibold text-red-600 hover:text-red-800 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors"
+          title="Estornar saída"
         >
-          🗑️ Estornar
+          Estornar
         </button>
       </td>
     </tr>
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 const InkManagement: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'estoque' | 'historico'>('estoque');
-  const [modeloFilter, setModeloFilter] = useState<string>('todos');
-  const [histModeloFilter, setHistModeloFilter] = useState<string>('todos');
-  const [histUnidadeFilter, setHistUnidadeFilter] = useState<string>('');
-  const [histSetorFilter, setHistSetorFilter] = useState<string>('');
-  const [histDataSaida, setHistDataSaida] = useState<string>('');
+  const [activeTab,         setActiveTab]         = useState<'estoque' | 'historico'>('estoque');
+  const [modeloFilter,      setModeloFilter]      = useState('todos');
+  const [histModeloFilter,  setHistModeloFilter]  = useState('todos');
+  const [histUnidadeFilter, setHistUnidadeFilter] = useState('');
+  const [histSetorFilter,   setHistSetorFilter]   = useState('');
+  const [histDataSaida,     setHistDataSaida]     = useState('');
 
-  // Modal state
-  const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState<'saida' | 'estoque_create' | 'estoque_edit' | 'gerenciar_modelos' | null>(null);
-  const [selectedEstoque, setSelectedEstoque] = useState<EstoqueTinta | null>(null);
+  const [showModal,       setShowModal]       = useState(false);
+  const [modalMode,       setModalMode]       = useState<'saida'|'estoque_create'|'estoque_edit'|'gerenciar_modelos'|null>(null);
+  const [selectedEstoque, setSelectedEstoque] = useState<EstoqueTinta|null>(null);
 
   const { data: estoques = [], isLoading: estoqueLoading, error: estoqueError, refetch: refetchEstoque } = useEstoqueTintas();
-  const { data: modelos = [] } = useModelosImpressora();
+  const { data: modelos  = [] } = useModelosImpressora();
 
   const saidasFilters = useMemo(() => ({
-    modelo: histModeloFilter !== 'todos' ? histModeloFilter : undefined,
-    unidade: histUnidadeFilter || undefined,
-    setor: histSetorFilter || undefined,
+    modelo:   histModeloFilter !== 'todos' ? histModeloFilter : undefined,
+    unidade:  histUnidadeFilter || undefined,
+    setor:    histSetorFilter || undefined,
     dataInicio: histDataSaida || undefined,
   }), [histModeloFilter, histUnidadeFilter, histSetorFilter, histDataSaida]);
 
@@ -257,486 +245,302 @@ const InkManagement: React.FC = () => {
   const createEstoqueMutation = useCreateEstoque();
   const updateEstoqueMutation = useUpdateEstoque();
   const deleteEstoqueMutation = useDeleteEstoque();
-  const createSaidaMutation = useCreateSaida();
-  const deleteSaidaMutation = useDeleteSaida();
+  const createSaidaMutation   = useCreateSaida();
+  const deleteSaidaMutation   = useDeleteSaida();
 
   const { toasts, removeToast, success, error: errorToast } = useToast();
 
-  // ── Filtered estoque ──
-  const filteredEstoque = useMemo(() => {
-    if (modeloFilter === 'todos') return estoques;
-    return estoques.filter((e) => e.modelo_impressora === modeloFilter);
-  }, [estoques, modeloFilter]);
+  const filteredEstoque = useMemo(() =>
+    modeloFilter === 'todos' ? estoques : estoques.filter(e => e.modelo_impressora === modeloFilter),
+    [estoques, modeloFilter]);
 
-  const criticalCount = useMemo(
-    () => estoques.filter((e) => e.quantidade_atual <= e.quantidade_minima).length,
-    [estoques]
-  );
+  const criticalCount = useMemo(() => estoques.filter(e => e.quantidade_atual <= e.quantidade_minima).length, [estoques]);
 
-  // Contagem por modelo (para os botões de filtro)
   const contagemPorModelo = useMemo(() => {
     const map: Record<string, number> = {};
-    estoques.forEach((e) => {
-      map[e.modelo_impressora] = (map[e.modelo_impressora] ?? 0) + 1;
-    });
+    estoques.forEach(e => { map[e.modelo_impressora] = (map[e.modelo_impressora] ?? 0) + 1; });
     return map;
   }, [estoques]);
 
-  // Lista de modelos que aparecem no estoque + modelos cadastrados
   const modelosParaFiltro = useMemo(() => {
-    const nomesNoEstoque = new Set(estoques.map((e) => e.modelo_impressora));
-    const nomesModelos = modelos.map((m) => m.nome);
-    const todos = new Set([...nomesModelos, ...nomesNoEstoque]);
-    return Array.from(todos).sort();
+    const s = new Set([...modelos.map(m => m.nome), ...estoques.map(e => e.modelo_impressora)]);
+    return Array.from(s).sort();
   }, [estoques, modelos]);
 
-  const closeModal = useCallback(() => {
-    setShowModal(false);
-    setModalMode(null);
-    setSelectedEstoque(null);
-  }, []);
+  const closeModal = useCallback(() => { setShowModal(false); setModalMode(null); setSelectedEstoque(null); }, []);
 
-  const handleOpenSaida = useCallback((estoque: EstoqueTinta) => {
-    setSelectedEstoque(estoque);
-    setModalMode('saida');
-    setShowModal(true);
-  }, []);
+  const handleOpenSaida   = useCallback((e: EstoqueTinta) => { setSelectedEstoque(e); setModalMode('saida');         setShowModal(true); }, []);
+  const handleOpenEdit    = useCallback((e: EstoqueTinta) => { setSelectedEstoque(e); setModalMode('estoque_edit');  setShowModal(true); }, []);
+  const handleOpenCreate  = useCallback(() => { setSelectedEstoque(null); setModalMode('estoque_create'); setShowModal(true); }, []);
+  const handleOpenModelos = useCallback(() => { setModalMode('gerenciar_modelos'); setShowModal(true); }, []);
+  const handleViewHistory = useCallback((e: EstoqueTinta) => { setActiveTab('historico'); setHistModeloFilter(e.modelo_impressora); }, []);
 
-  const handleOpenEdit = useCallback((estoque: EstoqueTinta) => {
-    setSelectedEstoque(estoque);
-    setModalMode('estoque_edit');
-    setShowModal(true);
-  }, []);
-
-  const handleOpenCreate = useCallback(() => {
-    setSelectedEstoque(null);
-    setModalMode('estoque_create');
-    setShowModal(true);
-  }, []);
-
-  const handleOpenGerenciarModelos = useCallback(() => {
-    setModalMode('gerenciar_modelos');
-    setShowModal(true);
-  }, []);
-
-  const handleViewHistory = useCallback((estoque: EstoqueTinta) => {
-    setActiveTab('historico');
-    setHistModeloFilter(estoque.modelo_impressora);
-  }, []);
-
-  // ── Submit saída ──
   const handleSubmitSaida = useCallback(async (data: CreateSaidaData) => {
     try {
       await createSaidaMutation.mutateAsync(data);
       const est = selectedEstoque!;
-      success(`✅ Saída de ${data.quantidade}x Tinta ${est.cor_tinta} (${est.modelo_impressora}) registrada para o setor "${data.setor}"!`);
+      success(`Saída de ${data.quantidade}× ${est.cor_tinta} registrada para "${data.setor}"`);
       closeModal();
-    } catch (err: any) {
-      errorToast(err.response?.data?.error || '❌ Erro ao registrar saída');
-    }
+    } catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao registrar saída'); }
   }, [createSaidaMutation, selectedEstoque, success, errorToast, closeModal]);
 
-  // ── Submit estoque ──
   const handleSubmitEstoque = useCallback(async (data: CreateEstoqueData | UpdateEstoqueData) => {
     try {
       if (modalMode === 'estoque_edit' && selectedEstoque) {
         await updateEstoqueMutation.mutateAsync({ id: selectedEstoque.id, data });
-        success(`💾 Estoque atualizado com sucesso!`);
+        success('Estoque atualizado!');
       } else {
         await createEstoqueMutation.mutateAsync(data as CreateEstoqueData);
-        success(`➕ Tinta cadastrada no estoque com sucesso!`);
+        success('Tinta cadastrada no estoque!');
       }
       closeModal();
-    } catch (err: any) {
-      errorToast(err.response?.data?.error || '❌ Erro ao salvar estoque');
-    }
+    } catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao salvar'); }
   }, [modalMode, selectedEstoque, createEstoqueMutation, updateEstoqueMutation, success, errorToast, closeModal]);
 
-  // ── Delete estoque ──
   const handleDeleteEstoque = useCallback(async (id: number) => {
-    if (!window.confirm('Tem certeza que deseja remover este item do estoque? Todas as saídas registradas serão excluídas.')) return;
-    try {
-      await deleteEstoqueMutation.mutateAsync(id);
-      success('🗑️ Item removido do estoque!');
-    } catch (err: any) {
-      errorToast(err.response?.data?.error || '❌ Erro ao remover item');
-    }
+    if (!window.confirm('Remover este item? Todas as saídas serão excluídas.')) return;
+    try { await deleteEstoqueMutation.mutateAsync(id); success('Item removido!'); }
+    catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao remover'); }
   }, [deleteEstoqueMutation, success, errorToast]);
 
-  // ── Delete saída ──
   const handleDeleteSaida = useCallback(async (id: number) => {
-    if (!window.confirm('Deseja estornar esta saída? A quantidade será devolvida ao estoque.')) return;
-    try {
-      await deleteSaidaMutation.mutateAsync(id);
-      success('↩️ Saída estornada e estoque revertido!');
-      refetchSaidas();
-    } catch (err: any) {
-      errorToast(err.response?.data?.error || '❌ Erro ao estornar saída');
-    }
+    if (!window.confirm('Estornar esta saída? A quantidade voltará ao estoque.')) return;
+    try { await deleteSaidaMutation.mutateAsync(id); success('Saída estornada!'); refetchSaidas(); }
+    catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao estornar'); }
   }, [deleteSaidaMutation, success, errorToast, refetchSaidas]);
 
-  // ── Modal title ──
   const modalTitle = useMemo(() => {
-    if (modalMode === 'saida' && selectedEstoque)
-      return `Registrar Saída — Tinta ${selectedEstoque.cor_tinta} (${selectedEstoque.modelo_impressora})`;
-    if (modalMode === 'estoque_edit' && selectedEstoque)
-      return `Editar Estoque — ${selectedEstoque.cor_tinta} (${selectedEstoque.modelo_impressora})`;
+    if (modalMode === 'saida' && selectedEstoque) return `Registrar Saída — ${selectedEstoque.cor_tinta} (${selectedEstoque.modelo_impressora})`;
+    if (modalMode === 'estoque_edit' && selectedEstoque) return `Editar — ${selectedEstoque.cor_tinta} (${selectedEstoque.modelo_impressora})`;
     if (modalMode === 'estoque_create') return 'Cadastrar Nova Tinta';
-    if (modalMode === 'gerenciar_modelos') return '🖨️ Gerenciar Modelos de Impressora';
+    if (modalMode === 'gerenciar_modelos') return 'Gerenciar Modelos de Impressora';
     return '';
   }, [modalMode, selectedEstoque]);
 
-  // ── Modal content ──
-  const renderModalContent = useCallback(() => {
-    if (modalMode === 'saida' && selectedEstoque) {
-      return (
-        <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" /></div>}>
-          <InkSaidaForm
-            estoque={selectedEstoque}
-            onSubmit={handleSubmitSaida}
-            onCancel={closeModal}
-            isLoading={createSaidaMutation.isPending}
-          />
-        </Suspense>
-      );
-    }
-    if (modalMode === 'estoque_create' || modalMode === 'estoque_edit') {
-      return (
-        <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" /></div>}>
-          <InkEstoqueForm
-            estoque={modalMode === 'estoque_edit' ? selectedEstoque : null}
-            onSubmit={handleSubmitEstoque}
-            onCancel={closeModal}
-            isLoading={createEstoqueMutation.isPending || updateEstoqueMutation.isPending}
-          />
-        </Suspense>
-      );
-    }
-    if (modalMode === 'gerenciar_modelos') {
-      return (
-        <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500" /></div>}>
-          <PrinterModelManager onClose={closeModal} />
-        </Suspense>
-      );
-    }
+  const renderModal = useCallback(() => {
+    if (modalMode === 'saida' && selectedEstoque)
+      return <Suspense fallback={<Spinner />}><InkSaidaForm estoque={selectedEstoque} onSubmit={handleSubmitSaida} onCancel={closeModal} isLoading={createSaidaMutation.isPending} /></Suspense>;
+    if (modalMode === 'estoque_create' || modalMode === 'estoque_edit')
+      return <Suspense fallback={<Spinner />}><InkEstoqueForm estoque={modalMode === 'estoque_edit' ? selectedEstoque : null} onSubmit={handleSubmitEstoque} onCancel={closeModal} isLoading={createEstoqueMutation.isPending || updateEstoqueMutation.isPending} /></Suspense>;
+    if (modalMode === 'gerenciar_modelos')
+      return <Suspense fallback={<Spinner />}><PrinterModelManager onClose={closeModal} /></Suspense>;
     return null;
   }, [modalMode, selectedEstoque, handleSubmitSaida, handleSubmitEstoque, closeModal, createSaidaMutation.isPending, createEstoqueMutation.isPending, updateEstoqueMutation.isPending]);
 
   return (
-    <div className="min-h-screen pb-12">
-      {/* Page Header */}
-      <div className="bg-gradient-to-br from-primary-hover via-primary to-primary-light shadow-xl border-b-4 border-primary-hover/30 px-4 py-6 mb-8">
-        <div className="container">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <span className="text-4xl">🖨️</span>
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-                    Controle de Tintas
-                  </h2>
-                  <p className="text-white/90 text-sm font-medium">
-                    Gestão de Estoque e Saídas de Tintas
-                  </p>
-                </div>
-              </div>
-            </div>
-            {/* Botões do header */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={handleOpenGerenciarModelos}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/20 backdrop-blur-sm text-white font-bold rounded-xl border border-white/30 hover:bg-white/30 transition-all text-sm"
-                title="Gerenciar modelos de impressora"
-              >
-                ⚙️ Gerenciar Modelos
-              </button>
-              <button
-                onClick={handleOpenCreate}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white text-primary font-bold rounded-xl shadow-md hover:shadow-xl hover:scale-105 transition-all duration-300 text-sm"
-              >
-                ➕ Nova Tinta
-              </button>
-            </div>
-          </div>
+    <div className="page-inner pb-10">
 
-          {/* Stats rápidas */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
-            {[
-              { label: 'Total de Tintas', value: estoques.length, icon: '📦', color: 'bg-white/10' },
-              { label: 'Modelos Cadastrados', value: modelos.length, icon: '🖨️', color: 'bg-white/10' },
-              { label: 'Estoque Crítico', value: criticalCount, icon: '⚠️', color: criticalCount > 0 ? 'bg-red-500/30' : 'bg-white/10' },
-            ].map((stat) => (
-              <div key={stat.label} className={`${stat.color} backdrop-blur-sm rounded-xl p-3 text-white border border-white/20`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-lg">{stat.icon}</span>
-                  <span className="text-xs font-medium opacity-80">{stat.label}</span>
-                </div>
-                <p className="text-2xl font-black">{stat.value}</p>
-              </div>
+      {/* ── Page toolbar ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div>
+          <h2 className="text-base font-bold text-slate-800">Estoque de Tintas</h2>
+          <p className="text-xs text-slate-500">Gerencie o estoque e as saídas de tintas Epson</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={handleOpenModelos}
+            className="btn btn-outline text-xs py-2 gap-2">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            Modelos
+          </button>
+          <button onClick={handleOpenCreate}
+            className="btn btn-primary text-xs py-2 gap-2">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4"/>
+            </svg>
+            Nova Tinta
+          </button>
+        </div>
+      </div>
+
+      {/* ── Summary stats ── */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        {[
+          { label: 'Tintas cadastradas', value: estoques.length, sub: 'no estoque',
+            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 10V7"/></svg>,
+            accent: 'text-slate-600 bg-slate-50 border-slate-200' },
+          { label: 'Modelos', value: modelos.length, sub: 'cadastrados',
+            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>,
+            accent: 'text-blue-600 bg-blue-50 border-blue-200' },
+          { label: 'Estoque crítico', value: criticalCount, sub: 'abaixo do mínimo',
+            icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>,
+            accent: criticalCount > 0 ? 'text-red-600 bg-red-50 border-red-200' : 'text-slate-400 bg-slate-50 border-slate-200' },
+        ].map(s => (
+          <div key={s.label} className="stat-card">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{s.label}</span>
+              <div className={`w-7 h-7 rounded-md flex items-center justify-center border ${s.accent}`}>{s.icon}</div>
+            </div>
+            <p className="text-3xl font-extrabold text-slate-800 leading-none mb-1">{s.value}</p>
+            <p className="text-xs text-slate-500">{s.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Tabs ── */}
+      <div className="tab-bar">
+        <button onClick={() => setActiveTab('estoque')} className={`tab-item ${activeTab === 'estoque' ? 'active' : ''}`}>
+          Estoque
+        </button>
+        <button onClick={() => setActiveTab('historico')} className={`tab-item ${activeTab === 'historico' ? 'active' : ''}`}>
+          Histórico de Saídas
+        </button>
+      </div>
+
+      {/* ══ TAB: ESTOQUE ══════════════════════════════════════════════════════════ */}
+      {activeTab === 'estoque' && (
+        <>
+          {/* Modelo filter pills */}
+          <div className="flex gap-2 flex-wrap mb-5">
+            <button onClick={() => setModeloFilter('todos')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                modeloFilter === 'todos'
+                  ? 'bg-slate-800 border-slate-800 text-white'
+                  : 'border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50'
+              }`}>
+              Todos ({estoques.length})
+            </button>
+            {modelosParaFiltro.map(nome => (
+              <button key={nome} onClick={() => setModeloFilter(nome)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                  modeloFilter === nome
+                    ? 'bg-slate-800 border-slate-800 text-white'
+                    : 'border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50'
+                }`}>
+                {nome} ({contagemPorModelo[nome] ?? 0})
+              </button>
             ))}
           </div>
-        </div>
-      </div>
 
-      <div className="container px-4">
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-gray-100 p-1.5 rounded-xl w-fit">
-          <button
-            onClick={() => setActiveTab('estoque')}
-            className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-              activeTab === 'estoque'
-                ? 'bg-white text-primary shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            📦 Estoque
-          </button>
-          <button
-            onClick={() => setActiveTab('historico')}
-            className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
-              activeTab === 'historico'
-                ? 'bg-white text-primary shadow-md'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            📋 Histórico de Saídas
-          </button>
-        </div>
-
-        {/* ─── TAB ESTOQUE ─── */}
-        {activeTab === 'estoque' && (
-          <>
-            {/* Filtros de modelo — dinâmicos */}
-            <div className="flex gap-2 mb-6 flex-wrap">
-              <button
-                key="todos"
-                onClick={() => setModeloFilter('todos')}
-                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  modeloFilter === 'todos'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'bg-white text-primary border border-red-300 hover:bg-red-50'
-                }`}
-              >
-                Todos ({estoques.length})
-              </button>
-              {modelosParaFiltro.map((nome) => (
-                <button
-                  key={nome}
-                  onClick={() => setModeloFilter(nome)}
-                  className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
-                    modeloFilter === nome
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-white text-primary border border-red-300 hover:bg-red-50'
-                  }`}
-                >
-                  {nome} ({contagemPorModelo[nome] ?? 0})
-                </button>
-              ))}
+          {estoqueLoading && <Spinner />}
+          {estoqueError && (
+            <div className="card p-6 text-center border-red-200">
+              <p className="text-sm font-semibold text-red-600 mb-3">Erro ao carregar estoque</p>
+              <button onClick={() => refetchEstoque()} className="btn btn-primary text-xs">Tentar Novamente</button>
             </div>
+          )}
 
-            {/* Loading / Error */}
-            {estoqueLoading && (
-              <div className="text-center py-16">
-                <div className="inline-block animate-spin text-5xl mb-4">⏳</div>
-                <p className="text-gray-500 text-lg">Carregando estoque...</p>
-              </div>
-            )}
-            {estoqueError && (
-              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 text-center">
-                <p className="text-red-600 font-semibold mb-2">❌ Erro ao carregar estoque</p>
-                <button onClick={() => refetchEstoque()} className="btn btn-primary mt-2">🔄 Tentar Novamente</button>
-              </div>
-            )}
-
-            {!estoqueLoading && !estoqueError && (
-              <>
-                {filteredEstoque.length === 0 ? (
-                  <div className="text-center py-20">
-                    <div className="text-7xl mb-4">🖨️</div>
-                    <h3 className="text-xl font-bold text-gray-700 mb-2">Nenhuma tinta cadastrada</h3>
-                    <p className="text-gray-500 mb-6">
-                      {modeloFilter !== 'todos'
-                        ? `Nenhuma tinta para o modelo "${modeloFilter}".`
-                        : 'Clique em "Nova Tinta" para começar.'}
-                    </p>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      <button
-                        onClick={handleOpenCreate}
-                        className="px-6 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors"
-                      >
-                        ➕ Cadastrar primeira tinta
-                      </button>
-                      {modelos.length === 0 && (
-                        <button
-                          onClick={handleOpenGerenciarModelos}
-                          className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
-                        >
-                          🖨️ Cadastrar modelo primeiro
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {filteredEstoque.map((estoque) => (
-                      <EstoqueCard
-                        key={estoque.id}
-                        estoque={estoque}
-                        onSaida={handleOpenSaida}
-                        onEdit={handleOpenEdit}
-                        onDelete={handleDeleteEstoque}
-                        onViewHistory={handleViewHistory}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
-
-        {/* ─── TAB HISTÓRICO ─── */}
-        {activeTab === 'historico' && (
-          <>
-            {/* Filtros */}
-            <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-5 shadow-lg mb-6">
-              <h3 className="text-lg font-bold text-red-800 mb-4 flex items-center gap-2">
-                🔍 Filtrar Histórico de Saídas
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {/* Modelo — dinâmico */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Modelo:</label>
-                  <select
-                    value={histModeloFilter}
-                    onChange={(e) => setHistModeloFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-                  >
-                    <option value="todos">Todos os modelos</option>
-                    {modelosParaFiltro.map((nome) => (
-                      <option key={nome} value={nome}>{nome}</option>
-                    ))}
-                  </select>
+          {!estoqueLoading && !estoqueError && (
+            filteredEstoque.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                  <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 10V7"/>
+                  </svg>
                 </div>
-
-                {/* Unidade */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Unidade:</label>
-                  <select
-                    value={histUnidadeFilter}
-                    onChange={(e) => setHistUnidadeFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-                  >
-                    <option value="">Todas as unidades</option>
-                    {UNIDADES_PREDEFINIDAS.map((u) => (
-                      <option key={u} value={u}>{u}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Setor */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Setor:</label>
-                  <select
-                    value={histSetorFilter}
-                    onChange={(e) => setHistSetorFilter(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-                  >
-                    <option value="">Todos os setores</option>
-                    {SETORES_PREDEFINIDOS.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Data de Saída */}
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">Data de Saída:</label>
-                  <input
-                    type="date"
-                    value={histDataSaida}
-                    onChange={(e) => setHistDataSaida(e.target.value)}
-                    className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-              </div>
-              <div className="mt-3 flex items-center justify-between">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold text-primary">{saidas.length}</span> registro{saidas.length !== 1 ? 's' : ''} encontrado{saidas.length !== 1 ? 's' : ''}
+                <p className="text-sm font-bold text-slate-700 mb-1">Nenhuma tinta cadastrada</p>
+                <p className="text-xs text-slate-500 mb-4">
+                  {modeloFilter !== 'todos' ? `Nenhuma tinta para "${modeloFilter}"` : 'Clique em "Nova Tinta" para começar.'}
                 </p>
-                <button
-                  onClick={() => {
-                    setHistModeloFilter('todos');
-                    setHistUnidadeFilter('');
-                    setHistSetorFilter('');
-                    setHistDataSaida('');
-                  }}
-                  className="text-sm font-semibold text-red-600 hover:text-red-800 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                >
-                  🗑️ Limpar filtros
-                </button>
-              </div>
-            </div>
-
-            {/* Tabela */}
-            {saidasLoading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin text-5xl mb-4">⏳</div>
-                <p className="text-gray-500">Carregando histórico...</p>
-              </div>
-            ) : saidas.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">📋</div>
-                <h3 className="text-xl font-bold text-gray-700 mb-2">Nenhuma saída registrada</h3>
-                <p className="text-gray-500">As saídas de tinta aparecerão aqui.</p>
+                <div className="flex gap-2">
+                  <button onClick={handleOpenCreate} className="btn btn-primary text-xs">Nova Tinta</button>
+                  {modelos.length === 0 && <button onClick={handleOpenModelos} className="btn btn-outline text-xs">Cadastrar Modelo</button>}
+                </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto table-scroll">
-                  <table className="w-full text-left">
-                    <thead className="bg-gradient-to-r from-primary-hover to-primary text-white">
-                      <tr>
-                        {['Data de Saída', 'Cor', 'Modelo', 'Unidade', 'Setor', 'Responsável', 'Qtd', 'Observação', 'Ação'].map((h) => (
-                          <th key={h} className="px-4 py-3 text-xs font-bold uppercase tracking-wide whitespace-nowrap">
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {saidas.map((saida) => (
-                        <SaidaRow key={saida.id} saida={saida} onDelete={handleDeleteSaida} />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Sumário */}
-                <div className="bg-gray-50 border-t border-gray-200 px-4 py-3 flex flex-wrap gap-4 text-sm text-gray-600">
-                  <span>
-                    Total de saídas:{' '}
-                    <strong className="text-gray-800">{saidas.reduce((acc, s) => acc + s.quantidade, 0)} unidade{saidas.reduce((acc, s) => acc + s.quantidade, 0) !== 1 ? 's' : ''}</strong>
-                  </span>
-                  <span>
-                    Registros:{' '}
-                    <strong className="text-gray-800">{saidas.length}</strong>
-                  </span>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredEstoque.map(e => (
+                  <EstoqueCard key={e.id} estoque={e}
+                    onSaida={handleOpenSaida} onEdit={handleOpenEdit}
+                    onDelete={handleDeleteEstoque} onViewHistory={handleViewHistory} />
+                ))}
               </div>
-            )}
-          </>
-        )}
-      </div>
+            )
+          )}
+        </>
+      )}
+
+      {/* ══ TAB: HISTÓRICO ════════════════════════════════════════════════════════ */}
+      {activeTab === 'historico' && (
+        <>
+          {/* Filtros */}
+          <div className="filter-bar mb-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-slate-700">Filtros</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">{saidas.length}</span> registro{saidas.length !== 1 ? 's' : ''}
+                </span>
+                <button onClick={() => { setHistModeloFilter('todos'); setHistUnidadeFilter(''); setHistSetorFilter(''); setHistDataSaida(''); }}
+                  className="text-xs text-slate-500 hover:text-slate-700 underline">
+                  Limpar
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <label className="label">Modelo</label>
+                <select value={histModeloFilter} onChange={e => setHistModeloFilter(e.target.value)} className="input">
+                  <option value="todos">Todos</option>
+                  {modelosParaFiltro.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Unidade</label>
+                <select value={histUnidadeFilter} onChange={e => setHistUnidadeFilter(e.target.value)} className="input">
+                  <option value="">Todas</option>
+                  {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Setor</label>
+                <select value={histSetorFilter} onChange={e => setHistSetorFilter(e.target.value)} className="input">
+                  <option value="">Todos</option>
+                  {SETORES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label">Data de Saída</label>
+                <input type="date" value={histDataSaida} onChange={e => setHistDataSaida(e.target.value)} className="input" />
+              </div>
+            </div>
+          </div>
+
+          {saidasLoading ? <Spinner /> : saidas.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              <p className="text-sm font-bold text-slate-700 mb-1">Nenhuma saída registrada</p>
+              <p className="text-xs text-slate-500">As saídas de tinta aparecerão aqui.</p>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <div className="overflow-x-auto table-scroll">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      {['Data','Cor','Modelo','Unidade','Setor','Responsável','Qtd','Observação','Ação'].map(h => (
+                        <th key={h} className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {saidas.map(s => <SaidaRow key={s.id} saida={s} onDelete={handleDeleteSaida} />)}
+                  </tbody>
+                </table>
+              </div>
+              {/* Footer summary */}
+              <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex gap-6 text-xs text-slate-500">
+                <span>Registros: <strong className="text-slate-700">{saidas.length}</strong></span>
+                <span>Total saído: <strong className="text-slate-700">{saidas.reduce((a,s)=>a+s.quantidade,0)} unidades</strong></span>
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Modal */}
       <Modal isOpen={showModal} onClose={closeModal} title={modalTitle}>
-        {renderModalContent()}
+        {renderModal()}
       </Modal>
 
-      {/* Toasts */}
-      {toasts.map((toast) => (
-        <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => removeToast(toast.id)} />
-      ))}
+      {toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}
     </div>
   );
 };

@@ -296,7 +296,7 @@ export const deleteSaida = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Transação: remove saída + estorna estoque
+    // Transação: remove saída + estorna estoque (quantidade total)
     await prisma.$transaction([
       prisma.saidaTinta.delete({ where: { id: Number(id) } }),
       prisma.estoqueTinta.update({
@@ -313,5 +313,70 @@ export const deleteSaida = async (req: Request, res: Response): Promise<void> =>
   } catch (error) {
     console.error('Erro ao cancelar saída de tinta:', error);
     res.status(500).json({ error: 'Erro ao cancelar saída de tinta' });
+  }
+};
+
+/**
+ * PATCH /api/tintas/saidas/:id/estorno
+ * Estorno parcial ou total de uma saída.
+ * Body: { quantidade: number }  — deve ser >= 1 e <= saida.quantidade
+ * Se quantidade == saida.quantidade → deleta o registro (estorno total)
+ * Se quantidade < saida.quantidade → subtrai da saída e devolve ao estoque
+ */
+export const estornarSaida = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params as { id: number | string };
+    const { quantidade } = req.body as { quantidade: number };
+
+    if (!quantidade || !Number.isInteger(Number(quantidade)) || Number(quantidade) < 1) {
+      res.status(400).json({ error: 'Quantidade para estorno deve ser um número inteiro >= 1' });
+      return;
+    }
+
+    const saida = await prisma.saidaTinta.findUnique({ where: { id: Number(id) } });
+    if (!saida) {
+      res.status(404).json({ error: 'Saída de tinta não encontrada' });
+      return;
+    }
+
+    const qtdEstorno = Number(quantidade);
+
+    if (qtdEstorno > saida.quantidade) {
+      res.status(400).json({
+        error: `Quantidade para estorno (${qtdEstorno}) não pode ser maior que a quantidade da saída (${saida.quantidade})`,
+      });
+      return;
+    }
+
+    if (qtdEstorno === saida.quantidade) {
+      // Estorno total → deleta o registro
+      await prisma.$transaction([
+        prisma.saidaTinta.delete({ where: { id: Number(id) } }),
+        prisma.estoqueTinta.update({
+          where: { id: saida.estoque_id },
+          data: { quantidade_atual: { increment: qtdEstorno } },
+        }),
+      ]);
+      res.status(200).json({ message: 'Saída estornada por completo e removida do histórico.' });
+    } else {
+      // Estorno parcial → reduz a quantidade da saída e devolve ao estoque
+      const [saidaAtualizada] = await prisma.$transaction([
+        prisma.saidaTinta.update({
+          where: { id: Number(id) },
+          data: { quantidade: { decrement: qtdEstorno } },
+        }),
+        prisma.estoqueTinta.update({
+          where: { id: saida.estoque_id },
+          data: { quantidade_atual: { increment: qtdEstorno } },
+        }),
+      ]);
+      res.status(200).json({
+        message: `Estorno parcial de ${qtdEstorno} unidade(s) realizado. Saldo restante na saída: ${saidaAtualizada.quantidade}.`,
+        saida: saidaAtualizada,
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao estornar saída de tinta:', error);
+    res.status(500).json({ error: 'Erro ao estornar saída de tinta' });
   }
 };

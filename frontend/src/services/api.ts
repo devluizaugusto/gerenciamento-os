@@ -173,6 +173,11 @@ export const tintaAPI = {
   deleteSaida: async (id: number): Promise<void> => {
     await api.delete(`/tintas/saidas/${id}`);
   },
+
+  estornarSaida: async (id: number, quantidade: number): Promise<{ message: string }> => {
+    const response = await api.patch<{ message: string }>(`/tintas/saidas/${id}/estorno`, { quantidade });
+    return response.data;
+  },
 };
 
 // ─── Modelos de Impressora API ────────────────────────────────

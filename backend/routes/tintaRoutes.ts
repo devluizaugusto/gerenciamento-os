@@ -8,6 +8,7 @@ import {
   getAllSaidas,
   createSaida,
   deleteSaida,
+  estornarSaida,
 } from '../controllers/tintaController';
 import { validateSchema } from '../middlewares/validateSchema';
 import {
@@ -31,5 +32,6 @@ router.delete('/estoque/:id', validateSchema(idParamTintaSchema), deleteEstoque)
 router.get('/saidas', validateSchema(historicoQuerySchema), getAllSaidas);
 router.post('/saidas', validateSchema(createSaidaTintaSchema), createSaida);
 router.delete('/saidas/:id', validateSchema(idParamTintaSchema), deleteSaida);
+router.patch('/saidas/:id/estorno', validateSchema(idParamTintaSchema), estornarSaida);
 
 export default router;

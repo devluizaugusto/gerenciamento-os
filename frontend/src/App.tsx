@@ -4,6 +4,14 @@ import Toast from './components/common/Toast';
 import Statistics from './components/common/Statistics';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
+import Sidebar from './components/layout/Sidebar';
+
+// ── Spinner helper ─────────────────────────────────────────
+const Spinner = () => (
+  <div className="flex items-center justify-center py-16">
+    <div className="w-10 h-10 border-2 border-slate-200 border-t-primary rounded-full animate-spin" />
+  </div>
+);
 
 const ServiceOrderForm = lazy(() => import('./components/orders/ServiceOrderForm'));
 const ServiceOrderDetails = lazy(() => import('./components/orders/ServiceOrderDetails'));
@@ -293,7 +301,7 @@ function App() {
   const renderModalContent = () => {
     if (modalContent === 'create' || modalContent === 'edit') {
       return (
-        <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
+        <Suspense fallback={<Spinner />}>
           <ServiceOrderForm
             order={selectedOrder}
             onSubmit={handleSubmit}
@@ -303,21 +311,28 @@ function App() {
         </Suspense>
       );
     }
-    
     if (modalContent === 'view' && selectedOrder) {
       return (
-        <Suspense fallback={<div className="flex items-center justify-center py-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>}>
+        <Suspense fallback={<Spinner />}>
           <ServiceOrderDetails ordem={selectedOrder} />
         </Suspense>
       );
     }
-    
     return null;
   };
 
+  // ── Status filter pills config ─────────────────────────
+  const statusPills = [
+    { value: 'todos',        label: 'Todos',        count: orders.length,                                      cls: 'border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50', activeCls: 'bg-slate-800 border-slate-800 text-white' },
+    { value: 'aberto',       label: 'Abertos',      count: orders.filter(o => o.status === 'aberto').length,       cls: 'border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50',       activeCls: 'bg-red-600 border-red-600 text-white' },
+    { value: 'em_andamento', label: 'Em Andamento', count: orders.filter(o => o.status === 'em_andamento').length, cls: 'border-amber-200 text-amber-600 hover:border-amber-300 hover:bg-amber-50', activeCls: 'bg-amber-500 border-amber-500 text-white' },
+    { value: 'finalizado',   label: 'Finalizados',  count: orders.filter(o => o.status === 'finalizado').length,  cls: 'border-emerald-200 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50', activeCls: 'bg-emerald-600 border-emerald-600 text-white' },
+  ] as const;
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header
+    <div className="flex min-h-screen bg-slate-50">
+      {/* ─── Sidebar ─── */}
+      <Sidebar
         currentPage={currentPage}
         onChangePage={handleChangePage}
         onNewOS={handleCreate}
@@ -325,322 +340,218 @@ function App() {
         canGeneratePDF={filteredOrders.length > 0}
       />
 
-      {/* ─── Ink Management Page ─── */}
-      {currentPage === 'tintas' && (
-        <main className="flex-1">
-          <Suspense fallback={
-            <div className="flex items-center justify-center py-24">
-              <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-cyan-500" />
-            </div>
-          }>
-            <InkManagement />
-          </Suspense>
-        </main>
-      )}
+      {/* ─── Main wrapper ─── */}
+      <div className="flex flex-col flex-1 min-h-screen overflow-x-hidden">
+        <Header
+          currentPage={currentPage}
+          onChangePage={handleChangePage}
+          onNewOS={handleCreate}
+          onGeneratePDF={handleGenerateReportPDF}
+          canGeneratePDF={filteredOrders.length > 0}
+        />
 
-      {/* ─── Help Desk Page ─── */}
-      {currentPage === 'helpdesk' && (
-      <main className="min-h-[calc(100vh-280px)] pb-12 flex-1 pt-8">
-        <div className="container p-4 md:p-6 lg:p-8">
-          <Statistics 
-            orders={orders} 
-            dayFilter={dayFilter}
-            monthFilter={monthFilter}
-            yearFilter={yearFilter}
-            startDateFilter={startDateFilter}
-            endDateFilter={endDateFilter}
-          />
+        {/* ── Tintas page ── */}
+        {currentPage === 'tintas' && (
+          <main className="flex-1">
+            <Suspense fallback={<Spinner />}>
+              <InkManagement />
+            </Suspense>
+          </main>
+        )}
 
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-5 shadow-lg mb-6">
-            <h2 className="text-2xl font-bold text-green-800 mb-4 flex items-center gap-2">
-              <span className="text-3xl">🔍</span>
-              Filtros e Buscas
-            </h2>
-            
-            <div className="flex flex-wrap gap-2 mb-4">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                  statusFilter === 'todos' 
-                    ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md' 
-                    : 'bg-blue-100 text-blue-800 hover:bg-blue-200 hover:shadow-md border border-blue-300'
-                }`}
-                onClick={() => setStatusFilter('todos')}
-              >
-                Todos ({orders.length})
-              </button>
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  statusFilter === 'aberto' 
-                    ? 'bg-red-800 text-white hover:bg-red-900' 
-                    : 'bg-red-200 text-red-900 hover:bg-red-300'
-                }`}
-                onClick={() => {
-                  setStatusFilter('aberto');
-                  setDayFilter('');
-                  setMonthFilter('');
-                  setYearFilter('');
-                  setStartDateFilter('');
-                  setEndDateFilter('');
-                }}
-              >
-                Abertos ({orders.filter(o => o.status === 'aberto').length})
-              </button>
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  statusFilter === 'em_andamento' 
-                    ? 'bg-yellow-700 text-white hover:bg-yellow-800' 
-                    : 'bg-yellow-200 text-yellow-900 hover:bg-yellow-300'
-                }`}
-                onClick={() => {
-                  setStatusFilter('em_andamento');
-                  setDayFilter('');
-                  setMonthFilter('');
-                  setYearFilter('');
-                  setStartDateFilter('');
-                  setEndDateFilter('');
-                }}
-              >
-                Em Andamento ({orders.filter(o => o.status === 'em_andamento').length})
-              </button>
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  statusFilter === 'finalizado' 
-                    ? 'bg-green-800 text-white hover:bg-green-900' 
-                    : 'bg-green-200 text-green-900 hover:bg-green-300'
-                }`}
-                onClick={() => {
-                  setStatusFilter('finalizado');
-                  setDayFilter('');
-                  setMonthFilter('');
-                  setYearFilter('');
-                  setStartDateFilter('');
-                  setEndDateFilter('');
-                }}
-              >
-                Finalizados ({orders.filter(o => o.status === 'finalizado').length})
-              </button>
-            </div>
+        {/* ── Helpdesk page ── */}
+        {currentPage === 'helpdesk' && (
+          <main className="flex-1 page-inner">
 
-            <div className="mb-4 relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Stats */}
+            <Statistics
+              orders={orders}
+              dayFilter={dayFilter}
+              monthFilter={monthFilter}
+              yearFilter={yearFilter}
+              startDateFilter={startDateFilter}
+              endDateFilter={endDateFilter}
+            />
+
+            {/* ── Filter card ── */}
+            <div className="filter-bar">
+              {/* Header row */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0014 13.828V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.172a1 1 0 00-.293-.707L1.293 6.707A1 1 0 011 6V4z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700">Filtros</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={clearFilters}
+                    disabled={!hasActiveFilters}
+                    className="btn btn-outline text-xs py-1.5 px-3 disabled:opacity-40"
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={viewAllHistory}
+                    className="btn btn-ghost text-xs py-1.5 px-3 text-slate-600"
+                  >
+                    Todo Histórico
+                  </button>
+                </div>
+              </div>
+
+              {/* Status pills */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {statusPills.map((p) => (
+                  <button
+                    key={p.value}
+                    onClick={() => {
+                      setStatusFilter(p.value);
+                      if (p.value !== 'todos') {
+                        setDayFilter(''); setMonthFilter(''); setYearFilter('');
+                        setStartDateFilter(''); setEndDateFilter('');
+                      }
+                    }}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${
+                      statusFilter === p.value ? p.activeCls : p.cls
+                    }`}
+                  >
+                    {p.label}
+                    <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      statusFilter === p.value ? 'bg-white/25' : 'bg-slate-100 text-slate-500'
+                    }`}>{p.count}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Search */}
+              <div className="relative mb-4">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
+                <input
+                  type="text"
+                  placeholder="Buscar por número, solicitante, unidade, setor ou descrição..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value.replace(/-/g, ''))}
+                  onKeyDown={(e) => { if (e.key === '-') e.preventDefault(); }}
+                  className="input pl-9"
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Buscar por número, solicitante, unidade, setor ou descrição..."
-                value={searchTerm}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  const sanitizedValue = value.replace(/-/g, '');
-                  setSearchTerm(sanitizedValue);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === '-') {
-                    e.preventDefault();
-                  }
-                }}
-                className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-              />
+
+              {/* Date filters grid */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {/* Dia */}
+                <div>
+                  <label className="label">Dia</label>
+                  <input type="number" value={dayFilter}
+                    onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 1 && +v <= 31)) setDayFilter(v); }}
+                    onKeyDown={(e) => { if (['-','+','e','E'].includes(e.key)) e.preventDefault(); }}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    placeholder="1 – 31" min="1" max="31"
+                    disabled={isUsingDateRangeFilters}
+                    className="input"
+                  />
+                </div>
+                {/* Mês */}
+                <div>
+                  <label className="label">Mês</label>
+                  <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}
+                    disabled={isUsingDateRangeFilters} className="input">
+                    <option value="">Todos</option>
+                    {['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+                      .map((m, i) => <option key={m} value={String(i+1).padStart(2,'0')}>{m}</option>)}
+                  </select>
+                </div>
+                {/* Ano */}
+                <div>
+                  <label className="label">Ano</label>
+                  <input type="number" value={yearFilter}
+                    onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 2020 && +v <= 2100)) setYearFilter(v); }}
+                    onKeyDown={(e) => { if (['-','+','e','E'].includes(e.key)) e.preventDefault(); }}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    placeholder="2020 – 2100" min="2020" max="2100"
+                    disabled={isUsingDateRangeFilters}
+                    className="input"
+                  />
+                </div>
+                {/* Data início */}
+                <div>
+                  <label className="label">Data Inicial</label>
+                  <input type="date" value={startDateFilter}
+                    onChange={(e) => setStartDateFilter(e.target.value)}
+                    max={endDateFilter || undefined}
+                    disabled={isUsingDateFilters} className="input" />
+                </div>
+                {/* Data fim */}
+                <div>
+                  <label className="label">Data Final</label>
+                  <input type="date" value={endDateFilter}
+                    onChange={(e) => setEndDateFilter(e.target.value)}
+                    min={startDateFilter || undefined}
+                    disabled={isUsingDateFilters} className="input" />
+                </div>
+              </div>
+
+              {/* Active filter info */}
+              {(dayFilter || (monthFilter && yearFilter)) && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-slate-600 bg-slate-100 rounded-lg px-3 py-2 w-fit">
+                  <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {dayFilter && monthFilter && yearFilter
+                    ? `Dia ${String(dayFilter).padStart(2,'0')}/${monthFilter}/${yearFilter}`
+                    : monthFilter && yearFilter ? formatMonthYear(monthFilter, yearFilter) : ''}
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mb-3">
-              <div>
-                <label htmlFor="dayFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Dia:
-                </label>
-                <input
-                  type="number"
-                  id="dayFilter"
-                  value={dayFilter}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 31 && !value.includes('-'))) {
-                      setDayFilter(value);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
-                      e.preventDefault();
-                    }
-                  }}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="Dia (1-31)"
-                  min="1"
-                  max="31"
-                  disabled={isUsingDateRangeFilters}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="monthFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Mês:
-                </label>
-                <select
-                  id="monthFilter"
-                  value={monthFilter}
-                  onChange={(e) => setMonthFilter(e.target.value)}
-                  disabled={isUsingDateRangeFilters}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <option value="">Todos</option>
-                  <option value="01">Janeiro</option>
-                  <option value="02">Fevereiro</option>
-                  <option value="03">Março</option>
-                  <option value="04">Abril</option>
-                  <option value="05">Maio</option>
-                  <option value="06">Junho</option>
-                  <option value="07">Julho</option>
-                  <option value="08">Agosto</option>
-                  <option value="09">Setembro</option>
-                  <option value="10">Outubro</option>
-                  <option value="11">Novembro</option>
-                  <option value="12">Dezembro</option>
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="yearFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Ano:
-                </label>
-                <input
-                  type="number"
-                  id="yearFilter"
-                  value={yearFilter}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || (parseInt(value) >= 2020 && parseInt(value) <= 2100 && !value.includes('-'))) {
-                      setYearFilter(value);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
-                      e.preventDefault();
-                    }
-                  }}
-                  onWheel={(e) => e.currentTarget.blur()}
-                  placeholder="Ano (2020-2100)"
-                  min="2020"
-                  max="2100"
-                  disabled={isUsingDateRangeFilters}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label htmlFor="startDateFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Data Inicial:
-                </label>
-                <input
-                  type="date"
-                  id="startDateFilter"
-                  value={startDateFilter}
-                  onChange={(e) => setStartDateFilter(e.target.value)}
-                  max={endDateFilter || undefined}
-                  disabled={isUsingDateFilters}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="endDateFilter" className="block text-xs font-semibold text-gray-700 mb-1.5 uppercase tracking-wide">
-                  Data Final:
-                </label>
-                <input
-                  type="date"
-                  id="endDateFilter"
-                  value={endDateFilter}
-                  onChange={(e) => setEndDateFilter(e.target.value)}
-                  min={startDateFilter || undefined}
-                  disabled={isUsingDateFilters}
-                  className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-              </div>
-
-              <div className="flex items-end gap-2">
-                <button
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={clearFilters}
-                  disabled={!hasActiveFilters}
-                >
-                  📅 Hoje
+            {/* ── Results count ── */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-slate-500">
+                <span className="font-semibold text-slate-700">{filteredOrders.length}</span> ordem{filteredOrders.length !== 1 ? 's' : ''} encontrada{filteredOrders.length !== 1 ? 's' : ''}
+              </p>
+              {hasActiveFilters && (
+                <button onClick={clearFilters} className="text-xs text-slate-500 hover:text-slate-700 underline">
+                  Limpar filtros
                 </button>
-                <button
-                  className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                  onClick={viewAllHistory}
-                >
-                  📚 Todo Histórico
-                </button>
-              </div>
+              )}
             </div>
-            
-            {(dayFilter || (monthFilter && yearFilter)) && (
-              <div className="mt-4 bg-green-100 border-2 border-green-300 rounded-lg p-3 flex items-center gap-2">
-                <span className="text-lg">📌</span>
-                <p className="text-sm font-semibold text-green-800">
-                  {dayFilter && monthFilter && yearFilter ? (
-                    <>
-                      Mostrando Ordens de Serviço do dia:{' '}
-                      <span className="font-bold">
-                        {String(dayFilter).padStart(2, '0')}/{monthFilter}/{yearFilter}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      Mostrando Ordens de Serviço de:{' '}
-                      <span className="font-bold">
-                        {monthFilter && yearFilter ? formatMonthYear(monthFilter, yearFilter) : 'Todo período'}
-                      </span>
-                    </>
-                  )}
-                </p>
+
+            {/* Loading */}
+            {isLoading && <Spinner />}
+
+            {/* Error */}
+            {error && (
+              <div className="card p-6 text-center border-red-200">
+                <p className="text-sm font-semibold text-red-600 mb-1">Erro ao carregar dados</p>
+                <p className="text-xs text-red-500 mb-4">{(error as Error).message}</p>
+                <button onClick={() => refetch()} className="btn btn-primary text-xs">Tentar Novamente</button>
               </div>
             )}
-          </div>
 
-          {/* Loading State */}
-          {isLoading && (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin text-6xl mb-4">⏳</div>
-              <p className="text-text-muted text-lg">Carregando ordens de serviço...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 text-center">
-              <p className="text-red-600 text-lg font-semibold mb-2">❌ Erro ao carregar dados</p>
-              <p className="text-red-500">{(error as Error).message}</p>
-              <button onClick={() => refetch()} className="btn btn-primary mt-4">
-                🔄 Tentar Novamente
-              </button>
-            </div>
-          )}
-
-          {!isLoading && !error && (
-            <>
-              {filteredOrders.length === 0 ? (
-                <div className="text-center py-16 px-4 md:px-8">
-                  <div className="text-8xl mb-6">📋</div>
-                  <h3 className="text-2xl font-bold text-text-primary mb-3">
-                    Nenhuma ordem de serviço encontrada
-                  </h3>
-                  <p className="text-text-muted mb-6 text-base md:text-lg">
-                    {hasActiveFilters
-                      ? 'Tente ajustar os filtros ou limpe-os para ver todas as ordens.'
-                      : 'Crie sua primeira ordem de serviço clicando no botão "Nova OS" acima.'}
+            {/* Cards grid */}
+            {!isLoading && !error && (
+              filteredOrders.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-700 mb-1">Nenhuma ordem encontrada</h3>
+                  <p className="text-sm text-slate-500 mb-4">
+                    {hasActiveFilters ? 'Tente ajustar os filtros.' : 'Clique em "Nova OS" para criar a primeira.'}
                   </p>
                   {hasActiveFilters && (
-                    <button onClick={clearFilters} className="btn btn-secondary">
-                      Limpar Filtros
-                    </button>
+                    <button onClick={clearFilters} className="btn btn-outline text-xs">Limpar Filtros</button>
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredOrders.map((order) => (
                     <ServiceOrderCard
                       key={order.id}
@@ -650,14 +561,13 @@ function App() {
                     />
                   ))}
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </main>
-      )} {/* end helpdesk page */}
+              )
+            )}
+          </main>
+        )}
 
-      <Footer />
+        <Footer />
+      </div>
 
       {/* Modal */}
       <Modal isOpen={showModal} onClose={closeModal} title={modalTitle}>
@@ -665,12 +575,7 @@ function App() {
       </Modal>
 
       {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          onClose={() => removeToast(toast.id)}
-        />
+        <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => removeToast(toast.id)} />
       ))}
     </div>
   );
