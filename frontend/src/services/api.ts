@@ -156,6 +156,7 @@ export const tintaAPI = {
     const params = new URLSearchParams();
     if (filters?.estoque_id) params.append('estoque_id', String(filters.estoque_id));
     if (filters?.setor) params.append('setor', filters.setor);
+    if (filters?.unidade) params.append('unidade', filters.unidade);
     if (filters?.dataInicio) params.append('dataInicio', filters.dataInicio);
     if (filters?.dataFim) params.append('dataFim', filters.dataFim);
     if (filters?.modelo) params.append('modelo', filters.modelo);
