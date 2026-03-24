@@ -239,7 +239,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className={`px-3 py-4 border-t border-white/8 shrink-0 ${collapsed ? 'flex justify-center' : 'flex items-center justify-between'}`}>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="text-white/50 text-[11px] font-medium truncate">Luiz Augusto de Andrade Silva</p>
+            <p className="text-white/50 text-[11px] font-medium truncate">Help Desk TI</p>
             <p className="text-white/25 text-[10px] truncate">© {new Date().getFullYear()} — Todos os direitos reservados.</p>
           </div>
         )}
