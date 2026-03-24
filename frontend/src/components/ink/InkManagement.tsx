@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useMemo, useCallback, lazy, Suspense, useEffect } from 'react';
 import { EstoqueTinta, SaidaTinta, CreateEstoqueData, UpdateEstoqueData, CreateSaidaData } from '../../types';
 import Modal from '../common/Modal';
 import {
@@ -9,6 +9,7 @@ import {
   useSaidasTinta,
   useCreateSaida,
   useDeleteSaida,
+  useEstornarSaida,
 } from '../../hooks/useTinta';
 import { useModelosImpressora } from '../../hooks/useModeloImpressora';
 import { useToast } from '../../hooks/useToast';
@@ -178,13 +179,150 @@ const EstoqueCard: React.FC<EstoqueCardProps> = ({ estoque, onSaida, onEdit, onD
   );
 };
 
+// ─── EstornoModal ─────────────────────────────────────────────────────────────
+interface EstornoModalProps {
+  saida: SaidaTinta;
+  isLoading: boolean;
+  onConfirm: (quantidade: number) => void;
+  onCancel: () => void;
+}
+
+const EstornoModal: React.FC<EstornoModalProps> = ({ saida, isLoading, onConfirm, onCancel }) => {
+  const [qtd, setQtd] = useState(saida.quantidade);
+  const cor = getCor(saida.estoque?.cor_tinta ?? '');
+
+  useEffect(() => { setQtd(saida.quantidade); }, [saida.quantidade]);
+
+  const isTotal = qtd === saida.quantidade;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
+
+      {/* Card */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">Estornar Saída</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Informe quantas unidades deseja devolver ao estoque</p>
+            </div>
+          </div>
+          <button onClick={onCancel} className="text-slate-400 hover:text-slate-600 transition-colors mt-0.5">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Info da saída */}
+        <div className="bg-slate-50 rounded-xl border border-slate-200 px-4 py-3 flex flex-col gap-1.5 text-xs">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">Tinta</span>
+            <span className={`badge border ${cor.badge}`}>{saida.estoque?.cor_tinta ?? '—'}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">Modelo</span>
+            <span className="font-medium text-slate-700 truncate max-w-[160px]">{saida.estoque?.modelo_impressora ?? '—'}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">Unidade</span>
+            <span className="font-medium text-slate-700">{saida.unidade || '—'}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-500">Data</span>
+            <span className="font-medium text-slate-700">{fmt(saida.data_saida)}</span>
+          </div>
+          <div className="flex items-center justify-between border-t border-slate-200 pt-1.5 mt-0.5">
+            <span className="text-slate-500">Qtd. original da saída</span>
+            <span className="font-bold text-red-600">−{saida.quantidade}</span>
+          </div>
+        </div>
+
+        {/* Input de quantidade */}
+        <div>
+          <label className="label mb-1.5">Quantidade a estornar</label>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setQtd(v => Math.max(1, v - 1))}
+              disabled={qtd <= 1}
+              className="w-9 h-9 rounded-lg border border-slate-300 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" />
+              </svg>
+            </button>
+            <input
+              type="number"
+              min={1}
+              max={saida.quantidade}
+              value={qtd}
+              onChange={e => {
+                const v = Math.max(1, Math.min(saida.quantidade, Number(e.target.value)));
+                setQtd(isNaN(v) ? 1 : v);
+              }}
+              className="input text-center font-bold text-lg flex-1"
+            />
+            <button
+              type="button"
+              onClick={() => setQtd(v => Math.min(saida.quantidade, v + 1))}
+              disabled={qtd >= saida.quantidade}
+              className="w-9 h-9 rounded-lg border border-slate-300 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-400 mt-1.5 text-center">
+            {isTotal
+              ? 'Estorno total — o registro será removido do histórico'
+              : `Estorno parcial — ${saida.quantidade - qtd} unidade(s) permanecerão no histórico`}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <button onClick={onCancel} disabled={isLoading}
+            className="btn btn-outline flex-1 text-xs py-2.5">
+            Cancelar
+          </button>
+          <button
+            onClick={() => onConfirm(qtd)}
+            disabled={isLoading}
+            className="btn flex-1 text-xs py-2.5 bg-amber-500 hover:bg-amber-600 text-white border-amber-500 font-semibold disabled:opacity-60"
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                Estornando…
+              </span>
+            ) : `Estornar ${qtd} un.`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── SaidaRow ─────────────────────────────────────────────────────────────────
 interface SaidaRowProps {
   saida: SaidaTinta;
-  onDelete: (id: number) => void;
+  onEstornar: (saida: SaidaTinta) => void;
 }
 
-const SaidaRow: React.FC<SaidaRowProps> = ({ saida, onDelete }) => {
+const SaidaRow: React.FC<SaidaRowProps> = ({ saida, onEstornar }) => {
   const cor = getCor(saida.estoque?.cor_tinta ?? '');
   return (
     <tr className="hover:bg-slate-50 transition-colors">
@@ -206,8 +344,8 @@ const SaidaRow: React.FC<SaidaRowProps> = ({ saida, onDelete }) => {
       </td>
       <td className="px-4 py-3 text-center">
         <button
-          onClick={() => onDelete(saida.id)}
-          className="text-xs font-semibold text-red-600 hover:text-red-800 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors"
+          onClick={() => onEstornar(saida)}
+          className="text-xs font-semibold text-amber-600 hover:text-amber-800 hover:bg-amber-50 px-2.5 py-1.5 rounded-lg transition-colors"
           title="Estornar saída"
         >
           Estornar
@@ -230,6 +368,8 @@ const InkManagement: React.FC = () => {
   const [modalMode,       setModalMode]       = useState<'saida'|'estoque_create'|'estoque_edit'|'gerenciar_modelos'|null>(null);
   const [selectedEstoque, setSelectedEstoque] = useState<EstoqueTinta|null>(null);
 
+  const [estornoSaida,    setEstornoSaida]    = useState<SaidaTinta|null>(null);
+
   const { data: estoques = [], isLoading: estoqueLoading, error: estoqueError, refetch: refetchEstoque } = useEstoqueTintas();
   const { data: modelos  = [] } = useModelosImpressora();
 
@@ -247,6 +387,7 @@ const InkManagement: React.FC = () => {
   const deleteEstoqueMutation = useDeleteEstoque();
   const createSaidaMutation   = useCreateSaida();
   const deleteSaidaMutation   = useDeleteSaida();
+  const estornarSaidaMutation = useEstornarSaida();
 
   const { toasts, removeToast, success, error: errorToast } = useToast();
 
@@ -304,10 +445,32 @@ const InkManagement: React.FC = () => {
   }, [deleteEstoqueMutation, success, errorToast]);
 
   const handleDeleteSaida = useCallback(async (id: number) => {
-    if (!window.confirm('Estornar esta saída? A quantidade voltará ao estoque.')) return;
-    try { await deleteSaidaMutation.mutateAsync(id); success('Saída estornada!'); refetchSaidas(); }
-    catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao estornar'); }
+    if (!window.confirm('Remover esta saída completamente? A quantidade voltará ao estoque.')) return;
+    try { await deleteSaidaMutation.mutateAsync(id); success('Saída removida!'); refetchSaidas(); }
+    catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao remover'); }
   }, [deleteSaidaMutation, success, errorToast, refetchSaidas]);
+
+  const handleOpenEstorno = useCallback((saida: SaidaTinta) => {
+    setEstornoSaida(saida);
+  }, []);
+
+  const handleConfirmEstorno = useCallback(async (quantidade: number) => {
+    if (!estornoSaida) return;
+    try {
+      await estornarSaidaMutation.mutateAsync({ id: estornoSaida.id, quantidade });
+      success(
+        quantidade === estornoSaida.quantidade
+          ? `Estorno total de ${quantidade} unidade(s) realizado!`
+          : `Estorno parcial de ${quantidade} unidade(s) realizado!`
+      );
+      setEstornoSaida(null);
+      refetchSaidas();
+    } catch (err: any) {
+      errorToast(err.response?.data?.error || 'Erro ao estornar');
+    }
+  }, [estornoSaida, estornarSaidaMutation, success, errorToast, refetchSaidas]);
+
+  const closeEstorno = useCallback(() => setEstornoSaida(null), []);
 
   const modalTitle = useMemo(() => {
     if (modalMode === 'saida' && selectedEstoque) return `Registrar Saída — ${selectedEstoque.cor_tinta} (${selectedEstoque.modelo_impressora})`;
@@ -521,7 +684,7 @@ const InkManagement: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {saidas.map(s => <SaidaRow key={s.id} saida={s} onDelete={handleDeleteSaida} />)}
+                    {saidas.map(s => <SaidaRow key={s.id} saida={s} onEstornar={handleOpenEstorno} />)}
                   </tbody>
                 </table>
               </div>
@@ -539,6 +702,16 @@ const InkManagement: React.FC = () => {
       <Modal isOpen={showModal} onClose={closeModal} title={modalTitle}>
         {renderModal()}
       </Modal>
+
+      {/* Modal de Estorno */}
+      {estornoSaida && (
+        <EstornoModal
+          saida={estornoSaida}
+          isLoading={estornarSaidaMutation.isPending}
+          onConfirm={handleConfirmEstorno}
+          onCancel={closeEstorno}
+        />
+      )}
 
       {toasts.map(t => <Toast key={t.id} message={t.message} type={t.type} onClose={() => removeToast(t.id)} />)}
     </div>

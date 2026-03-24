@@ -77,3 +77,15 @@ export const useDeleteSaida = () => {
     },
   });
 };
+
+export const useEstornarSaida = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, quantidade }: { id: number; quantidade: number }) =>
+      tintaAPI.estornarSaida(id, quantidade),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ESTOQUE_KEY });
+      queryClient.invalidateQueries({ queryKey: SAIDAS_KEY });
+    },
+  });
+};
