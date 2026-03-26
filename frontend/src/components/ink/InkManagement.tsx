@@ -8,7 +8,6 @@ import {
   useDeleteEstoque,
   useSaidasTinta,
   useCreateSaida,
-  useDeleteSaida,
   useEstornarSaida,
 } from '../../hooks/useTinta';
 import { useModelosImpressora } from '../../hooks/useModeloImpressora';
@@ -386,7 +385,6 @@ const InkManagement: React.FC = () => {
   const updateEstoqueMutation = useUpdateEstoque();
   const deleteEstoqueMutation = useDeleteEstoque();
   const createSaidaMutation   = useCreateSaida();
-  const deleteSaidaMutation   = useDeleteSaida();
   const estornarSaidaMutation = useEstornarSaida();
 
   const { toasts, removeToast, success, error: errorToast } = useToast();
@@ -444,11 +442,7 @@ const InkManagement: React.FC = () => {
     catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao remover'); }
   }, [deleteEstoqueMutation, success, errorToast]);
 
-  const handleDeleteSaida = useCallback(async (id: number) => {
-    if (!window.confirm('Remover esta saída completamente? A quantidade voltará ao estoque.')) return;
-    try { await deleteSaidaMutation.mutateAsync(id); success('Saída removida!'); refetchSaidas(); }
-    catch (err: any) { errorToast(err.response?.data?.error || 'Erro ao remover'); }
-  }, [deleteSaidaMutation, success, errorToast, refetchSaidas]);
+
 
   const handleOpenEstorno = useCallback((saida: SaidaTinta) => {
     setEstornoSaida(saida);

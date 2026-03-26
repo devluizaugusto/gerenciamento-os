@@ -106,7 +106,11 @@ export const createModelo = async (req: Request, res: Response): Promise<void> =
 
 /**
  * PUT /api/modelos-impressora/:id
- * Atualiza um modelo de impressora
+ * Atualiza um modelo de impressora.
+ *
+ * Quando o nome é alterado, o banco propaga automaticamente para estoque_tinta
+ * via ON UPDATE CASCADE (FK estoque_tinta_modelo_impressora_fkey).
+ * Portanto NÃO é necessário (nem seguro) fazer updateMany manual nos estoques.
  */
 export const updateModelo = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -119,31 +123,8 @@ export const updateModelo = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Se o nome está mudando, precisamos atualizar também os estoques que referenciam o nome antigo
-    if (nome && nome.trim() !== existing.nome) {
-      await prisma.$transaction(async (tx) => {
-        // Atualizar todos os estoques que usam o nome antigo
-        await tx.estoqueTinta.updateMany({
-          where: { modelo_impressora: existing.nome },
-          data: { modelo_impressora: nome.trim() },
-        });
-
-        // Atualizar o modelo
-        await tx.modeloImpressoraCadastro.update({
-          where: { id: Number(id) },
-          data: {
-            nome: nome.trim(),
-            ...(descricao !== undefined && { descricao: descricao?.trim() || null }),
-            ...(ativo !== undefined && { ativo: Boolean(ativo) }),
-          },
-        });
-      });
-
-      const updated = await prisma.modeloImpressoraCadastro.findUnique({ where: { id: Number(id) } });
-      res.json(updated);
-      return;
-    }
-
+    // Atualiza o modelo diretamente.
+    // Se o nome mudar, o ON UPDATE CASCADE da FK cuida de propagar para estoque_tinta.
     const updated = await prisma.modeloImpressoraCadastro.update({
       where: { id: Number(id) },
       data: {
@@ -166,7 +147,10 @@ export const updateModelo = async (req: Request, res: Response): Promise<void> =
 
 /**
  * DELETE /api/modelos-impressora/:id
- * Remove um modelo de impressora (apenas se não tiver estoques associados)
+ * Remove um modelo de impressora.
+ *
+ * A FK com ON DELETE RESTRICT no banco impede a exclusão quando há estoques associados.
+ * A verificação prévia via _count garante uma mensagem de erro clara ao usuário.
  */
 export const deleteModelo = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -193,8 +177,15 @@ export const deleteModelo = async (req: Request, res: Response): Promise<void> =
 
     await prisma.modeloImpressoraCadastro.delete({ where: { id: Number(id) } });
     res.status(204).send();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao deletar modelo de impressora:', error);
+    // P2003: FK constraint violation (segurança extra caso _count falhe)
+    if (error.code === 'P2003') {
+      res.status(409).json({
+        error: 'Não é possível remover este modelo pois há tintas associadas. Remova as tintas primeiro ou desative o modelo.',
+      });
+      return;
+    }
     res.status(500).json({ error: 'Erro ao deletar modelo de impressora' });
   }
 };

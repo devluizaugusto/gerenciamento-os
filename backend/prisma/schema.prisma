@@ -53,7 +53,7 @@ model EstoqueTinta {
   updated_at      DateTime  @updatedAt
 
   saidas          SaidaTinta[]
-  modelo_cadastro ModeloImpressoraCadastro? @relation(fields: [modelo_impressora], references: [nome])
+  modelo_cadastro ModeloImpressoraCadastro? @relation(fields: [modelo_impressora], references: [nome], onUpdate: Cascade, onDelete: Restrict)
 
   @@index([modelo_impressora])
   @@map("estoque_tinta")
