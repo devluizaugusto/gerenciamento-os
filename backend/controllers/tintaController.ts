@@ -26,6 +26,9 @@ export const getAllEstoque = async (_req: Request, res: Response): Promise<void>
             observacao: true,
           },
         },
+        _count: {
+          select: { saidas: true },
+        },
       },
     });
     res.json(estoques);
@@ -279,6 +282,70 @@ export const createSaida = async (req: Request, res: Response): Promise<void> =>
   } catch (error) {
     console.error('Erro ao registrar saída de tinta:', error);
     res.status(500).json({ error: 'Erro ao registrar saída de tinta' });
+  }
+};
+
+/**
+ * PUT /api/tintas/saidas/:id
+ * Edita os dados de uma saída (unidade, setor, responsavel, observacao, data_saida, quantidade)
+ * Ajusta o estoque se a quantidade mudar.
+ */
+export const updateSaida = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params as { id: number | string };
+    const { quantidade, unidade, setor, responsavel, observacao, data_saida } = req.body;
+
+    const saida = await prisma.saidaTinta.findUnique({ where: { id: Number(id) } });
+    if (!saida) {
+      res.status(404).json({ error: 'Saída de tinta não encontrada' });
+      return;
+    }
+
+    const novaQtd = quantidade !== undefined ? Number(quantidade) : saida.quantidade;
+    const diffQtd = saida.quantidade - novaQtd; // positivo = estoque aumenta, negativo = diminui
+
+    if (novaQtd < 1) {
+      res.status(400).json({ error: 'Quantidade deve ser pelo menos 1' });
+      return;
+    }
+
+    if (diffQtd < 0) {
+      // Verificar se há estoque suficiente para aumentar a saída
+      const estoque = await prisma.estoqueTinta.findUnique({ where: { id: saida.estoque_id } });
+      if (!estoque || estoque.quantidade_atual < Math.abs(diffQtd)) {
+        res.status(400).json({
+          error: `Estoque insuficiente para aumentar a saída. Disponível: ${estoque?.quantidade_atual ?? 0}`,
+        });
+        return;
+      }
+    }
+
+    const updateData: any = {};
+    if (quantidade !== undefined) updateData.quantidade = novaQtd;
+    if (unidade !== undefined) updateData.unidade = unidade;
+    if (setor !== undefined) updateData.setor = setor;
+    if (responsavel !== undefined) updateData.responsavel = responsavel;
+    if (observacao !== undefined) updateData.observacao = observacao || null;
+    if (data_saida !== undefined) updateData.data_saida = new Date(data_saida + 'T00:00:00.000Z');
+
+    const ops: any[] = [
+      prisma.saidaTinta.update({ where: { id: Number(id) }, data: updateData }),
+    ];
+
+    if (diffQtd !== 0) {
+      ops.push(
+        prisma.estoqueTinta.update({
+          where: { id: saida.estoque_id },
+          data: { quantidade_atual: { increment: diffQtd } },
+        })
+      );
+    }
+
+    const [saidaAtualizada] = await prisma.$transaction(ops);
+    res.json(saidaAtualizada);
+  } catch (error) {
+    console.error('Erro ao atualizar saída de tinta:', error);
+    res.status(500).json({ error: 'Erro ao atualizar saída de tinta' });
   }
 };
 

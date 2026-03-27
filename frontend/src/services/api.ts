@@ -7,6 +7,7 @@ import {
   UpdateEstoqueData,
   SaidaTinta,
   CreateSaidaData,
+  UpdateSaidaData,
   SaidasFilter,
   ModeloImpressoraCadastro,
   CreateModeloData,
@@ -168,6 +169,11 @@ export const tintaAPI = {
 
   createSaida: async (data: CreateSaidaData): Promise<SaidaTinta> => {
     const response = await api.post<SaidaTinta>('/tintas/saidas', data);
+    return response.data;
+  },
+
+  updateSaida: async (id: number, data: UpdateSaidaData): Promise<SaidaTinta> => {
+    const response = await api.put<SaidaTinta>(`/tintas/saidas/${id}`, data);
     return response.data;
   },
 

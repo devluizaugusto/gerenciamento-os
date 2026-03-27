@@ -78,6 +78,7 @@ export interface EstoqueTinta {
   created_at: string;
   updated_at: string;
   saidas?: SaidaTinta[];
+  _count?: { saidas: number };
 }
 
 export interface CreateEstoqueData {
@@ -104,6 +105,15 @@ export interface CreateSaidaData {
   responsavel: string;
   observacao?: string | null;
   data_saida: string;
+}
+
+export interface UpdateSaidaData {
+  quantidade?: number;
+  unidade?: string;
+  setor?: string;
+  responsavel?: string;
+  observacao?: string | null;
+  data_saida?: string;
 }
 
 export interface SaidasFilter {

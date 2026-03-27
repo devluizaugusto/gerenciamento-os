@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { tintaAPI } from '../services/api';
-import { CreateEstoqueData, UpdateEstoqueData, CreateSaidaData, SaidasFilter } from '../types';
+import { CreateEstoqueData, UpdateEstoqueData, CreateSaidaData, UpdateSaidaData, SaidasFilter } from '../types';
 
 // ─── Query Keys ───────────────────────────────────────────────
 const ESTOQUE_KEY = ['tintas', 'estoque'] as const;
@@ -60,6 +60,18 @@ export const useCreateSaida = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateSaidaData) => tintaAPI.createSaida(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ESTOQUE_KEY });
+      queryClient.invalidateQueries({ queryKey: SAIDAS_KEY });
+    },
+  });
+};
+
+export const useUpdateSaida = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateSaidaData }) =>
+      tintaAPI.updateSaida(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ESTOQUE_KEY });
       queryClient.invalidateQueries({ queryKey: SAIDAS_KEY });

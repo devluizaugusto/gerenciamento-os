@@ -84,6 +84,47 @@ export const createSaidaTintaSchema = z.object({
   }),
 });
 
+// Schema para editar saída de tinta
+export const updateSaidaTintaSchema = z.object({
+  params: z.object({
+    id: z
+      .string()
+      .regex(/^\d+$/, 'ID deve ser um número inteiro positivo')
+      .transform(Number),
+  }),
+  body: z.object({
+    quantidade: z
+      .number({ message: 'Quantidade deve ser um número' })
+      .int('Quantidade deve ser um número inteiro')
+      .min(1, 'Quantidade deve ser pelo menos 1')
+      .optional(),
+    unidade: z
+      .string()
+      .min(1, 'Unidade é obrigatória')
+      .max(255, 'Unidade não pode ter mais de 255 caracteres')
+      .optional(),
+    setor: z
+      .string()
+      .min(1, 'Setor é obrigatório')
+      .max(255, 'Setor não pode ter mais de 255 caracteres')
+      .optional(),
+    responsavel: z
+      .string()
+      .min(1, 'Responsável é obrigatório')
+      .max(255, 'Responsável não pode ter mais de 255 caracteres')
+      .optional(),
+    observacao: z
+      .string()
+      .max(1000, 'Observação não pode ter mais de 1000 caracteres')
+      .optional()
+      .nullable(),
+    data_saida: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data de saída deve estar no formato YYYY-MM-DD')
+      .optional(),
+  }),
+});
+
 // Schema para parâmetro de ID
 export const idParamTintaSchema = z.object({
   params: z.object({

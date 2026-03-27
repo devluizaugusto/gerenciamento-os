@@ -7,6 +7,7 @@ import {
   deleteEstoque,
   getAllSaidas,
   createSaida,
+  updateSaida,
   deleteSaida,
   estornarSaida,
 } from '../controllers/tintaController';
@@ -15,6 +16,7 @@ import {
   createEstoqueTintaSchema,
   updateEstoqueTintaSchema,
   createSaidaTintaSchema,
+  updateSaidaTintaSchema,
   idParamTintaSchema,
   historicoQuerySchema,
 } from '../schemas/tintaSchema';
@@ -31,6 +33,7 @@ router.delete('/estoque/:id', validateSchema(idParamTintaSchema), deleteEstoque)
 // ─── Saídas ──────────────────────────────────
 router.get('/saidas', validateSchema(historicoQuerySchema), getAllSaidas);
 router.post('/saidas', validateSchema(createSaidaTintaSchema), createSaida);
+router.put('/saidas/:id', validateSchema(updateSaidaTintaSchema), updateSaida);
 router.delete('/saidas/:id', validateSchema(idParamTintaSchema), deleteSaida);
 router.patch('/saidas/:id/estorno', validateSchema(idParamTintaSchema), estornarSaida);
 
