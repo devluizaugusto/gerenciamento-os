@@ -12,7 +12,7 @@ export const useEstoqueTintas = () =>
   useQuery({
     queryKey: ESTOQUE_KEY,
     queryFn: () => tintaAPI.getAllEstoque(),
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
 export const useCreateEstoque = () => {
@@ -53,7 +53,7 @@ export const useSaidasTinta = (filters?: SaidasFilter) =>
   useQuery({
     queryKey: [...SAIDAS_KEY, filters],
     queryFn: () => tintaAPI.getAllSaidas(filters),
-    staleTime: 30_000,
+    staleTime: 0,
   });
 
 export const useCreateSaida = () => {
@@ -63,6 +63,7 @@ export const useCreateSaida = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ESTOQUE_KEY });
       queryClient.invalidateQueries({ queryKey: SAIDAS_KEY });
+      queryClient.refetchQueries({ queryKey: ESTOQUE_KEY });
     },
   });
 };
@@ -75,6 +76,7 @@ export const useUpdateSaida = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ESTOQUE_KEY });
       queryClient.invalidateQueries({ queryKey: SAIDAS_KEY });
+      queryClient.refetchQueries({ queryKey: ESTOQUE_KEY });
     },
   });
 };
@@ -86,6 +88,7 @@ export const useDeleteSaida = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ESTOQUE_KEY });
       queryClient.invalidateQueries({ queryKey: SAIDAS_KEY });
+      queryClient.refetchQueries({ queryKey: ESTOQUE_KEY });
     },
   });
 };
@@ -98,6 +101,7 @@ export const useEstornarSaida = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ESTOQUE_KEY });
       queryClient.invalidateQueries({ queryKey: SAIDAS_KEY });
+      queryClient.refetchQueries({ queryKey: ESTOQUE_KEY });
     },
   });
 };

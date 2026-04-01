@@ -741,10 +741,10 @@ const InkManagement: React.FC = () => {
   }, [modalMode, selectedEstoque, handleSubmitSaida, handleSubmitEstoque, closeModal, createSaidaMutation.isPending, createEstoqueMutation.isPending, updateEstoqueMutation.isPending]);
 
   return (
-    <div className="page-inner pb-10">
+    <div className="page-inner pb-24 md:pb-10">
 
       {/* ── Page toolbar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 mb-4 sm:mb-6">
         <div>
           <h2 className="text-base font-bold text-slate-800">Estoque de Tintas</h2>
           <p className="text-xs text-slate-500">Gerencie o estoque e as saídas de tintas Epson</p>
@@ -767,7 +767,7 @@ const InkManagement: React.FC = () => {
       </div>
 
       {/* ── Summary stats ── */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {[
           { label: 'Tintas cadastradas', value: estoques.length, sub: 'no estoque',
             icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 10V7"/></svg>,
@@ -781,11 +781,11 @@ const InkManagement: React.FC = () => {
         ].map(s => (
           <div key={s.label} className="stat-card">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{s.label}</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide leading-tight">{s.label}</span>
               <div className={`w-7 h-7 rounded-md flex items-center justify-center border ${s.accent}`}>{s.icon}</div>
             </div>
-            <p className="text-3xl font-extrabold text-slate-800 leading-none mb-1">{s.value}</p>
-            <p className="text-xs text-slate-500">{s.sub}</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-slate-800 leading-none mb-0.5 sm:mb-1">{s.value}</p>
+            <p className="text-[10px] sm:text-xs text-slate-500 truncate">{s.sub}</p>
           </div>
         ))}
       </div>
@@ -865,12 +865,12 @@ const InkManagement: React.FC = () => {
       {/* ══ TAB: HISTÓRICO ════════════════════════════════════════════════════════ */}
       {activeTab === 'historico' && (
         <>
-          <div className="filter-bar mb-5">
+          <div className="filter-bar mb-4 sm:mb-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-semibold text-slate-700">Filtros</span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <span className="text-xs text-slate-500">
-                  <span className="font-semibold text-slate-700">{saidas.length}</span> registro{saidas.length !== 1 ? 's' : ''}
+                  <span className="font-semibold text-slate-700">{saidas.length}</span> reg.
                 </span>
                 <button onClick={() => { setHistModeloFilter('todos'); setHistUnidadeFilter(''); setHistSetorFilter(''); setHistDataSaida(''); }}
                   className="text-xs text-slate-500 hover:text-slate-700 underline">
@@ -878,7 +878,7 @@ const InkManagement: React.FC = () => {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               <div>
                 <label className="label">Modelo</label>
                 <select value={histModeloFilter} onChange={e => setHistModeloFilter(e.target.value)} className="input">
@@ -908,7 +908,7 @@ const InkManagement: React.FC = () => {
           </div>
 
           {saidasLoading ? <Spinner /> : saidas.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
               <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
                 <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -918,32 +918,92 @@ const InkManagement: React.FC = () => {
               <p className="text-xs text-slate-500">As saídas de tinta aparecerão aqui.</p>
             </div>
           ) : (
-            <div className="table-wrap">
-              <div className="overflow-x-auto table-scroll">
-                <table className="w-full text-left">
-                  <thead className="bg-slate-50 border-b border-slate-200">
-                    <tr>
-                      {['Data','Cor','Modelo','Unidade','Setor','Responsável','Qtd','Observação','Ações'].map(h => (
-                        <th key={h} className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
-                          {h}
-                        </th>
+            <>
+              {/* Desktop table */}
+              <div className="hidden sm:block table-wrap">
+                <div className="overflow-x-auto table-scroll">
+                  <table className="w-full text-left">
+                    <thead className="bg-slate-50 border-b border-slate-200">
+                      <tr>
+                        {['Data','Cor','Modelo','Unidade','Setor','Responsável','Qtd','Observação','Ações'].map(h => (
+                          <th key={h} className="px-4 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {saidas.map(s => (
+                        <SaidaRow key={s.id} saida={s}
+                          onEstornar={handleOpenEstorno}
+                          onEditar={handleOpenEditar} />
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {saidas.map(s => (
-                      <SaidaRow key={s.id} saida={s}
-                        onEstornar={handleOpenEstorno}
-                        onEditar={handleOpenEditar} />
-                    ))}
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex gap-6 text-xs text-slate-500">
+                  <span>Registros: <strong className="text-slate-700">{saidas.length}</strong></span>
+                  <span>Total saído: <strong className="text-slate-700">{saidas.reduce((a,s)=>a+s.quantidade,0)} unidades</strong></span>
+                </div>
               </div>
-              <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex gap-6 text-xs text-slate-500">
-                <span>Registros: <strong className="text-slate-700">{saidas.length}</strong></span>
-                <span>Total saído: <strong className="text-slate-700">{saidas.reduce((a,s)=>a+s.quantidade,0)} unidades</strong></span>
+
+              {/* Mobile cards */}
+              <div className="sm:hidden space-y-3">
+                {saidas.map(s => {
+                  const cor = getCor(s.estoque?.cor_tinta ?? '');
+                  return (
+                    <div key={s.id} className="card p-4 flex flex-col gap-3">
+                      {/* Top row */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className={`badge border ${cor.badge}`}>{s.estoque?.cor_tinta ?? '—'}</span>
+                          <span className="text-xs text-slate-500 font-medium">{s.estoque?.modelo_impressora ?? '—'}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-500">{fmt(s.data_saida)}</span>
+                      </div>
+                      {/* Info grid */}
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Unidade</p>
+                          <p className="font-semibold text-slate-700 truncate">{s.unidade || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Setor</p>
+                          <p className="font-semibold text-slate-700 truncate">{s.setor}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Responsável</p>
+                          <p className="font-semibold text-slate-700 truncate">{s.responsavel}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Qtd. Saída</p>
+                          <p className="font-bold text-red-600">−{s.quantidade}</p>
+                        </div>
+                      </div>
+                      {s.observacao && (
+                        <p className="text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2 border border-slate-100 truncate">
+                          {s.observacao}
+                        </p>
+                      )}
+                      {/* Actions */}
+                      <div className="flex gap-2 pt-1 border-t border-slate-100">
+                        <button onClick={() => handleOpenEditar(s)}
+                          className="flex-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 py-2 rounded-lg transition-colors border border-blue-200">
+                          Editar
+                        </button>
+                        <button onClick={() => handleOpenEstorno(s)}
+                          className="flex-1 text-xs font-semibold text-amber-600 hover:bg-amber-50 py-2 rounded-lg transition-colors border border-amber-200">
+                          Estornar
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                <div className="text-center py-3 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">{saidas.length}</span> registros · Total: <span className="font-semibold text-slate-700">{saidas.reduce((a,s)=>a+s.quantidade,0)}</span> unidades
+                </div>
               </div>
-            </div>
+            </>
           )}
         </>
       )}
