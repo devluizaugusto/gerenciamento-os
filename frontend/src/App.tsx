@@ -381,7 +381,7 @@ function App() {
                   <button
                     onClick={() => setShowFilters(v => !v)}
                     className="sm:hidden btn btn-ghost text-xs py-1.5 px-2.5 text-slate-600"
-                    aria-label="Filtros avançados"
+                    aria-label="Filtros Avançados"
                   >
                     <svg className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
