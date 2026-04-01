@@ -7,11 +7,19 @@
     @apply m-0 p-0 box-border;
   }
 
+  html {
+    /* Prevent font size inflation on mobile */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   body {
     @apply font-sans antialiased leading-relaxed min-h-screen text-sm;
     background-color: #f1f5f9;
     color: #1e293b;
     letter-spacing: -0.01em;
+    /* Smooth overscroll on iOS */
+    overscroll-behavior: none;
   }
 
   code {
@@ -25,6 +33,27 @@
   ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400; }
 
   ::selection { background: rgba(220,38,38,0.15); color: #1e293b; }
+
+  /* Ensure tap highlight is visible but subtle */
+  * { -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05); }
+
+  /* Better touch targets */
+  button, [role="button"] {
+    touch-action: manipulation;
+  }
+
+  /* Prevent zoom on input focus on iOS */
+  @media (max-width: 768px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="email"],
+    input[type="tel"],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer components {
@@ -35,7 +64,7 @@
   }
 
   .page-inner {
-    @apply max-w-7xl mx-auto px-6 py-6;
+    @apply max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-6;
   }
 
   /* ── Cards ────────────────────────────────────────────── */
@@ -48,16 +77,16 @@
   }
 
   .card-header {
-    @apply px-5 py-4 border-b border-slate-100 flex items-center justify-between;
+    @apply px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between;
   }
 
   .card-body {
-    @apply p-5;
+    @apply p-4 sm:p-5;
   }
 
   /* ── Form elements ────────────────────────────────────── */
   .input {
-    @apply w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white text-slate-800
+    @apply w-full px-3 sm:px-3.5 py-2 sm:py-2.5 text-sm border border-slate-300 rounded-lg bg-white text-slate-800
            placeholder:text-slate-400 transition-all duration-150
            focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary;
   }
@@ -67,7 +96,7 @@
   }
 
   textarea.input {
-    @apply min-h-[100px] resize-y;
+    @apply min-h-[90px] sm:min-h-[100px] resize-y;
   }
 
   select.input {
@@ -82,13 +111,15 @@
   }
 
   .label {
-    @apply block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide;
+    @apply block text-xs font-semibold text-slate-600 mb-1 sm:mb-1.5 uppercase tracking-wide;
   }
 
   /* ── Buttons ─────────────────────────────────────────── */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold
+    @apply inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-sm font-semibold
            rounded-lg cursor-pointer transition-all duration-150 select-none;
+    /* Better touch target on mobile */
+    min-height: 40px;
   }
 
   .btn:disabled {
@@ -150,7 +181,7 @@
 
   /* ── Badges ──────────────────────────────────────────── */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 text-xs font-semibold rounded-full;
+    @apply inline-flex items-center px-2 sm:px-2.5 py-0.5 text-xs font-semibold rounded-full;
   }
 
   .badge-red    { @apply bg-red-100 text-red-700; }
@@ -170,12 +201,12 @@
 
   /* ── Filter bar ──────────────────────────────────────── */
   .filter-bar {
-    @apply bg-white border border-slate-200 rounded-xl p-4 shadow-sm mb-5;
+    @apply bg-white border border-slate-200 rounded-xl p-3 sm:p-4 shadow-sm mb-4 sm:mb-5;
   }
 
   /* ── Stat card ───────────────────────────────────────── */
   .stat-card {
-    @apply bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col gap-1;
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm p-3 sm:p-5 flex flex-col gap-1;
   }
 
   /* ── Table ───────────────────────────────────────────── */
@@ -190,11 +221,11 @@
 
   /* ── Tab pills ───────────────────────────────────────── */
   .tab-bar {
-    @apply flex gap-1 p-1 bg-slate-100 rounded-lg w-fit mb-5;
+    @apply flex gap-1 p-1 bg-slate-100 rounded-lg w-fit mb-4 sm:mb-5;
   }
 
   .tab-item {
-    @apply px-4 py-2 text-sm font-semibold rounded-md transition-all duration-150 text-slate-600 hover:text-slate-800;
+    @apply px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-md transition-all duration-150 text-slate-600 hover:text-slate-800;
   }
 
   .tab-item.active {
@@ -203,12 +234,19 @@
 
   /* ── Container ───────────────────────────────────────── */
   .container {
-    @apply max-w-screen-xl mx-auto px-6;
+    @apply max-w-screen-xl mx-auto px-3 sm:px-6;
   }
 
-  @media (max-width: 768px) {
-    .container { @apply px-4; }
-    .page-inner { @apply px-4; }
+  /* ── Safe area for bottom nav ────────────────────────── */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* ── Mobile bottom nav spacer ────────────────────────── */
+  @media (max-width: 767px) {
+    .page-inner {
+      @apply px-3 py-3;
+    }
   }
 }
 
@@ -226,7 +264,7 @@
   }
 
   @keyframes slideUp {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
@@ -242,10 +280,24 @@
 
   .animate-fadeIn    { animation: fadeIn 0.2s ease-out; }
   .animate-slideDown { animation: slideDown 0.2s ease-out; }
-  .animate-slideUp   { animation: slideUp 0.2s ease-out; }
+  .animate-slideUp   { animation: slideUp 0.3s ease-out; }
   .animate-fadeInUp  { animation: fadeInUp 0.25s ease-out; }
   .animate-scaleIn   { animation: scaleIn 0.2s ease-out; }
 
   /* Hover/util */
   .hover\:bg-white\/8:hover { background-color: rgba(255,255,255,0.08); }
+
+  /* Line clamp utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }

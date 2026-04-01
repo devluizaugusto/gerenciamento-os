@@ -122,17 +122,21 @@ const Statistics: React.FC<StatisticsProps> = memo(({
   ];
 
   return (
-    <div className={`grid gap-4 mb-6 ${tiles.length === 4 ? 'grid-cols-2 lg:grid-cols-4' : 'grid-cols-3'}`}>
+    <div className={`grid gap-3 mb-5 ${
+      tiles.length === 4
+        ? 'grid-cols-2 lg:grid-cols-4'
+        : 'grid-cols-3'
+    }`}>
       {tiles.map((t) => (
         <div key={t.label} className="stat-card">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t.label}</span>
-            <div className={`w-7 h-7 rounded-md flex items-center justify-center border ${t.accent}`}>
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide leading-tight">{t.label}</span>
+            <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center border shrink-0 ${t.accent}`}>
               {t.icon}
             </div>
           </div>
-          <p className="text-3xl font-extrabold text-slate-800 leading-none mb-1">{t.value}</p>
-          <p className="text-xs text-slate-500">{t.sub}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-800 leading-none mb-0.5 sm:mb-1">{t.value}</p>
+          <p className="text-[10px] sm:text-xs text-slate-500 leading-tight truncate">{t.sub}</p>
         </div>
       ))}
     </div>
