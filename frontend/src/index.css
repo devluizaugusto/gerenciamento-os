@@ -152,7 +152,7 @@
 
   /* Edit / warning */
   .btn-edit {
-    @apply bg-amber-500 text-white hover:bg-amber-600 shadow-sm;
+    @apply bg-blue-600 text-white hover:bg-blue-700 shadow-sm;
   }
 
   /* Delete / danger */

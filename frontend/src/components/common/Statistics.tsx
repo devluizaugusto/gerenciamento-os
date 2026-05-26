@@ -71,7 +71,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({
     {
       label: dayFilter ? `Dia ${stats.cDay}` : 'Hoje',
       value: stats.osDay,
-      sub: 'OS abertas',
+      sub: '',
       accent: 'text-primary bg-red-50 border-red-100',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({
     {
       label: `${MONTHS[stats.cMonth]}/${stats.cYear}`,
       value: stats.osMonth,
-      sub: 'No mês',
+      sub: '',
       accent: 'text-amber-600 bg-amber-50 border-amber-100',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +95,7 @@ const Statistics: React.FC<StatisticsProps> = memo(({
     {
       label: `Ano ${stats.cYear}`,
       value: stats.osYear,
-      sub: 'No ano',
+      sub: '',
       accent: 'text-emerald-600 bg-emerald-50 border-emerald-100',
       icon: (
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -294,7 +294,6 @@ function App() {
     return null;
   };
 
-  // ── Status filter pills config ─────────────────────────
   const statusPills = [
     { value: 'todos', label: 'Todos', count: orders.length, cls: 'border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50', activeCls: 'bg-slate-800 border-slate-800 text-white' },
     { value: 'aberto', label: 'Abertos', count: orders.filter(o => o.status === 'aberto').length, cls: 'border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50', activeCls: 'bg-red-600 border-red-600 text-white' },
@@ -304,7 +303,6 @@ function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* ─── Sidebar ─── */}
       <Sidebar
         currentPage={currentPage}
         onChangePage={handleChangePage}
@@ -313,7 +311,6 @@ function App() {
         canGeneratePDF={filteredOrders.length > 0}
       />
 
-      {/* ─── Main wrapper ─── */}
       <div className="flex flex-col flex-1 min-h-screen overflow-x-hidden">
         <Header
           currentPage={currentPage}
@@ -323,7 +320,6 @@ function App() {
           canGeneratePDF={filteredOrders.length > 0}
         />
 
-        {/* ── Tintas page ── */}
         {currentPage === 'tintas' && (
           <main className="flex-1 pb-20 md:pb-0">
             <Suspense fallback={<Spinner />}>
@@ -332,11 +328,9 @@ function App() {
           </main>
         )}
 
-        {/* ── Helpdesk page ── */}
         {currentPage === 'helpdesk' && (
           <main className="flex-1 page-inner pb-24 md:pb-8">
 
-            {/* Stats */}
             <Statistics
               orders={orders}
               dayFilter={dayFilter}
@@ -346,9 +340,7 @@ function App() {
               endDateFilter={endDateFilter}
             />
 
-            {/* ── Filter card ── */}
             <div className="filter-bar">
-              {/* Header row */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-slate-100 flex items-center justify-center">
@@ -377,7 +369,6 @@ function App() {
                   >
                     Histórico
                   </button>
-                  {/* Mobile toggle advanced filters */}
                   <button
                     onClick={() => setShowFilters(v => !v)}
                     className="sm:hidden btn btn-ghost text-xs py-1.5 px-2.5 text-slate-600"
@@ -390,7 +381,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Status pills */}
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
                 {statusPills.map((p) => (
                   <button

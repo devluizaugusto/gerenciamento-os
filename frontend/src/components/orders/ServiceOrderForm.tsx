@@ -117,6 +117,21 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
     }
   }, [statusValue, isFinalizado, setValue]);
 
+  const descricaoField = register('descricao_problema');
+  const servicoField = register('servico_realizado');
+
+  const handleUppercaseTextareaChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    fieldOnChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  ) => {
+    const el = e.target;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    el.value = el.value.toUpperCase();
+    el.setSelectionRange(start, end);
+    fieldOnChange(e);
+  };
+
   const handleFormSubmit = (data: ServiceOrderFormData) => {
     const formattedData: ServiceOrderFormData = {
       ...data,
@@ -270,14 +285,11 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           </label>
           <textarea
             id="descricao_problema"
-            {...register('descricao_problema')}
+            {...descricaoField}
             rows={4}
             className={`input resize-none uppercase ${errors.descricao_problema ? 'border-danger ring-2 ring-danger/20' : 'border-red-200 focus:border-red-500'}`}
             placeholder="Descreva detalhadamente o problema..."
-            onChange={(e) => {
-              e.target.value = e.target.value.toUpperCase();
-              setValue('descricao_problema', e.target.value);
-            }}
+            onChange={(e) => handleUppercaseTextareaChange(e, descricaoField.onChange)}
           />
           {errors.descricao_problema && (
             <p className="text-danger text-xs sm:text-sm mt-1.5 sm:mt-2 flex items-center gap-1 animate-slideDown">
@@ -377,7 +389,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
           </label>
           <textarea
             id="servico_realizado"
-            {...register('servico_realizado')}
+            {...servicoField}
             rows={4}
             disabled={!isFinalizado}
             className={`input resize-none uppercase transition-all duration-200 ${
@@ -387,9 +399,9 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
             }`}
             placeholder={isFinalizado ? 'Descreva o serviço realizado...' : 'Altere o status para "Finalizado"...'}
             onChange={(e) => {
-              if (!isFinalizado) return;
-              e.target.value = e.target.value.toUpperCase();
-              setValue('servico_realizado', e.target.value);
+              if (isFinalizado) {
+                handleUppercaseTextareaChange(e, servicoField.onChange);
+              }
             }}
           />
           {!isFinalizado && (
