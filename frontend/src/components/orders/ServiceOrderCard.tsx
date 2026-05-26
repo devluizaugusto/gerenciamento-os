@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { ServiceOrder } from '../../types';
+import { getStatusConfig } from '../../utils/statusColors';
 
 interface ServiceOrderCardProps {
   ordem: ServiceOrder;
@@ -7,10 +8,10 @@ interface ServiceOrderCardProps {
   onDelete: (id: number) => void;
 }
 
-const STATUS_STYLE: Record<string, { bar: string; badge: string; label: string }> = {
-  aberto:       { bar: 'bg-red-500',    badge: 'bg-red-100 text-red-700 border-red-200',    label: 'Aberto' },
-  em_andamento: { bar: 'bg-amber-500',  badge: 'bg-amber-100 text-amber-700 border-amber-200', label: 'Em Andamento' },
-  finalizado:   { bar: 'bg-emerald-500',badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', label: 'Finalizado' },
+const STATUS_DOT: Record<string, string> = {
+  aberto: '●',
+  em_andamento: '◐',
+  finalizado: '✓',
 };
 
 const Field: React.FC<{ label: string; value: string; icon: React.ReactNode }> = ({ label, value, icon }) => (
@@ -23,28 +24,44 @@ const Field: React.FC<{ label: string; value: string; icon: React.ReactNode }> =
   </div>
 );
 
+const finalizadoStyle = getStatusConfig('finalizado');
+
 const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit, onDelete }) => {
-  const st = STATUS_STYLE[ordem.status] ?? STATUS_STYLE.aberto;
+  const status = getStatusConfig(ordem.status);
+  const borderColor = status.borderColor ?? status.color;
 
   return (
-    <div className="card flex flex-col animate-fadeInUp hover:-translate-y-0.5">
-      {/* Status bar */}
-      <div className={`h-1 w-full ${st.bar} rounded-t-xl`} />
-
-      {/* Card top */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div>
-            <p className="text-sm font-bold text-slate-800 leading-tight">OS #{ordem.numero_os}</p>
-            <p className="text-xs text-slate-500">{ordem.data_abertura}</p>
-          </div>
+    <article
+      className="flex flex-col rounded-xl bg-white shadow-sm transition-all duration-200 animate-fadeInUp hover:-translate-y-1 hover:shadow-lg overflow-hidden border-2"
+      style={{
+        borderColor,
+        boxShadow: `0 1px 3px 0 rgb(0 0 0 / 0.06), 4px 0 0 0 ${status.color}`,
+      }}
+    >
+      {/* Cabeçalho com cor do status */}
+      <header
+        className="flex items-center justify-between gap-3 px-4 py-3.5 border-b-2"
+        style={{ backgroundColor: status.bgColor, borderColor }}
+      >
+        <div className="min-w-0">
+          <p className="text-base font-extrabold text-slate-900 leading-tight truncate">
+            OS #{ordem.numero_os}
+          </p>
+          <p className="text-xs font-medium text-slate-600 mt-0.5">{ordem.data_abertura}</p>
         </div>
-        <span className={`badge border ${st.badge}`}>{st.label}</span>
-      </div>
+        <span
+          className="inline-flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wide shadow-md ring-2 ring-white/60"
+          style={{ backgroundColor: status.color, color: '#fff' }}
+        >
+          <span className="text-sm leading-none opacity-95" aria-hidden>
+            {STATUS_DOT[ordem.status] ?? '●'}
+          </span>
+          {status.label}
+        </span>
+      </header>
 
-      {/* Body */}
-      <div className="px-4 py-3 flex flex-col gap-3 flex-1">
-        {/* Fields */}
+      {/* Conteúdo */}
+      <div className="px-4 py-3.5 flex flex-col gap-3 flex-1">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
           <Field label="Solicitante" value={ordem.solicitante}
             icon={<svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>}
@@ -62,24 +79,28 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
           )}
         </div>
 
-        {/* Problem */}
-        <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">Problema</p>
-          <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">{ordem.descricao_problema}</p>
+        <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Problema</p>
+          <p className="text-xs text-slate-700 leading-relaxed line-clamp-3">{ordem.descricao_problema}</p>
         </div>
 
-        {/* Service done */}
         {ordem.servico_realizado && (
-          <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
-            <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide mb-1">Serviço Realizado</p>
-            <p className="text-xs text-emerald-800 leading-relaxed line-clamp-2">{ordem.servico_realizado}</p>
+          <div
+            className="rounded-lg p-3 border-2"
+            style={{ backgroundColor: finalizadoStyle.bgColor, borderColor: finalizadoStyle.borderColor }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: finalizadoStyle.color }}>
+              Serviço Realizado
+            </p>
+            <p className="text-xs text-slate-700 leading-relaxed line-clamp-2">{ordem.servico_realizado}</p>
           </div>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="px-4 pb-4 flex gap-2">
+      {/* Ações */}
+      <footer className="px-4 pb-4 flex gap-2 border-t border-slate-100 pt-3 mt-auto bg-slate-50/80">
         <button
+          type="button"
           onClick={() => onEdit(ordem)}
           className="btn btn-edit flex-1 text-xs py-2"
         >
@@ -89,6 +110,7 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
           Editar
         </button>
         <button
+          type="button"
           onClick={() => onDelete(ordem.id)}
           className="btn btn-delete flex-1 text-xs py-2"
         >
@@ -97,8 +119,8 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = memo(({ ordem, onEdit,
           </svg>
           Excluir
         </button>
-      </div>
-    </div>
+      </footer>
+    </article>
   );
 });
 
