@@ -95,6 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onChangePage(item.id)}
+                title={collapsed ? item.label : undefined}
                 className={`
                   group relative w-full flex items-center rounded-xl
                   text-sm font-medium transition-all duration-200
@@ -125,19 +126,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 )}
                 {isActive && !collapsed && (
                   <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-blue-300/80" />
-                )}
-                {collapsed && (
-                  <div className="
-                    pointer-events-none absolute left-full ml-3 z-50
-                    bg-gray-900 text-white text-xs font-medium
-                    px-3 py-2 rounded-lg whitespace-nowrap
-                    shadow-xl border border-white/10
-                    opacity-0 group-hover:opacity-100
-                    transition-opacity duration-150
-                  ">
-                    {item.label}
-                    <span className="absolute top-1/2 -left-1.5 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
-                  </div>
                 )}
               </button>
             );
