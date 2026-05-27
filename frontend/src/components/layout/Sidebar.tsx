@@ -95,7 +95,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => onChangePage(item.id)}
-                title={collapsed ? item.label : undefined}
                 className={`
                   group relative w-full flex items-center rounded-xl
                   text-sm font-medium transition-all duration-200
@@ -155,7 +154,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
             <button
               onClick={onNewOS}
-              title={collapsed ? 'Nova Ordem de Serviço' : undefined}
               className={`
                 group relative w-full flex items-center gap-3
                 bg-blue-600 hover:bg-blue-500 active:bg-blue-700
@@ -187,7 +185,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={onGeneratePDF}
               disabled={!canGeneratePDF}
-              title={collapsed ? (canGeneratePDF ? 'Gerar Relatório PDF' : 'Sem ordens para gerar relatório') : undefined}
               className={`
                 group relative w-full flex items-center gap-3
                 text-[13px] font-semibold rounded-xl

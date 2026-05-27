@@ -6,7 +6,6 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Sidebar from './components/layout/Sidebar';
 
-// ── Spinner helper ─────────────────────────────────────────
 const Spinner = () => (
   <div className="flex items-center justify-center py-16">
     <div className="w-10 h-10 border-2 border-slate-200 border-t-primary rounded-full animate-spin" />
@@ -70,7 +69,7 @@ function App() {
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
 
-  // Mobile filter panel toggle
+  
   const [showFilters, setShowFilters] = useState(false);
 
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -402,7 +401,7 @@ function App() {
                 ))}
               </div>
 
-              {/* Search */}
+              {/* Busca */}
               <div className="relative mb-3">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -418,7 +417,7 @@ function App() {
                 />
               </div>
 
-              {/* Date filters grid — always visible on desktop, collapsible on mobile */}
+              {/* Filtros avançados */}
               <div className={`${showFilters ? 'block' : 'hidden'} sm:block`}>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
                   {/* Dia */}
