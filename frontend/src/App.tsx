@@ -340,7 +340,7 @@ function App() {
               endDateFilter={endDateFilter}
             />
 
-            <div className="filter-bar">
+            <div className="filter-bar bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-sm px-3 py-3 sm:px-4 sm:py-4 mb-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-slate-100 flex items-center justify-center">
@@ -422,54 +422,95 @@ function App() {
               <div className={`${showFilters ? 'block' : 'hidden'} sm:block`}>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
                   {/* Dia */}
-                  <div>
-                    <label className="label">Dia</label>
-                    <input type="number" value={dayFilter}
+                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
+                      <span>Dia</span>
+                      {dayFilter && (
+                        <span className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white text-[9px] px-1.5 py-0.5 font-semibold">
+                          {String(dayFilter).padStart(2, '0')}
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="number"
+                      value={dayFilter}
                       onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 1 && +v <= 31)) setDayFilter(v); }}
                       onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
                       onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="1–31" min="1" max="31"
+                      placeholder="1–31"
+                      min="1"
+                      max="31"
                       disabled={isUsingDateRangeFilters}
-                      className="input"
+                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
                     />
                   </div>
                   {/* Mês */}
-                  <div>
-                    <label className="label">Mês</label>
-                    <select value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)}
-                      disabled={isUsingDateRangeFilters} className="input">
+                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
+                      <span>Mês</span>
+                      {monthFilter && yearFilter && (
+                        <span className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white text-[9px] px-1.5 py-0.5 font-semibold">
+                          {formatMonthYear(monthFilter, yearFilter)}
+                        </span>
+                      )}
+                    </label>
+                    <select
+                      value={monthFilter}
+                      onChange={(e) => setMonthFilter(e.target.value)}
+                      disabled={isUsingDateRangeFilters}
+                      className="input text-xs sm:text-sm mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
+                    >
                       <option value="">Todos</option>
                       {['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
                         .map((m, i) => <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
                     </select>
                   </div>
                   {/* Ano */}
-                  <div>
-                    <label className="label">Ano</label>
-                    <input type="number" value={yearFilter}
+                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
+                      <span>Ano</span>
+                      {yearFilter && (
+                        <span className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white text-[9px] px-1.5 py-0.5 font-semibold">
+                          {yearFilter}
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      type="number"
+                      value={yearFilter}
                       onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 2020 && +v <= 2100)) setYearFilter(v); }}
                       onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
                       onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="2020–2100" min="2020" max="2100"
+                      placeholder="2020–2100"
+                      min="2020"
+                      max="2100"
                       disabled={isUsingDateRangeFilters}
-                      className="input"
+                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
                     />
                   </div>
                   {/* Data início */}
-                  <div>
-                    <label className="label">Dt. Inicial</label>
-                    <input type="date" value={startDateFilter}
+                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Inicial</label>
+                    <input
+                      type="date"
+                      value={startDateFilter}
                       onChange={(e) => setStartDateFilter(e.target.value)}
                       max={endDateFilter || undefined}
-                      disabled={isUsingDateFilters} className="input" />
+                      disabled={isUsingDateFilters}
+                      className="input text-xs sm:text-sm mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
+                    />
                   </div>
                   {/* Data fim */}
-                  <div>
-                    <label className="label">Dt. Final</label>
-                    <input type="date" value={endDateFilter}
+                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Final</label>
+                    <input
+                      type="date"
+                      value={endDateFilter}
                       onChange={(e) => setEndDateFilter(e.target.value)}
                       min={startDateFilter || undefined}
-                      disabled={isUsingDateFilters} className="input" />
+                      disabled={isUsingDateFilters}
+                      className="input text-xs sm:text-sm mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
+                    />
                   </div>
                 </div>
               </div>

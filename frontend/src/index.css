@@ -206,7 +206,19 @@
 
   /* ── Stat card ───────────────────────────────────────── */
   .stat-card {
-    @apply bg-white rounded-xl border border-slate-200 shadow-sm p-3 sm:p-5 flex flex-col gap-1;
+    @apply relative overflow-hidden bg-white/85 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-sm p-3 sm:p-5 flex flex-col gap-1 transition-all duration-200;
+  }
+
+  .stat-card::before {
+    content: "";
+    @apply absolute inset-0 pointer-events-none;
+    background: radial-gradient(900px circle at 0% 0%, rgba(99,102,241,0.08), transparent 50%),
+                radial-gradient(900px circle at 100% 0%, rgba(16,185,129,0.06), transparent 45%);
+    opacity: 0.9;
+  }
+
+  .stat-card:hover {
+    @apply shadow-md -translate-y-0.5 border-slate-300/80;
   }
 
   /* ── Table ───────────────────────────────────────────── */
