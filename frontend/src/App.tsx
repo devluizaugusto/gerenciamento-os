@@ -424,11 +424,6 @@ function App() {
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
                     <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
                       <span>Dia</span>
-                      {dayFilter && (
-                        <span className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white text-[9px] px-1.5 py-0.5 font-semibold">
-                          {String(dayFilter).padStart(2, '0')}
-                        </span>
-                      )}
                     </label>
                     <input
                       type="number"
@@ -447,11 +442,6 @@ function App() {
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
                     <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
                       <span>Mês</span>
-                      {monthFilter && yearFilter && (
-                        <span className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white text-[9px] px-1.5 py-0.5 font-semibold">
-                          {formatMonthYear(monthFilter, yearFilter)}
-                        </span>
-                      )}
                     </label>
                     <select
                       value={monthFilter}
@@ -468,11 +458,6 @@ function App() {
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
                     <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
                       <span>Ano</span>
-                      {yearFilter && (
-                        <span className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white text-[9px] px-1.5 py-0.5 font-semibold">
-                          {yearFilter}
-                        </span>
-                      )}
                     </label>
                     <input
                       type="number"
