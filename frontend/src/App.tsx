@@ -15,6 +15,7 @@ const Spinner = () => (
 const ServiceOrderForm = lazy(() => import('./components/orders/ServiceOrderForm'));
 const ServiceOrderDetails = lazy(() => import('./components/orders/ServiceOrderDetails'));
 const InkManagement = lazy(() => import('./components/ink/InkManagement'));
+const ComputerSwapManagement = lazy(() => import('./components/computers/ComputerSwapManagement'));
 import { ServiceOrder, StatusFilter } from './types';
 import { ServiceOrderFormData } from './schemas/ordemServicoSchema';
 import {
@@ -28,12 +29,6 @@ import { useToast } from './hooks/useToast';
 import { useDebounce } from './hooks/useDebounce';
 import ServiceOrderCard from './components/orders/ServiceOrderCard';
 
-const ABBREVIATED_MONTHS: Record<string, string> = {
-  '01': 'Jan', '02': 'Fev', '03': 'Mar', '04': 'Abr',
-  '05': 'Mai', '06': 'Jun', '07': 'Jul', '08': 'Ago',
-  '09': 'Set', '10': 'Out', '11': 'Nov', '12': 'Dez',
-};
-
 const getCurrentDate = () => {
   const date = new Date();
   return {
@@ -43,20 +38,16 @@ const getCurrentDate = () => {
   };
 };
 
-const formatMonthYear = (month: string, year: string): string => {
-  const abbreviatedMonth = ABBREVIATED_MONTHS[month] || month;
-  return `${abbreviatedMonth}/${year}`;
-};
-
 function App() {
   const { day: currentDay, month: currentMonth, year: currentYear } = getCurrentDate();
 
-  const [currentPage, setCurrentPage] = useState<'helpdesk' | 'tintas'>(() => {
+  const [currentPage, setCurrentPage] = useState<'helpdesk' | 'tintas' | 'trocas'>(() => {
     const saved = sessionStorage.getItem('currentPage');
-    return (saved === 'tintas' ? 'tintas' : 'helpdesk') as 'helpdesk' | 'tintas';
+    if (saved === 'tintas' || saved === 'trocas') return saved;
+    return 'helpdesk';
   });
 
-  const handleChangePage = useCallback((page: 'helpdesk' | 'tintas') => {
+  const handleChangePage = useCallback((page: 'helpdesk' | 'tintas' | 'trocas') => {
     sessionStorage.setItem('currentPage', page);
     setCurrentPage(page);
   }, []);
@@ -323,6 +314,14 @@ function App() {
           <main className="flex-1 pb-20 md:pb-0">
             <Suspense fallback={<Spinner />}>
               <InkManagement />
+            </Suspense>
+          </main>
+        )}
+
+        {currentPage === 'trocas' && (
+          <main className="flex-1 pb-20 md:pb-0">
+            <Suspense fallback={<Spinner />}>
+              <ComputerSwapManagement />
             </Suspense>
           </main>
         )}

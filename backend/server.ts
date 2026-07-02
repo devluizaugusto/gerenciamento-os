@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import ordemServicoRoutes from './routes/ordemServicoRoutes';
 import tintaRoutes from './routes/tintaRoutes';
 import modeloImpressoraRoutes from './routes/modeloImpressoraRoutes';
+import trocaComputadorRoutes from './routes/trocaComputadorRoutes';
 
 dotenv.config();
 
@@ -25,7 +26,8 @@ app.get('/', (_req: Request, res: Response) => {
     endpoints: {
       ordensServico: '/api/ordens-servico',
       tintas: '/api/tintas',
-      modelosImpressora: '/api/modelos-impressora'
+      modelosImpressora: '/api/modelos-impressora',
+      trocasComputador: '/api/trocas-computador'
     }
   });
 });
@@ -33,6 +35,7 @@ app.get('/', (_req: Request, res: Response) => {
 app.use('/api/ordens-servico', ordemServicoRoutes);
 app.use('/api/tintas', tintaRoutes);
 app.use('/api/modelos-impressora', modeloImpressoraRoutes);
+app.use('/api/trocas-computador', trocaComputadorRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Erro:', err);

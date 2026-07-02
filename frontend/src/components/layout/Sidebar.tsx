@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-type Page = 'helpdesk' | 'tintas';
+type Page = 'helpdesk' | 'tintas' | 'trocas';
 
 interface SidebarProps {
   currentPage: Page;
@@ -39,6 +39,17 @@ const Sidebar: React.FC<SidebarProps> = ({
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
+      ),
+    },
+    {
+      id: 'trocas' as Page,
+      label: 'Troca de PCs',
+      description: 'Substituição Vacina',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       ),
     },
@@ -301,6 +312,22 @@ const Sidebar: React.FC<SidebarProps> = ({
                 d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
             <span className="text-[10px] font-semibold leading-none">Tintas</span>
+          </button>
+
+          {/* Nav: Trocas */}
+          <button
+            onClick={() => onChangePage('trocas')}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 relative
+              ${currentPage === 'trocas' ? 'text-blue-400' : 'text-white/40 active:text-white/70'}`}
+          >
+            {currentPage === 'trocas' && (
+              <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-blue-400 rounded-b-full" />
+            )}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={currentPage === 'trocas' ? 2.2 : 1.8}
+                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span className="text-[10px] font-semibold leading-none">Trocas</span>
           </button>
         </div>
       </nav>

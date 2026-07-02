@@ -77,3 +77,22 @@ model SaidaTinta {
   @@index([setor])
   @@map("saida_tinta")
 }
+
+model TrocaComputador {
+  id                        Int      @id @default(autoincrement())
+  patrimonio_cpu_antigo     String   @db.VarChar(100)
+  patrimonio_monitor_antigo String   @db.VarChar(100)
+  patrimonio_cpu_novo       String   @db.VarChar(100)
+  patrimonio_monitor_novo   String   @db.VarChar(100)
+  unidade                   String   @db.VarChar(255)
+  setor                     String   @default("VACINA") @db.VarChar(255)
+  data_troca                DateTime @db.Date
+  status                    String   @default("em_andamento") @db.VarChar(50)
+  created_at                DateTime @default(now())
+  updated_at                DateTime @updatedAt
+
+  @@index([unidade])
+  @@index([status])
+  @@index([data_troca])
+  @@map("troca_computador")
+}

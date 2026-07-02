@@ -11,7 +11,9 @@ import {
   SaidasFilter,
   ModeloImpressoraCadastro,
   CreateModeloData,
-  UpdateModeloData
+  UpdateModeloData,
+  TrocaComputador,
+  TrocaComputadorFormData,
 } from '../types';
 
 const api: AxiosInstance = axios.create({
@@ -212,5 +214,32 @@ export const modeloImpressoraAPI = {
 
   delete: async (id: number): Promise<void> => {
     await api.delete(`/modelos-impressora/${id}`);
+  },
+};
+
+// ─── Troca de Computadores API ────────────────────────────────
+export const trocaComputadorAPI = {
+  getAll: async (): Promise<TrocaComputador[]> => {
+    const response = await api.get<TrocaComputador[]>('/trocas-computador');
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<TrocaComputador> => {
+    const response = await api.get<TrocaComputador>(`/trocas-computador/${id}`);
+    return response.data;
+  },
+
+  create: async (data: TrocaComputadorFormData): Promise<TrocaComputador> => {
+    const response = await api.post<TrocaComputador>('/trocas-computador', data);
+    return response.data;
+  },
+
+  update: async (id: number, data: TrocaComputadorFormData): Promise<TrocaComputador> => {
+    const response = await api.put<TrocaComputador>(`/trocas-computador/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/trocas-computador/${id}`);
   },
 };

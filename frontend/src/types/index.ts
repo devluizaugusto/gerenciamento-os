@@ -124,3 +124,31 @@ export interface SaidasFilter {
   dataFim?: string;
   modelo?: ModeloImpressora;
 }
+
+// ─── Computer Swap Types ──────────────────────────────────────
+export type TrocaComputadorStatus = 'em_andamento' | 'finalizado';
+export type TrocaComputadorStatusFilter = 'todos' | TrocaComputadorStatus;
+
+export interface TrocaComputador {
+  id: number;
+  patrimonio_cpu_antigo: string;
+  patrimonio_monitor_antigo: string;
+  patrimonio_cpu_novo: string;
+  patrimonio_monitor_novo: string;
+  unidade: string;
+  setor: string;
+  data_troca: string;
+  status: TrocaComputadorStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TrocaComputadorFormData {
+  patrimonio_cpu_antigo: string;
+  patrimonio_monitor_antigo: string;
+  patrimonio_cpu_novo: string;
+  patrimonio_monitor_novo: string;
+  unidade: string;
+  data_troca: string;
+  status: TrocaComputadorStatus;
+}
