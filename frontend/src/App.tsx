@@ -471,7 +471,7 @@ function App() {
                       className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
                     />
                   </div>
-                  {/* Data início */}
+                  
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
                     <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Inicial</label>
                     <input
@@ -483,7 +483,7 @@ function App() {
                       className="input text-xs sm:text-sm mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
                     />
                   </div>
-                  {/* Data fim */}
+                  
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
                     <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Final</label>
                     <input
@@ -504,7 +504,7 @@ function App() {
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <p className="text-sm text-slate-500">
                 {filteredOrders.length === 0
-                  ? "Nenhuma ordem encontrada"
+                  ? ""
                   : (
                     <>
                       <span className="font-semibold text-slate-700">{filteredOrders.length}</span>{" "}
