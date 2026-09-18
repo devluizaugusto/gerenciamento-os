@@ -12,8 +12,10 @@ import {
 } from '../../hooks/useTrocaComputador';
 import { useToast } from '../../hooks/useToast';
 import { UNIDADES_PREDEFINIDAS } from '../../constants/unidades';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ComputerSwapManagement: React.FC = () => {
+  const { canCreate, canEdit, canDelete } = useAuth();
   const [statusFilter, setStatusFilter] = useState<TrocaComputadorStatusFilter>('todos');
   const [unidadeFilter, setUnidadeFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,7 +109,7 @@ const ComputerSwapManagement: React.FC = () => {
             Controle de substituição de CPU e monitor — Setor Vacina
           </p>
         </div>
-        <button onClick={handleCreate} className="btn btn-primary w-full sm:w-auto">
+        <button onClick={handleCreate} className="btn btn-primary w-full sm:w-auto" style={{ display: canCreate ? undefined : 'none' }}>
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
           </svg>

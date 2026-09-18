@@ -1,12 +1,28 @@
-import { OrdemServico as PrismaOrdemServico } from '@prisma/client';
-
-// Tipos básicos
 export type StatusOrdemServico = 'aberto' | 'em_andamento' | 'finalizado';
+export type RoleUsuario = 'admin' | 'tecnico' | 'visualizador';
 
-// Tipo da Ordem de Serviço do banco
-export type OrdemServico = PrismaOrdemServico;
+export interface UsuarioPayload {
+  id: number;
+  nome: string;
+  email: string;
+  role: RoleUsuario;
+}
 
-// Tipo da Ordem de Serviço formatada (com datas em string brasileiro)
+// Types for Prisma model (raw DB types)
+export interface OrdemServico {
+  id: number;
+  numero_os: number;
+  solicitante: string;
+  unidade: string;
+  setor: string;
+  descricao_problema: string;
+  data_abertura: Date | null;
+  servico_realizado?: string | null;
+  status: string;
+  data_fechamento?: Date | null;
+}
+
+// Formatted type (dates as strings)
 export interface OrdemServicoFormatada {
   id: number;
   numero_os: number;
@@ -15,42 +31,15 @@ export interface OrdemServicoFormatada {
   setor: string;
   descricao_problema: string;
   data_abertura: string | null;
-  servico_realizado: string | null;
+  servico_realizado?: string | null;
   status: string;
-  data_fechamento: string | null;
-}
-
-// Tipos para criação
-export interface CreateOrdemServicoInput {
-  solicitante: string;
-  unidade: string;
-  setor: string;
-  descricao_problema: string;
-  data_abertura: string;
-  servico_realizado?: string | null;
-  status?: StatusOrdemServico;
   data_fechamento?: string | null;
 }
 
-// Tipos para atualização
-export interface UpdateOrdemServicoInput {
-  solicitante?: string;
-  unidade?: string;
-  setor?: string;
-  descricao_problema?: string;
-  data_abertura?: string;
-  servico_realizado?: string | null;
-  status?: StatusOrdemServico;
-  data_fechamento?: string | null;
-}
-
-// Tipos para filtros de relatório
-export interface RelatorioQueryParams {
-  status?: 'todos' | StatusOrdemServico;
-  search?: string;
-  dia?: string;
-  mes?: string;
-  ano?: string;
-  dataInicio?: string;
-  dataFim?: string;
+declare global {
+  namespace Express {
+    interface Request {
+      usuario?: UsuarioPayload;
+    }
+  }
 }

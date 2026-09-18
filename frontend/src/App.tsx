@@ -5,6 +5,8 @@ import Statistics from './components/common/Statistics';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Sidebar from './components/layout/Sidebar';
+import LoginPage from './pages/LoginPage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const Spinner = () => (
   <div className="flex items-center justify-center py-16">
@@ -16,6 +18,8 @@ const ServiceOrderForm = lazy(() => import('./components/orders/ServiceOrderForm
 const ServiceOrderDetails = lazy(() => import('./components/orders/ServiceOrderDetails'));
 const InkManagement = lazy(() => import('./components/ink/InkManagement'));
 const ComputerSwapManagement = lazy(() => import('./components/computers/ComputerSwapManagement'));
+const UsersManagement = lazy(() => import('./components/users/UsersManagement'));
+
 import { ServiceOrder, StatusFilter } from './types';
 import { ServiceOrderFormData } from './schemas/ordemServicoSchema';
 import {
@@ -38,7 +42,19 @@ const getCurrentDate = () => {
   };
 };
 
-function App() {
+const normalizeSearch = (value: string) =>
+  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+const parseBRDate = (value?: string | null) => {
+  if (!value) return null;
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+  return Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+};
+
+/* ─── Main App logic (authenticated) ─────────────────────────────────────── */
+function AppContent() {
+  const { isAuthenticated, isLoading, canCreate, canEdit, canDelete } = useAuth();
   const { day: currentDay, month: currentMonth, year: currentYear } = getCurrentDate();
 
   const [currentPage, setCurrentPage] = useState<'helpdesk' | 'tintas' | 'trocas'>(() => {
@@ -59,16 +75,14 @@ function App() {
   const [yearFilter, setYearFilter] = useState<string>(currentYear);
   const [startDateFilter, setStartDateFilter] = useState<string>('');
   const [endDateFilter, setEndDateFilter] = useState<string>('');
-
-  
   const [showFilters, setShowFilters] = useState(false);
 
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [modalContent, setModalContent] = useState<'create' | 'edit' | 'view' | null>(null);
+  const [modalContent, setModalContent] = useState<'create' | 'edit' | 'view' | 'users' | null>(null);
   const [modalTitle, setModalTitle] = useState<string>('');
   const [selectedOrder, setSelectedOrder] = useState<ServiceOrder | null>(null);
 
-  const { data: orders = [], isLoading, error, refetch } = useServiceOrders();
+  const { data: orders = [], isLoading: ordersLoading, error, refetch } = useServiceOrders(isAuthenticated);
   const createMutation = useCreateServiceOrder();
   const updateMutation = useUpdateServiceOrder();
   const deleteMutation = useDeleteServiceOrder();
@@ -78,6 +92,13 @@ function App() {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  /*
+   * IMPORTANTE: todos os hooks deste componente precisam ser executados em
+   * todas as renderizações. O filtro ficava depois do gate de login, fazendo
+   * com que a quantidade de hooks mudasse quando o usuário entrava no sistema.
+   * Isso causava "Rendered more hooks than during the previous render" e a
+   * tela ficava branca/piscando após o login.
+   */
   const filteredOrders = useMemo(() => {
     let filtered = [...orders];
 
@@ -85,94 +106,85 @@ function App() {
       filtered = filtered.filter(order => order.status === statusFilter);
     }
 
-    if (debouncedSearchTerm) {
-      const term = debouncedSearchTerm.toLowerCase();
-      filtered = filtered.filter(order =>
-        order.numero_os.toString().includes(term) ||
-        order.solicitante.toLowerCase().includes(term) ||
-        order.unidade.toLowerCase().includes(term) ||
-        order.setor.toLowerCase().includes(term) ||
-        order.descricao_problema.toLowerCase().includes(term)
-      );
-    }
-
-    if (dayFilter) {
+    const term = normalizeSearch(debouncedSearchTerm);
+    if (term) {
       filtered = filtered.filter(order => {
-        if (!order.data_abertura) return false;
-        const [day] = order.data_abertura.split('/');
-        return parseInt(day) === parseInt(dayFilter);
+        const searchable = normalizeSearch([
+          String(order.numero_os),
+          order.solicitante,
+          order.unidade,
+          order.setor,
+          order.descricao_problema,
+          order.servico_realizado || '',
+        ].join(' '));
+        return searchable.includes(term);
       });
     }
 
-    if (monthFilter) {
-      filtered = filtered.filter(order => {
-        if (!order.data_abertura) return false;
-        const [, month] = order.data_abertura.split('/');
-        return parseInt(month) === parseInt(monthFilter);
-      });
-    }
-
-    if (yearFilter) {
-      filtered = filtered.filter(order => {
-        if (!order.data_abertura) return false;
-        const [, , year] = order.data_abertura.split('/');
-        return parseInt(year) === parseInt(yearFilter);
-      });
-    }
-
+    // Filtros de período: quando o intervalo estiver ativo, ele tem prioridade.
     if (startDateFilter || endDateFilter) {
+      const start = startDateFilter ? Date.parse(`${startDateFilter}T00:00:00`) : -Infinity;
+      const end = endDateFilter ? Date.parse(`${endDateFilter}T23:59:59`) : Infinity;
       filtered = filtered.filter(order => {
-        if (!order.data_abertura) return false;
-        const [day, month, year] = order.data_abertura.split('/');
-        const orderDate = Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day));
-        let withinRange = true;
-        if (startDateFilter) {
-          const [startYear, startMonth, startDay] = startDateFilter.split('-');
-          const startDate = Date.UTC(parseInt(startYear), parseInt(startMonth) - 1, parseInt(startDay));
-          if (orderDate < startDate) withinRange = false;
-        }
-        if (endDateFilter && withinRange) {
-          const [endYear, endMonth, endDay] = endDateFilter.split('-');
-          const endDate = Date.UTC(parseInt(endYear), parseInt(endMonth) - 1, parseInt(endDay));
-          if (orderDate > endDate) withinRange = false;
-        }
-        return withinRange;
+        const date = parseBRDate(order.data_abertura);
+        return date !== null && date >= start && date <= end;
       });
+    } else {
+      if (dayFilter) {
+        filtered = filtered.filter(order => parseBRDate(order.data_abertura) !== null && new Date(parseBRDate(order.data_abertura)!).getUTCDate() === Number(dayFilter));
+      }
+      if (monthFilter) {
+        filtered = filtered.filter(order => parseBRDate(order.data_abertura) !== null && new Date(parseBRDate(order.data_abertura)!).getUTCMonth() + 1 === Number(monthFilter));
+      }
+      if (yearFilter) {
+        filtered = filtered.filter(order => parseBRDate(order.data_abertura) !== null && new Date(parseBRDate(order.data_abertura)!).getUTCFullYear() === Number(yearFilter));
+      }
     }
 
-    filtered.sort((a, b) => {
-      if (!a.data_abertura) return 1;
-      if (!b.data_abertura) return -1;
-      const [dayA, monthA, yearA] = a.data_abertura.split('/');
-      const [dayB, monthB, yearB] = b.data_abertura.split('/');
-      const dateA = Date.UTC(parseInt(yearA), parseInt(monthA) - 1, parseInt(dayA));
-      const dateB = Date.UTC(parseInt(yearB), parseInt(monthB) - 1, parseInt(dayB));
-      return dateA - dateB;
-    });
-
-    return filtered;
+    return filtered.sort((a, b) => (parseBRDate(b.data_abertura) ?? -Infinity) - (parseBRDate(a.data_abertura) ?? -Infinity));
   }, [orders, statusFilter, debouncedSearchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter]);
 
-  const closeModal = useCallback(() => {
+  /* ─── Loading / Login gate ─────────────────────────────────── */
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-10 h-10 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
+  const closeModal = () => {
     setShowModal(false);
     setModalContent(null);
     setModalTitle('');
     setSelectedOrder(null);
-  }, []);
+  };
 
-  const handleCreate = useCallback(() => {
+  const handleCreate = () => {
+    if (!canCreate) return;
     setSelectedOrder(null);
     setModalContent('create');
     setModalTitle('Nova Ordem de Serviço');
     setShowModal(true);
-  }, []);
+  };
 
-  const handleEdit = useCallback((order: ServiceOrder) => {
+  const handleEdit = (order: ServiceOrder) => {
+    if (!canEdit) return;
     setSelectedOrder(order);
     setModalContent('edit');
     setModalTitle(`Editar OS #${order.numero_os}`);
     setShowModal(true);
-  }, []);
+  };
+
+  const handleOpenUsers = () => {
+    setModalContent('users');
+    setModalTitle('Gerenciar Usuários');
+    setShowModal(true);
+  };
 
   const handleSubmit = async (formData: ServiceOrderFormData) => {
     try {
@@ -187,12 +199,16 @@ function App() {
       closeModal();
     } catch (err: any) {
       console.error('Erro ao salvar ordem:', err);
-      errorToast(err.response?.data?.error || '❌ Erro ao salvar ordem de serviço');
+      const msg = err.response?.data?.error || err.response?.data?.message || '❌ Erro ao salvar ordem de serviço';
+      errorToast(msg);
     }
   };
 
-  const handleDelete = useCallback(async (id: number) => {
-    if (window.confirm('Tem certeza que deseja excluir esta ordem de serviço?')) {
+  const handleDelete = async (id: number) => {
+    if (!canDelete) { errorToast('Sem permissão para excluir registros'); return; }
+    if (window.confirm(`Atenção: a OS #${orders.find(o => o.id === id)?.numero_os ?? id} será excluída permanentemente. Esta ação não pode ser desfeita.
+
+Deseja continuar?`)) {
       try {
         await deleteMutation.mutateAsync(id);
         success('🗑️ Ordem de Serviço excluída com sucesso!');
@@ -201,9 +217,9 @@ function App() {
         errorToast(err.response?.data?.error || '❌ Erro ao deletar ordem de serviço');
       }
     }
-  }, [deleteMutation, success, errorToast]);
+  };
 
-  const handleGenerateReportPDF = useCallback(async () => {
+  const handleGenerateReportPDF = async () => {
     try {
       await generateReportPDFMutation.mutateAsync({
         status: statusFilter !== 'todos' ? statusFilter : null,
@@ -217,12 +233,11 @@ function App() {
       success('📊 Relatório PDF gerado com sucesso!');
     } catch (err: any) {
       console.error('Erro ao gerar relatório PDF:', err);
-      const errorMessage = err.response?.data?.error || err.message || '❌ Erro ao gerar relatório PDF';
-      errorToast(errorMessage);
+      errorToast(err.response?.data?.error || err.message || '❌ Erro ao gerar relatório PDF');
     }
-  }, [generateReportPDFMutation, statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, success, errorToast]);
+  };
 
-  const clearFilters = useCallback(() => {
+  const clearFilters = () => {
     const { day, month, year } = getCurrentDate();
     setStatusFilter('todos');
     setSearchTerm('');
@@ -231,9 +246,34 @@ function App() {
     setYearFilter(year);
     setStartDateFilter('');
     setEndDateFilter('');
-  }, []);
+  };
 
-  const viewAllHistory = useCallback(() => {
+  const handleDayFilterChange = (value: string) => {
+    setDayFilter(value);
+    if (value) { setStartDateFilter(''); setEndDateFilter(''); }
+  };
+
+  const handleMonthFilterChange = (value: string) => {
+    setMonthFilter(value);
+    if (value) { setStartDateFilter(''); setEndDateFilter(''); }
+  };
+
+  const handleYearFilterChange = (value: string) => {
+    setYearFilter(value);
+    if (value) { setStartDateFilter(''); setEndDateFilter(''); }
+  };
+
+  const handleStartDateFilterChange = (value: string) => {
+    setStartDateFilter(value);
+    if (value) { setDayFilter(''); setMonthFilter(''); setYearFilter(''); }
+  };
+
+  const handleEndDateFilterChange = (value: string) => {
+    setEndDateFilter(value);
+    if (value) { setDayFilter(''); setMonthFilter(''); setYearFilter(''); }
+  };
+
+  const viewAllHistory = () => {
     setStatusFilter('todos');
     setSearchTerm('');
     setDayFilter('');
@@ -241,25 +281,19 @@ function App() {
     setYearFilter('');
     setStartDateFilter('');
     setEndDateFilter('');
-  }, []);
+  };
 
-  const hasActiveFilters = useMemo(() => {
-    return statusFilter !== 'todos' ||
-      searchTerm !== '' ||
-      dayFilter !== currentDay ||
-      monthFilter !== currentMonth ||
-      yearFilter !== currentYear ||
-      startDateFilter !== '' ||
-      endDateFilter !== '';
-  }, [statusFilter, searchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter, currentDay, currentMonth, currentYear]);
+  const hasActiveFilters =
+    statusFilter !== 'todos' ||
+    searchTerm.trim() !== '' ||
+    dayFilter !== currentDay ||
+    monthFilter !== currentMonth ||
+    yearFilter !== currentYear ||
+    startDateFilter !== '' ||
+    endDateFilter !== '';
 
-  const isUsingDateFilters = useMemo(() => {
-    return dayFilter !== '' || monthFilter !== '' || yearFilter !== '';
-  }, [dayFilter, monthFilter, yearFilter]);
-
-  const isUsingDateRangeFilters = useMemo(() => {
-    return startDateFilter !== '' || endDateFilter !== '';
-  }, [startDateFilter, endDateFilter]);
+  const isUsingDateFilters = dayFilter !== '' || monthFilter !== '' || yearFilter !== '';
+  const isUsingDateRangeFilters = startDateFilter !== '' || endDateFilter !== '';
 
   const renderModalContent = () => {
     if (modalContent === 'create' || modalContent === 'edit') {
@@ -281,6 +315,13 @@ function App() {
         </Suspense>
       );
     }
+    if (modalContent === 'users') {
+      return (
+        <Suspense fallback={<Spinner />}>
+          <UsersManagement onClose={closeModal} />
+        </Suspense>
+      );
+    }
     return null;
   };
 
@@ -299,6 +340,7 @@ function App() {
         onNewOS={handleCreate}
         onGeneratePDF={handleGenerateReportPDF}
         canGeneratePDF={filteredOrders.length > 0}
+        onOpenUsers={handleOpenUsers}
       />
 
       <div className="flex flex-col flex-1 min-h-screen overflow-x-hidden">
@@ -308,6 +350,7 @@ function App() {
           onNewOS={handleCreate}
           onGeneratePDF={handleGenerateReportPDF}
           canGeneratePDF={filteredOrders.length > 0}
+          onOpenUsers={handleOpenUsers}
         />
 
         {currentPage === 'tintas' && (
@@ -348,23 +391,16 @@ function App() {
                   </div>
                   <span className="text-sm font-semibold text-slate-700">Filtros</span>
                   {hasActiveFilters && (
-                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold">
-                      !
-                    </span>
+                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold">!</span>
                   )}
                 </div>
                 <div className="flex gap-1.5 sm:gap-2">
-                  <button
-                    onClick={clearFilters}
-                    disabled={!hasActiveFilters}
-                    className="btn btn-outline text-xs py-1.5 px-2.5 sm:px-3 disabled:opacity-40"
-                  >
+                  <button onClick={clearFilters} disabled={!hasActiveFilters}
+                    className="btn btn-outline text-xs py-1.5 px-2.5 sm:px-3 disabled:opacity-40">
                     Hoje
                   </button>
-                  <button
-                    onClick={viewAllHistory}
-                    className="btn btn-ghost text-xs py-1.5 px-2.5 sm:px-3 text-slate-600"
-                  >
+                  <button onClick={viewAllHistory}
+                    className="btn btn-ghost text-xs py-1.5 px-2.5 sm:px-3 text-slate-600">
                     Histórico
                   </button>
                   <button
@@ -372,7 +408,8 @@ function App() {
                     className="sm:hidden btn btn-ghost text-xs py-1.5 px-2.5 text-slate-600"
                     aria-label="Filtros Avançados"
                   >
-                    <svg className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
@@ -381,15 +418,8 @@ function App() {
 
               <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
                 {statusPills.map((p) => (
-                  <button
-                    key={p.value}
-                    onClick={() => {
-                      setStatusFilter(p.value);
-                      if (p.value !== 'todos') {
-                        setDayFilter(''); setMonthFilter(''); setYearFilter('');
-                        setStartDateFilter(''); setEndDateFilter('');
-                      }
-                    }}
+                  <button key={p.value}
+                    onClick={() => setStatusFilter(p.value)}
                     className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${statusFilter === p.value ? p.activeCls : p.cls}`}
                   >
                     {p.label}
@@ -400,7 +430,6 @@ function App() {
                 ))}
               </div>
 
-              {/* Busca */}
               <div className="relative mb-3">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -416,101 +445,64 @@ function App() {
                 />
               </div>
 
-              {/* Filtros avançados */}
               <div className={`${showFilters ? 'block' : 'hidden'} sm:block`}>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-                  {/* Dia */}
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
-                      <span>Dia</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={dayFilter}
-                      onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 1 && +v <= 31)) setDayFilter(v); }}
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between"><span>Dia</span></label>
+                    <input type="number" value={dayFilter}
+                      onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 1 && +v <= 31)) handleDayFilterChange(v); }}
                       onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
                       onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="1–31"
-                      min="1"
-                      max="31"
+                      placeholder="1–31" min="1" max="31"
                       disabled={isUsingDateRangeFilters}
-                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
-                    />
+                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1" />
                   </div>
-                  {/* Mês */}
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
-                      <span>Mês</span>
-                    </label>
-                    <select
-                      value={monthFilter}
-                      onChange={(e) => setMonthFilter(e.target.value)}
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between"><span>Mês</span></label>
+                    <select value={monthFilter} onChange={(e) => handleMonthFilterChange(e.target.value)}
                       disabled={isUsingDateRangeFilters}
-                      className="input text-xs sm:text-sm mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
-                    >
+                      className="input text-xs sm:text-sm mt-1">
                       <option value="">Todos</option>
                       {['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
                         .map((m, i) => <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
                     </select>
                   </div>
-                  {/* Ano */}
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between">
-                      <span>Ano</span>
-                    </label>
-                    <input
-                      type="number"
-                      value={yearFilter}
-                      onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 2020 && +v <= 2100)) setYearFilter(v); }}
+                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between"><span>Ano</span></label>
+                    <input type="number" value={yearFilter}
+                      onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 2000 && +v <= Number(currentYear))) handleYearFilterChange(v); }}
                       onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
                       onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="2020–2100"
-                      min="2020"
-                      max="2100"
+                      placeholder="2020–2100" min="2020" max="2100"
                       disabled={isUsingDateRangeFilters}
-                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
-                    />
+                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1" />
                   </div>
-                  
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
                     <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Inicial</label>
-                    <input
-                      type="date"
-                      value={startDateFilter}
-                      onChange={(e) => setStartDateFilter(e.target.value)}
+                    <input type="date" value={startDateFilter} onChange={(e) => handleStartDateFilterChange(e.target.value)}
                       max={endDateFilter || undefined}
                       disabled={isUsingDateFilters}
-                      className="input text-xs sm:text-sm mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
-                    />
+                      className="input text-xs sm:text-sm mt-1" />
                   </div>
-                  
                   <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
                     <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Final</label>
-                    <input
-                      type="date"
-                      value={endDateFilter}
-                      onChange={(e) => setEndDateFilter(e.target.value)}
+                    <input type="date" value={endDateFilter} onChange={(e) => handleEndDateFilterChange(e.target.value)}
                       min={startDateFilter || undefined}
                       disabled={isUsingDateFilters}
-                      className="input text-xs sm:text-sm mt-1 group-focus-within:ring-2 group-focus-within:ring-slate-300"
-                    />
+                      className="input text-xs sm:text-sm mt-1" />
                   </div>
                 </div>
               </div>
-
             </div>
 
-            {/* ── Results count ── */}
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <p className="text-sm text-slate-500">
-                {filteredOrders.length === 0
-                  ? ""
-                  : (
-                    <>
-                      <span className="font-semibold text-slate-700">{filteredOrders.length}</span>{" "}
-                      {filteredOrders.length === 1 ? "ordem encontrada" : "ordens encontradas"}
-                    </>
-                  )}
+                {filteredOrders.length === 0 ? '' : (
+                  <>
+                    <span className="font-semibold text-slate-700">{filteredOrders.length}</span>{' '}
+                    {filteredOrders.length === 1 ? 'ordem encontrada' : 'ordens encontradas'}
+                  </>
+                )}
               </p>
               {hasActiveFilters && (
                 <button onClick={clearFilters} className="text-xs text-slate-500 hover:text-slate-700 underline">
@@ -519,10 +511,8 @@ function App() {
               )}
             </div>
 
-            {/* Loading */}
-            {isLoading && <Spinner />}
+            {ordersLoading && <Spinner />}
 
-            {/* Error */}
             {error && (
               <div className="card p-6 text-center border-red-200">
                 <p className="text-sm font-semibold text-red-600 mb-1">Erro ao carregar dados</p>
@@ -531,8 +521,7 @@ function App() {
               </div>
             )}
 
-            {/* Cards grid */}
-            {!isLoading && !error && (
+            {!ordersLoading && !error && (
               filteredOrders.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
@@ -542,7 +531,11 @@ function App() {
                   </div>
                   <h3 className="text-base font-bold text-slate-700 mb-1">Nenhuma ordem encontrada</h3>
                   <p className="text-sm text-slate-500 mb-4">
-                    {hasActiveFilters ? 'Tente ajustar os filtros.' : 'Toque em "Nova OS" para criar a primeira.'}
+                    {hasActiveFilters
+                      ? 'Tente ajustar os filtros.'
+                      : canCreate
+                        ? 'Toque em "Nova OS" para criar a primeira.'
+                        : 'Nenhuma ordem disponível no momento.'}
                   </p>
                   {hasActiveFilters && (
                     <button onClick={clearFilters} className="btn btn-outline text-xs">Limpar Filtros</button>
@@ -567,7 +560,6 @@ function App() {
         <Footer />
       </div>
 
-      {/* Modal */}
       <Modal isOpen={showModal} onClose={closeModal} title={modalTitle}>
         {renderModalContent()}
       </Modal>
@@ -576,6 +568,15 @@ function App() {
         <Toast key={toast.id} message={toast.message} type={toast.type} onClose={() => removeToast(toast.id)} />
       ))}
     </div>
+  );
+}
+
+/* ─── Root with AuthProvider ──────────────────────────────────────────────── */
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

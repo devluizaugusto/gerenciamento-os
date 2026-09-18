@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 type Page = 'helpdesk' | 'tintas' | 'trocas';
 
@@ -8,6 +9,7 @@ interface SidebarProps {
   onNewOS: () => void;
   onGeneratePDF: () => void;
   canGeneratePDF: boolean;
+  onOpenUsers?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -16,8 +18,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   onNewOS,
   onGeneratePDF,
   canGeneratePDF,
+  onOpenUsers,
 }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const { user, logout, isAdmin, canCreate } = useAuth();
+
+  const initials = user?.nome
+    ? user.nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+    : '?';
+
+  const ROLE_COLORS: Record<string, string> = {
+    admin: 'bg-purple-500',
+    tecnico: 'bg-blue-500',
+    visualizador: 'bg-slate-400',
+  };
 
   const navItems = [
     {
@@ -141,10 +155,44 @@ const Sidebar: React.FC<SidebarProps> = ({
               </button>
             );
           })}
+
+          {/* ── Admin: Gerenciar Usuários ── */}
+          {isAdmin && onOpenUsers && (
+            <>
+              {!collapsed && (
+                <p className="text-white/30 text-[10px] font-semibold uppercase tracking-[0.12em] px-3 mt-5 mb-2">
+                  Administração
+                </p>
+              )}
+              <button
+                onClick={onOpenUsers}
+                title={collapsed ? 'Gerenciar Usuários' : undefined}
+                className={`
+                  group relative w-full flex items-center rounded-xl
+                  text-sm font-medium transition-all duration-200
+                  text-white/60 hover:text-white hover:bg-white/8
+                  ${collapsed ? 'justify-center h-11 w-11 mx-auto p-0' : 'gap-3 px-3.5 py-3'}
+                `}
+              >
+                <span className="shrink-0 transition-transform duration-200 group-hover:scale-110">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </span>
+                {!collapsed && (
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="truncate font-semibold text-[13.5px] leading-tight">Usuários</p>
+                    <p className="truncate text-[11px] text-white/35 leading-tight mt-0.5">Gerenciar acessos</p>
+                  </div>
+                )}
+              </button>
+            </>
+          )}
         </nav>
 
-        {/* ══ AÇÕES ══ */}
-        {currentPage === 'helpdesk' && (
+        {/* ══ AÇÕES (somente helpdesk + se pode criar) ══ */}
+        {currentPage === 'helpdesk' && canCreate && (
           <div className="px-3 py-4 border-t border-white/8 space-y-2.5 shrink-0">
             {!collapsed && (
               <p className="text-white/30 text-[10px] font-semibold uppercase tracking-[0.12em] px-3 mb-3">
@@ -167,14 +215,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </svg>
               {!collapsed && <span>Nova OS</span>}
               {collapsed && (
-                <div className="
-                  pointer-events-none absolute left-full ml-3 z-50
-                  bg-gray-900 text-white text-xs font-medium
-                  px-3 py-2 rounded-lg whitespace-nowrap
-                  shadow-xl border border-white/10
-                  opacity-0 group-hover:opacity-100
-                  transition-opacity duration-150
-                ">
+                <div className="pointer-events-none absolute left-full ml-3 z-50 bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-lg whitespace-nowrap shadow-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   Nova Ordem de Serviço
                   <span className="absolute top-1/2 -left-1.5 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
                 </div>
@@ -201,14 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </svg>
               {!collapsed && <span>Gerar Relatório</span>}
               {collapsed && (
-                <div className="
-                  pointer-events-none absolute left-full ml-3 z-50
-                  bg-gray-900 text-white text-xs font-medium
-                  px-3 py-2 rounded-lg whitespace-nowrap
-                  shadow-xl border border-white/10
-                  opacity-0 group-hover:opacity-100
-                  transition-opacity duration-150
-                ">
+                <div className="pointer-events-none absolute left-full ml-3 z-50 bg-gray-900 text-white text-xs font-medium px-3 py-2 rounded-lg whitespace-nowrap shadow-xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                   {canGeneratePDF ? 'Gerar Relatório PDF' : 'Sem ordens disponíveis'}
                   <span className="absolute top-1/2 -left-1.5 -translate-y-1/2 border-4 border-transparent border-r-gray-900" />
                 </div>
@@ -217,32 +251,50 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* ══ RODAPÉ ══ */}
-        <div className={`px-3 py-4 border-t border-white/8 shrink-0 ${collapsed ? 'flex justify-center' : 'flex items-center justify-between'}`}>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="text-white/50 text-[11px] font-medium truncate">Help Desk TI</p>
-              <p className="text-white/25 text-[10px] truncate">© {new Date().getFullYear()} — Todos os direitos reservados.</p>
+        {/* ══ RODAPÉ COM USUÁRIO ══ */}
+        <div className={`px-3 py-4 border-t border-white/8 shrink-0 ${collapsed ? 'flex flex-col items-center gap-2' : ''}`}>
+          {!collapsed ? (
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0 ${ROLE_COLORS[user?.role ?? ''] ?? 'bg-slate-500'}`}>
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-white/80 text-[11px] font-semibold truncate">{user?.nome}</p>
+                <p className="text-white/35 text-[10px] truncate">{user?.role_label}</p>
+              </div>
+              <button onClick={logout} title="Sair"
+                className="shrink-0 flex items-center justify-center w-7 h-7 rounded-lg text-white/30 hover:text-red-400 hover:bg-white/8 transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
+          ) : (
+            <button onClick={logout} title="Sair"
+              className="flex items-center justify-center w-9 h-9 rounded-xl text-white/30 hover:text-red-400 hover:bg-white/8 transition-all">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           )}
-          <button
-            onClick={() => setCollapsed(c => !c)}
-            title={collapsed ? 'Expandir menu' : 'Recolher menu'}
-            className="
-              flex items-center justify-center w-8 h-8 rounded-lg
-              text-white/40 hover:text-white hover:bg-white/10
-              transition-all duration-200 shrink-0
-            "
-          >
-            <svg
-              className={`w-4 h-4 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+
+          <div className={`${collapsed ? 'flex justify-center w-full' : 'flex items-center justify-between'}`}>
+            {!collapsed && (
+              <p className="text-white/20 text-[10px] truncate">© {new Date().getFullYear()} Help Desk TI</p>
+            )}
+            <button
+              onClick={() => setCollapsed(c => !c)}
+              title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all duration-200 shrink-0"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+              <svg className={`w-4 h-4 transition-transform duration-300 ${collapsed ? 'rotate-180' : ''}`}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -267,8 +319,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             <span className="text-[10px] font-semibold leading-none">OS</span>
           </button>
 
-          {/* Action: Nova OS (only on helpdesk) */}
-          {currentPage === 'helpdesk' && (
+          {/* Action: Nova OS (only on helpdesk + if canCreate) */}
+          {currentPage === 'helpdesk' && canCreate && (
             <button
               onClick={onNewOS}
               className="flex-1 flex flex-col items-center justify-center gap-1 text-white/40 active:text-white/70 transition-all duration-200"

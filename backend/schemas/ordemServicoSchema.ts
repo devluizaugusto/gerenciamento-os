@@ -66,6 +66,36 @@ export const createServiceOrderSchema = z.object({
         { message: 'Data de fechamento deve estar no formato DD/MM/YYYY ou YYYY-MM-DD' }
       )
       .transform(val => val === '' ? null : val)
+  }).superRefine((data, ctx) => {
+    const parseDate = (value?: string | null) => {
+      if (!value) return null;
+      const matchBR = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (matchBR) return new Date(Number(matchBR[3]), Number(matchBR[2]) - 1, Number(matchBR[1]));
+      const matchISO = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (matchISO) return new Date(Number(matchISO[1]), Number(matchISO[2]) - 1, Number(matchISO[3]));
+      return null;
+    };
+    const abertura = parseDate(data.data_abertura);
+    const fechamento = parseDate(data.data_fechamento);
+    const hoje = new Date();
+    hoje.setHours(23, 59, 59, 999);
+
+    if (abertura && abertura > hoje) {
+      ctx.addIssue({ code: 'custom', path: ['data_abertura'], message: 'A data de abertura não pode ser futura' });
+    }
+    if (data.status === 'finalizado') {
+      if (!data.servico_realizado || !data.servico_realizado.trim()) {
+        ctx.addIssue({ code: 'custom', path: ['servico_realizado'], message: 'Informe o serviço realizado para finalizar a OS' });
+      }
+      if (!fechamento) {
+        ctx.addIssue({ code: 'custom', path: ['data_fechamento'], message: 'Informe a data de fechamento para finalizar a OS' });
+      }
+      if (abertura && fechamento && fechamento < abertura) {
+        ctx.addIssue({ code: 'custom', path: ['data_fechamento'], message: 'A data de fechamento não pode ser anterior à abertura' });
+      }
+    } else if (data.data_fechamento) {
+      ctx.addIssue({ code: 'custom', path: ['data_fechamento'], message: 'Data de fechamento só pode ser informada em OS finalizada' });
+    }
   })
 });
 
@@ -149,6 +179,37 @@ export const updateServiceOrderSchema = z.object({
     (data) => Object.keys(data).length > 0,
     { message: 'Pelo menos um campo deve ser fornecido para atualização' }
   )
+  .superRefine((data, ctx) => {
+    const parseDate = (value?: string | null) => {
+      if (!value) return null;
+      const br = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+      if (br) return new Date(Number(br[3]), Number(br[2]) - 1, Number(br[1]));
+      const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+      return null;
+    };
+    const abertura = parseDate(data.data_abertura);
+    const fechamento = parseDate(data.data_fechamento);
+    const hoje = new Date();
+    hoje.setHours(23, 59, 59, 999);
+
+    if (abertura && abertura > hoje) {
+      ctx.addIssue({ code: 'custom', path: ['data_abertura'], message: 'A data de abertura não pode ser futura' });
+    }
+    if (data.status === 'finalizado') {
+      if (data.servico_realizado !== undefined && !data.servico_realizado?.trim()) {
+        ctx.addIssue({ code: 'custom', path: ['servico_realizado'], message: 'Informe o serviço realizado para finalizar a OS' });
+      }
+      if (data.data_fechamento !== undefined && !fechamento) {
+        ctx.addIssue({ code: 'custom', path: ['data_fechamento'], message: 'Informe uma data de fechamento válida para finalizar a OS' });
+      }
+      if (abertura && fechamento && fechamento < abertura) {
+        ctx.addIssue({ code: 'custom', path: ['data_fechamento'], message: 'A data de fechamento não pode ser anterior à abertura' });
+      }
+    } else if (data.data_fechamento) {
+      ctx.addIssue({ code: 'custom', path: ['data_fechamento'], message: 'Data de fechamento só pode ser informada em OS finalizada' });
+    }
+  })
 });
 
 // Schema to validate ID in params

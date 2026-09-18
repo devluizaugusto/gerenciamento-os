@@ -6,14 +6,17 @@ import {
   updateModelo,
   deleteModelo,
 } from '../controllers/modeloImpressoraController';
+import { autorizar } from '../middlewares/authMiddleware';
 
 const router = express.Router();
 
-// ─── Modelos de Impressora ─────────────────────
+// ─── Leitura: todos os perfis autenticados ────────────────────────────────
 router.get('/', getAllModelos);
 router.get('/:id', getModeloById);
-router.post('/', createModelo);
-router.put('/:id', updateModelo);
-router.delete('/:id', deleteModelo);
+
+// ─── Escrita e exclusão: somente admin ───────────────────────────────────
+router.post('/', autorizar('admin'), createModelo);
+router.put('/:id', autorizar('admin'), updateModelo);
+router.delete('/:id', autorizar('admin'), deleteModelo);
 
 export default router;

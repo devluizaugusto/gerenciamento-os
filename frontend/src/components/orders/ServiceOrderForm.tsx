@@ -11,6 +11,11 @@ interface ServiceOrderFormProps {
   isLoading?: boolean;
 }
 
+const getTodayInput = () => {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
 const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({ 
   order, 
   onSubmit, 
@@ -36,7 +41,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
       unidade: '',
       setor: '',
       descricao_problema: '',
-      data_abertura: '',
+      data_abertura: getTodayInput(),
       servico_realizado: '',
       status: 'aberto',
       data_fechamento: '',
@@ -312,7 +317,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
               <span className="text-base sm:text-lg mr-1 sm:mr-2">📆</span>
               Data de Abertura <span className="text-danger">*</span>
             </label>
-            <input type="date" id="data_abertura" {...register('data_abertura')}
+            <input type="date" id="data_abertura" {...register('data_abertura')} max={getTodayInput()}
               className={`input ${errors.data_abertura ? 'border-danger ring-2 ring-danger/20' : 'border-purple-200 focus:border-purple-500'}`} />
             {errors.data_abertura && (
               <p className="text-danger text-xs sm:text-sm mt-1.5 sm:mt-2 flex items-center gap-1 animate-slideDown">
@@ -348,6 +353,7 @@ const ServiceOrderForm: React.FC<ServiceOrderFormProps> = ({
             <input type="date" id="data_fechamento" {...register('data_fechamento')}
               disabled={!isFinalizado}
               min={dataAberturaValue || undefined}
+              max={getTodayInput()}
               className={`input transition-all duration-200 ${
                 !isFinalizado
                   ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'

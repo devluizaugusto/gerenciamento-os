@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { TrocaComputador } from '../../types';
 import { getStatusConfig } from '../../utils/statusColors';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface ComputerSwapCardProps {
   troca: TrocaComputador;
@@ -38,6 +39,7 @@ const PatrimonioBlock: React.FC<{ title: string; cpu: string; monitor: string; v
 const ComputerSwapCard: React.FC<ComputerSwapCardProps> = memo(({ troca, onEdit, onDelete }) => {
   const status = getStatusConfig(troca.status);
   const borderColor = status.borderColor ?? status.color;
+  const { canEdit, canDelete } = useAuth();
 
   return (
     <article
@@ -83,12 +85,20 @@ const ComputerSwapCard: React.FC<ComputerSwapCardProps> = memo(({ troca, onEdit,
       </div>
 
       <footer className="px-4 pb-4 flex gap-2 border-t border-slate-100 pt-3 mt-auto bg-slate-50/80">
-        <button type="button" onClick={() => onEdit(troca)} className="btn btn-edit flex-1 text-xs py-2">
-          Editar
-        </button>
-        <button type="button" onClick={() => onDelete(troca.id)} className="btn btn-delete flex-1 text-xs py-2">
-          Excluir
-        </button>
+        {canEdit ? (
+          <button type="button" onClick={() => onEdit(troca)} className="btn btn-edit flex-1 text-xs py-2">
+            Editar
+          </button>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-xs text-slate-400 bg-slate-100 rounded-lg py-2 cursor-not-allowed">
+            Visualizar
+          </div>
+        )}
+        {canDelete && (
+          <button type="button" onClick={() => onDelete(troca.id)} className="btn btn-delete flex-1 text-xs py-2">
+            Excluir
+          </button>
+        )}
       </footer>
     </article>
   );

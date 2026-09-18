@@ -78,6 +78,23 @@ model SaidaTinta {
   @@map("saida_tinta")
 }
 
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  nome         String   @db.VarChar(255)
+  email        String   @unique @db.VarChar(255)
+  senha_hash   String   @db.VarChar(255)
+  role         String   @default("tecnico") @db.VarChar(50)
+  ativo        Boolean  @default(true)
+  ultimo_login DateTime?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([ativo])
+  @@map("usuario")
+}
+
 model TrocaComputador {
   id                        Int      @id @default(autoincrement())
   patrimonio_cpu_antigo     String   @db.VarChar(100)

@@ -23,6 +23,71 @@ const api: AxiosInstance = axios.create({
   },
 });
 
+// ─── Interceptor: adiciona token JWT em todas as requisições ─────────────
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ─── Interceptor: trata erros de autenticação globalmente ────────────────
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && !String(error.config?.url || '').includes('/auth/login')) {
+      // Token inválido/expirado: volta para a raiz da SPA, nunca para /login,
+      // pois /login é uma tela React e não uma rota HTTP do servidor.
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      if (window.location.pathname !== '/') window.location.replace('/');
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ─── Auth API ─────────────────────────────────────────────────
+export const authAPI = {
+  login: async (email: string, senha: string) => {
+    const response = await api.post('/auth/login', { email, senha });
+    return response.data as {
+      token: string;
+      usuario: { id: number; nome: string; email: string; role: string; role_label: string };
+    };
+  },
+
+  me: async () => {
+    const response = await api.get('/auth/me');
+    return response.data;
+  },
+
+  listarUsuarios: async () => {
+    const response = await api.get('/auth');
+    return response.data;
+  },
+
+  criarUsuario: async (data: { nome: string; email: string; senha: string; role: string }) => {
+    const response = await api.post('/auth', data);
+    return response.data;
+  },
+
+  atualizarUsuario: async (id: number, data: { nome?: string; email?: string; senha?: string; role?: string; ativo?: boolean }) => {
+    const response = await api.put(`/auth/${id}`, data);
+    return response.data;
+  },
+
+  deletarUsuario: async (id: number) => {
+    const response = await api.delete(`/auth/${id}`);
+    return response.data;
+  },
+
+  alterarSenha: async (senha_atual: string, nova_senha: string) => {
+    const response = await api.put('/auth/alterar-senha', { senha_atual, nova_senha });
+    return response.data;
+  },
+};
+
 export const serviceOrderAPI = {
   getAll: async (): Promise<ServiceOrder[]> => {
     const response = await api.get<ServiceOrder[]>('/ordens-servico');
@@ -59,9 +124,7 @@ export const serviceOrderAPI = {
   },
 
   generatePDF: async (id: number): Promise<Blob> => {
-    const response = await api.get(`/ordens-servico/pdf/${id}`, {
-      responseType: 'blob'
-    });
+    const response = await api.get(`/ordens-servico/pdf/${id}`, { responseType: 'blob' });
     return response.data;
   },
 
@@ -75,38 +138,20 @@ export const serviceOrderAPI = {
     dataFim: string | null = null
   ): Promise<Blob> => {
     const params = new URLSearchParams();
-    if (status && status !== 'todos') {
-      params.append('status', status);
-    }
-    if (search) {
-      params.append('search', search);
-    }
-    if (dia) {
-      params.append('dia', dia);
-    }
-    if (mes) {
-      params.append('mes', mes);
-    }
-    if (ano) {
-      params.append('ano', ano);
-    }
-    if (dataInicio) {
-      params.append('dataInicio', dataInicio);
-    }
-    if (dataFim) {
-      params.append('dataFim', dataFim);
-    }
+    if (status && status !== 'todos') params.append('status', status);
+    if (search) params.append('search', search);
+    if (dia) params.append('dia', dia);
+    if (mes) params.append('mes', mes);
+    if (ano) params.append('ano', ano);
+    if (dataInicio) params.append('dataInicio', dataInicio);
+    if (dataFim) params.append('dataFim', dataFim);
 
     const url = `/ordens-servico/pdf/relatorio/geral${params.toString() ? '?' + params.toString() : ''}`;
 
     try {
-      const response = await api.get(url, {
-        responseType: 'blob'
-      });
+      const response = await api.get(url, { responseType: 'blob' });
       return response.data;
     } catch (err: any) {
-      // When responseType is 'blob', error responses are also Blobs.
-      // We need to read the Blob to extract the actual JSON error message.
       if (err.response?.data instanceof Blob) {
         const text = await err.response.data.text();
         try {
@@ -115,8 +160,7 @@ export const serviceOrderAPI = {
           const error = new Error(message) as any;
           error.response = { data: json, status: err.response.status };
           throw error;
-        } catch (parseErr) {
-          // If it's not valid JSON, re-throw the original error
+        } catch {
           throw err;
         }
       }
@@ -129,32 +173,25 @@ export default api;
 
 // ─── Ink / Tinta API ─────────────────────────────────────────
 export const tintaAPI = {
-  // Estoque
   getAllEstoque: async (): Promise<EstoqueTinta[]> => {
     const response = await api.get<EstoqueTinta[]>('/tintas/estoque');
     return response.data;
   },
-
   getEstoqueById: async (id: number): Promise<EstoqueTinta> => {
     const response = await api.get<EstoqueTinta>(`/tintas/estoque/${id}`);
     return response.data;
   },
-
   createEstoque: async (data: CreateEstoqueData): Promise<EstoqueTinta> => {
     const response = await api.post<EstoqueTinta>('/tintas/estoque', data);
     return response.data;
   },
-
   updateEstoque: async (id: number, data: UpdateEstoqueData): Promise<EstoqueTinta> => {
     const response = await api.put<EstoqueTinta>(`/tintas/estoque/${id}`, data);
     return response.data;
   },
-
   deleteEstoque: async (id: number): Promise<void> => {
     await api.delete(`/tintas/estoque/${id}`);
   },
-
-  // Saídas
   getAllSaidas: async (filters?: SaidasFilter): Promise<SaidaTinta[]> => {
     const params = new URLSearchParams();
     if (filters?.estoque_id) params.append('estoque_id', String(filters.estoque_id));
@@ -163,26 +200,21 @@ export const tintaAPI = {
     if (filters?.dataInicio) params.append('dataInicio', filters.dataInicio);
     if (filters?.dataFim) params.append('dataFim', filters.dataFim);
     if (filters?.modelo) params.append('modelo', filters.modelo);
-
     const url = `/tintas/saidas${params.toString() ? '?' + params.toString() : ''}`;
     const response = await api.get<SaidaTinta[]>(url);
     return response.data;
   },
-
   createSaida: async (data: CreateSaidaData): Promise<SaidaTinta> => {
     const response = await api.post<SaidaTinta>('/tintas/saidas', data);
     return response.data;
   },
-
   updateSaida: async (id: number, data: UpdateSaidaData): Promise<SaidaTinta> => {
     const response = await api.put<SaidaTinta>(`/tintas/saidas/${id}`, data);
     return response.data;
   },
-
   deleteSaida: async (id: number): Promise<void> => {
     await api.delete(`/tintas/saidas/${id}`);
   },
-
   estornarSaida: async (id: number, quantidade: number): Promise<{ message: string }> => {
     const response = await api.patch<{ message: string }>(`/tintas/saidas/${id}/estorno`, { quantidade });
     return response.data;
@@ -196,22 +228,18 @@ export const modeloImpressoraAPI = {
     const response = await api.get<ModeloImpressoraCadastro[]>(`/modelos-impressora${params}`);
     return response.data;
   },
-
   getById: async (id: number): Promise<ModeloImpressoraCadastro> => {
     const response = await api.get<ModeloImpressoraCadastro>(`/modelos-impressora/${id}`);
     return response.data;
   },
-
   create: async (data: CreateModeloData): Promise<ModeloImpressoraCadastro> => {
     const response = await api.post<ModeloImpressoraCadastro>('/modelos-impressora', data);
     return response.data;
   },
-
   update: async (id: number, data: UpdateModeloData): Promise<ModeloImpressoraCadastro> => {
     const response = await api.put<ModeloImpressoraCadastro>(`/modelos-impressora/${id}`, data);
     return response.data;
   },
-
   delete: async (id: number): Promise<void> => {
     await api.delete(`/modelos-impressora/${id}`);
   },
@@ -223,22 +251,18 @@ export const trocaComputadorAPI = {
     const response = await api.get<TrocaComputador[]>('/trocas-computador');
     return response.data;
   },
-
   getById: async (id: number): Promise<TrocaComputador> => {
     const response = await api.get<TrocaComputador>(`/trocas-computador/${id}`);
     return response.data;
   },
-
   create: async (data: TrocaComputadorFormData): Promise<TrocaComputador> => {
     const response = await api.post<TrocaComputador>('/trocas-computador', data);
     return response.data;
   },
-
   update: async (id: number, data: TrocaComputadorFormData): Promise<TrocaComputador> => {
     const response = await api.put<TrocaComputador>(`/trocas-computador/${id}`, data);
     return response.data;
   },
-
   delete: async (id: number): Promise<void> => {
     await api.delete(`/trocas-computador/${id}`);
   },

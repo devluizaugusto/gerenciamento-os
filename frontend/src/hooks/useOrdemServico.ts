@@ -12,10 +12,11 @@ export const serviceOrderKeys = {
 };
 
 // Hook to fetch all service orders
-export const useServiceOrders = () => {
+export const useServiceOrders = (enabled = true) => {
   return useQuery({
     queryKey: serviceOrderKeys.lists(),
     queryFn: () => serviceOrderAPI.getAll(),
+    enabled,
     staleTime: 1000 * 60 * 5, // 5 minutes - data is valid for 5 min
     refetchOnMount: false, // No automatic refetch on mount
     refetchOnWindowFocus: false, // No refetch on window focus

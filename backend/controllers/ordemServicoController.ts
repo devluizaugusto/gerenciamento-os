@@ -3,6 +3,28 @@ import prisma from '../config/prisma';
 import { formatServiceOrder, formatServiceOrders } from '../utils/dateFormatter';
 import { StatusOrdemServico } from '../types';
 
+
+const parseDateOnly = (value: unknown): Date | null => {
+  if (value === null || value === undefined || String(value).trim() === '') return null;
+  const raw = String(value).trim();
+  let year: number, month: number, day: number;
+  const br = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (br) {
+    day = Number(br[1]); month = Number(br[2]); year = Number(br[3]);
+  } else if (iso) {
+    year = Number(iso[1]); month = Number(iso[2]); day = Number(iso[3]);
+  } else return null;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+  return date;
+};
+
+const todayUTC = () => {
+  const now = new Date();
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+};
+
 export const getAllServiceOrders = async (_req: Request, res: Response): Promise<void> => {
   try {
     const rows = await prisma.ordemServico.findMany({
@@ -105,28 +127,35 @@ export const createServiceOrder = async (req: Request, res: Response): Promise<v
     const validStatuses: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
     const finalStatus: StatusOrdemServico = status && validStatuses.includes(status) ? status : 'aberto';
     
-    let formattedOpeningDate = data_abertura;
-    if (data_abertura && data_abertura.includes('/')) {
-      const parts = data_abertura.split('/');
-      if (parts.length === 3) {
-        formattedOpeningDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
-      }
-    } else if (data_abertura && data_abertura.includes('-')) {
-      formattedOpeningDate = `${data_abertura}T12:00:00.000Z`;
+    const openingDate = parseDateOnly(data_abertura);
+    const closingDate = parseDateOnly(data_fechamento);
+    if (!openingDate) {
+      res.status(400).json({ error: 'Data de abertura inválida' });
+      return;
     }
-    
-    let formattedClosingDate: string | null = null;
-    if (data_fechamento && data_fechamento.trim() !== '') {
-      if (data_fechamento.includes('/')) {
-        const parts = data_fechamento.split('/');
-        if (parts.length === 3) {
-          formattedClosingDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
-        }
-      } else if (data_fechamento.includes('-')) {
-        formattedClosingDate = `${data_fechamento}T12:00:00.000Z`;
-      }
+    if (openingDate > todayUTC()) {
+      res.status(400).json({ error: 'A data de abertura não pode ser futura' });
+      return;
     }
-    
+
+    if (finalStatus === 'finalizado') {
+      if (!servico_realizado || !String(servico_realizado).trim()) {
+        res.status(400).json({ error: 'Informe o serviço realizado para finalizar a OS' });
+        return;
+      }
+      if (!closingDate) {
+        res.status(400).json({ error: 'Informe a data de fechamento para finalizar a OS' });
+        return;
+      }
+      if (closingDate < openingDate) {
+        res.status(400).json({ error: 'A data de fechamento não pode ser anterior à abertura' });
+        return;
+      }
+    } else if (data_fechamento || (servico_realizado && String(servico_realizado).trim())) {
+      res.status(400).json({ error: 'Serviço realizado e data de fechamento só podem ser informados em OS finalizada' });
+      return;
+    }
+
     const newOrder = await prisma.ordemServico.create({
       data: {
         numero_os: orderNumber,
@@ -134,10 +163,10 @@ export const createServiceOrder = async (req: Request, res: Response): Promise<v
         unidade,
         setor,
         descricao_problema,
-        data_abertura: new Date(formattedOpeningDate),
-        servico_realizado: servico_realizado || null,
+        data_abertura: openingDate,
+        servico_realizado: finalStatus === 'finalizado' ? String(servico_realizado).trim() : null,
         status: finalStatus,
-        data_fechamento: formattedClosingDate ? new Date(formattedClosingDate) : null
+        data_fechamento: finalStatus === 'finalizado' ? closingDate : null
       }
     });
     
@@ -177,60 +206,75 @@ export const updateServiceOrder = async (req: Request, res: Response): Promise<v
     }
     
     const updateData: any = {};
-    
-    if (solicitante !== undefined) updateData.solicitante = solicitante;
-    if (unidade !== undefined) updateData.unidade = unidade;
-    if (setor !== undefined) updateData.setor = setor;
-    if (descricao_problema !== undefined) updateData.descricao_problema = descricao_problema;
-    if (servico_realizado !== undefined) updateData.servico_realizado = servico_realizado;
-    
-    if (data_abertura !== undefined && data_abertura !== null && String(data_abertura).trim() !== '') {
-      let formattedOpeningDate = String(data_abertura);
-      if (formattedOpeningDate.includes('/')) {
-        const parts = formattedOpeningDate.split('/');
-        if (parts.length === 3) {
-          formattedOpeningDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
-        }
-      } else if (formattedOpeningDate.includes('-')) {
-        formattedOpeningDate = `${formattedOpeningDate}T12:00:00.000Z`;
-      }
-      updateData.data_abertura = new Date(formattedOpeningDate);
+
+    if (solicitante !== undefined) updateData.solicitante = String(solicitante).trim();
+    if (unidade !== undefined) updateData.unidade = String(unidade).trim();
+    if (setor !== undefined) updateData.setor = String(setor).trim();
+    if (descricao_problema !== undefined) updateData.descricao_problema = String(descricao_problema).trim();
+
+    const nextStatus: StatusOrdemServico = status !== undefined
+      ? status as StatusOrdemServico
+      : existing.status as StatusOrdemServico;
+
+    if (status !== undefined && !['aberto', 'em_andamento', 'finalizado'].includes(status)) {
+      res.status(400).json({ error: 'Status inválido' });
+      return;
     }
-    
+
+    let nextOpeningDate = existing.data_abertura;
+    if (data_abertura !== undefined) {
+      const parsed = parseDateOnly(data_abertura);
+      if (!parsed) {
+        res.status(400).json({ error: 'Data de abertura inválida' });
+        return;
+      }
+      if (parsed > todayUTC()) {
+        res.status(400).json({ error: 'A data de abertura não pode ser futura' });
+        return;
+      }
+      nextOpeningDate = parsed;
+      updateData.data_abertura = parsed;
+    }
+
+    let nextService = existing.servico_realizado;
+    if (servico_realizado !== undefined) {
+      nextService = servico_realizado === null ? null : String(servico_realizado).trim();
+      updateData.servico_realizado = nextService;
+    }
+
+    let nextClosingDate = existing.data_fechamento;
     if (data_fechamento !== undefined) {
-      if (data_fechamento === null || String(data_fechamento).trim() === '') {
-        updateData.data_fechamento = null;
-      } else {
-        let formattedClosingDate = String(data_fechamento);
-        if (formattedClosingDate.includes('/')) {
-          const parts = formattedClosingDate.split('/');
-          if (parts.length === 3) {
-            formattedClosingDate = `${parts[2]}-${parts[1]}-${parts[0]}T12:00:00.000Z`;
-          }
-        } else if (formattedClosingDate.includes('-')) {
-          formattedClosingDate = `${formattedClosingDate}T12:00:00.000Z`;
-        }
-        updateData.data_fechamento = new Date(formattedClosingDate);
+      nextClosingDate = parseDateOnly(data_fechamento);
+      if (data_fechamento && !nextClosingDate) {
+        res.status(400).json({ error: 'Data de fechamento inválida' });
+        return;
       }
+      updateData.data_fechamento = nextClosingDate;
     }
-    
-    // Process status
-    if (status !== undefined) {
-      const validStatuses: StatusOrdemServico[] = ['aberto', 'em_andamento', 'finalizado'];
-      if (validStatuses.includes(status)) {
-        updateData.status = status;
-        
-        if (status === 'finalizado' && data_fechamento === undefined) {
-          updateData.data_fechamento = new Date();
-        }
-        
-        // If not finalized and data_fechamento was not provided, remove closing date
-        if (status !== 'finalizado' && data_fechamento === undefined) {
-          updateData.data_fechamento = null;
-        }
+
+    if (nextStatus === 'finalizado') {
+      if (!nextService || !String(nextService).trim()) {
+        res.status(400).json({ error: 'Informe o serviço realizado para finalizar a OS' });
+        return;
       }
+      if (!nextClosingDate) {
+        res.status(400).json({ error: 'Informe a data de fechamento para finalizar a OS' });
+        return;
+      }
+      if (nextClosingDate < nextOpeningDate) {
+        res.status(400).json({ error: 'A data de fechamento não pode ser anterior à abertura' });
+        return;
+      }
+    } else {
+      // OS aberta/em andamento nunca fica com dados de encerramento.
+      nextClosingDate = null;
+      nextService = null;
+      updateData.data_fechamento = null;
+      updateData.servico_realizado = null;
     }
-    
+
+    if (status !== undefined) updateData.status = nextStatus;
+
     if (Object.keys(updateData).length === 0) {
       res.status(400).json({ error: 'Nenhum campo para atualizar' });
       return;
