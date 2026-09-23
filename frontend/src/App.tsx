@@ -47,34 +47,47 @@ const normalizeSearch = (value: string) =>
 
 const parseBRDate = (value?: string | null) => {
   if (!value) return null;
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return null;
-  return Date.UTC(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+
+  const brMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brMatch) {
+    // Usa horário local para que o filtro por data não perca o dia por causa do UTC.
+    return new Date(Number(brMatch[3]), Number(brMatch[2]) - 1, Number(brMatch[1])).getTime();
+  }
+
+  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return new Date(Number(isoMatch[1]), Number(isoMatch[2]) - 1, Number(isoMatch[3])).getTime();
+  }
+
+  return null;
 };
 
 /* ─── Main App logic (authenticated) ─────────────────────────────────────── */
 function AppContent() {
   const { isAuthenticated, isLoading, canCreate, canEdit, canDelete } = useAuth();
   const { day: currentDay, month: currentMonth, year: currentYear } = getCurrentDate();
+  const currentDateISO = `${currentYear}-${currentMonth}-${currentDay}`;
 
+  // O menu principal do sistema fica restrito a Ordens de Serviço.
+  // Mantemos as telas antigas no código para não quebrar dependências,
+  // mas qualquer sessão antiga que aponte para elas volta para OS.
   const [currentPage, setCurrentPage] = useState<'helpdesk' | 'tintas' | 'trocas'>(() => {
-    const saved = sessionStorage.getItem('currentPage');
-    if (saved === 'tintas' || saved === 'trocas') return saved;
+    sessionStorage.setItem('currentPage', 'helpdesk');
     return 'helpdesk';
   });
 
   const handleChangePage = useCallback((page: 'helpdesk' | 'tintas' | 'trocas') => {
-    sessionStorage.setItem('currentPage', page);
-    setCurrentPage(page);
+    // Apenas OS é navegável pelo menu atual.
+    const nextPage = page === 'helpdesk' ? 'helpdesk' : 'helpdesk';
+    sessionStorage.setItem('currentPage', nextPage);
+    setCurrentPage(nextPage);
   }, []);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [dayFilter, setDayFilter] = useState<string>(currentDay);
-  const [monthFilter, setMonthFilter] = useState<string>(currentMonth);
-  const [yearFilter, setYearFilter] = useState<string>(currentYear);
-  const [startDateFilter, setStartDateFilter] = useState<string>('');
-  const [endDateFilter, setEndDateFilter] = useState<string>('');
+  // O período usa apenas duas datas: início e fim. Por padrão, a tela abre em Hoje.
+  const [startDateFilter, setStartDateFilter] = useState<string>(currentDateISO);
+  const [endDateFilter, setEndDateFilter] = useState<string>(currentDateISO);
   const [showFilters, setShowFilters] = useState(false);
 
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -99,8 +112,23 @@ function AppContent() {
    * Isso causava "Rendered more hooks than during the previous render" e a
    * tela ficava branca/piscando após o login.
    */
+  const dateScopedOrders = useMemo(() => {
+    const hasRange = Boolean(startDateFilter || endDateFilter);
+
+    return orders.filter((order) => {
+      const date = parseBRDate(order.data_abertura);
+      if (date === null) return false;
+
+      if (!hasRange) return true;
+
+      const start = startDateFilter ? new Date(`${startDateFilter}T00:00:00`) : null;
+      const end = endDateFilter ? new Date(`${endDateFilter}T23:59:59.999`) : null;
+      return (!start || date >= start.getTime()) && (!end || date <= end.getTime());
+    });
+  }, [orders, startDateFilter, endDateFilter]);
+
   const filteredOrders = useMemo(() => {
-    let filtered = [...orders];
+    let filtered = [...dateScopedOrders];
 
     if (statusFilter !== 'todos') {
       filtered = filtered.filter(order => order.status === statusFilter);
@@ -121,28 +149,8 @@ function AppContent() {
       });
     }
 
-    // Filtros de período: quando o intervalo estiver ativo, ele tem prioridade.
-    if (startDateFilter || endDateFilter) {
-      const start = startDateFilter ? Date.parse(`${startDateFilter}T00:00:00`) : -Infinity;
-      const end = endDateFilter ? Date.parse(`${endDateFilter}T23:59:59`) : Infinity;
-      filtered = filtered.filter(order => {
-        const date = parseBRDate(order.data_abertura);
-        return date !== null && date >= start && date <= end;
-      });
-    } else {
-      if (dayFilter) {
-        filtered = filtered.filter(order => parseBRDate(order.data_abertura) !== null && new Date(parseBRDate(order.data_abertura)!).getUTCDate() === Number(dayFilter));
-      }
-      if (monthFilter) {
-        filtered = filtered.filter(order => parseBRDate(order.data_abertura) !== null && new Date(parseBRDate(order.data_abertura)!).getUTCMonth() + 1 === Number(monthFilter));
-      }
-      if (yearFilter) {
-        filtered = filtered.filter(order => parseBRDate(order.data_abertura) !== null && new Date(parseBRDate(order.data_abertura)!).getUTCFullYear() === Number(yearFilter));
-      }
-    }
-
     return filtered.sort((a, b) => (parseBRDate(b.data_abertura) ?? -Infinity) - (parseBRDate(a.data_abertura) ?? -Infinity));
-  }, [orders, statusFilter, debouncedSearchTerm, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter]);
+  }, [dateScopedOrders, statusFilter, debouncedSearchTerm]);
 
   /* ─── Loading / Login gate ─────────────────────────────────── */
   if (isLoading) {
@@ -224,9 +232,9 @@ Deseja continuar?`)) {
       await generateReportPDFMutation.mutateAsync({
         status: statusFilter !== 'todos' ? statusFilter : null,
         search: searchTerm || null,
-        dia: dayFilter || null,
-        mes: monthFilter || null,
-        ano: yearFilter || null,
+        dia: null,
+        mes: null,
+        ano: null,
         dataInicio: startDateFilter || null,
         dataFim: endDateFilter || null,
       });
@@ -237,63 +245,65 @@ Deseja continuar?`)) {
     }
   };
 
-  const clearFilters = () => {
-    const { day, month, year } = getCurrentDate();
+  const resetToToday = () => {
+    setStatusFilter('todos');
+    setStartDateFilter(currentDateISO);
+    setEndDateFilter(currentDateISO);
+  };
+
+  const clearAllFilters = () => {
     setStatusFilter('todos');
     setSearchTerm('');
-    setDayFilter(day);
-    setMonthFilter(month);
-    setYearFilter(year);
     setStartDateFilter('');
     setEndDateFilter('');
   };
 
-  const handleDayFilterChange = (value: string) => {
-    setDayFilter(value);
-    if (value) { setStartDateFilter(''); setEndDateFilter(''); }
+  const resetToTodayAndClearSearch = () => {
+    resetToToday();
+    setSearchTerm('');
   };
 
-  const handleMonthFilterChange = (value: string) => {
-    setMonthFilter(value);
-    if (value) { setStartDateFilter(''); setEndDateFilter(''); }
+  const handleStatusFilterChange = (status: StatusFilter) => {
+    setStatusFilter(status);
+
+    // Status é um filtro de visão e não deve ficar preso ao "Hoje".
+    // Ao escolher um status, removemos o escopo de data para mostrar todas
+    // as OS daquele status. O usuário ainda pode aplicar uma data depois.
+    if (status !== 'todos') {
+      setStartDateFilter('');
+      setEndDateFilter('');
+    }
   };
 
-  const handleYearFilterChange = (value: string) => {
-    setYearFilter(value);
-    if (value) { setStartDateFilter(''); setEndDateFilter(''); }
+  const handleStatisticsStatus = (status: StatusFilter) => {
+    handleStatusFilterChange(status);
+    window.setTimeout(() => {
+      document.getElementById('lista-os')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   };
 
   const handleStartDateFilterChange = (value: string) => {
     setStartDateFilter(value);
-    if (value) { setDayFilter(''); setMonthFilter(''); setYearFilter(''); }
   };
 
   const handleEndDateFilterChange = (value: string) => {
     setEndDateFilter(value);
-    if (value) { setDayFilter(''); setMonthFilter(''); setYearFilter(''); }
   };
 
   const viewAllHistory = () => {
-    setStatusFilter('todos');
-    setSearchTerm('');
-    setDayFilter('');
-    setMonthFilter('');
-    setYearFilter('');
-    setStartDateFilter('');
-    setEndDateFilter('');
+    clearAllFilters();
   };
 
+  const isUsingDateRangeFilters = startDateFilter !== '' || endDateFilter !== '';
+  const isTodayScope = startDateFilter === currentDateISO && endDateFilter === currentDateISO;
+  const isHistoryScope = !isUsingDateRangeFilters;
   const hasActiveFilters =
     statusFilter !== 'todos' ||
     searchTerm.trim() !== '' ||
-    dayFilter !== currentDay ||
-    monthFilter !== currentMonth ||
-    yearFilter !== currentYear ||
-    startDateFilter !== '' ||
-    endDateFilter !== '';
-
-  const isUsingDateFilters = dayFilter !== '' || monthFilter !== '' || yearFilter !== '';
-  const isUsingDateRangeFilters = startDateFilter !== '' || endDateFilter !== '';
+    (!isTodayScope && !isHistoryScope);
+  const dateScopeLabel = isUsingDateRangeFilters
+    ? (startDateFilter && endDateFilter ? `${startDateFilter.split('-').reverse().join('/')} — ${endDateFilter.split('-').reverse().join('/')}` : startDateFilter ? `A partir de ${startDateFilter.split('-').reverse().join('/')}` : `Até ${endDateFilter.split('-').reverse().join('/')}`)
+    : 'Todo o histórico';
 
   const renderModalContent = () => {
     if (modalContent === 'create' || modalContent === 'edit') {
@@ -326,11 +336,11 @@ Deseja continuar?`)) {
   };
 
   const statusPills = [
-    { value: 'todos', label: 'Todos', count: orders.length, cls: 'border-slate-300 text-slate-600 hover:border-slate-400 hover:bg-slate-50', activeCls: 'bg-slate-800 border-slate-800 text-white' },
-    { value: 'aberto', label: 'Abertos', count: orders.filter(o => o.status === 'aberto').length, cls: 'border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50', activeCls: 'bg-red-600 border-red-600 text-white' },
-    { value: 'em_andamento', label: 'Andamento', count: orders.filter(o => o.status === 'em_andamento').length, cls: 'border-amber-200 text-amber-600 hover:border-amber-300 hover:bg-amber-50', activeCls: 'bg-amber-500 border-amber-500 text-white' },
-    { value: 'finalizado', label: 'Finalizados', count: orders.filter(o => o.status === 'finalizado').length, cls: 'border-emerald-200 text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50', activeCls: 'bg-emerald-600 border-emerald-600 text-white' },
-  ] as const;
+    { value: 'todos' as StatusFilter, label: 'Todos', count: dateScopedOrders.length, cls: 'filter-pill-neutral', activeCls: 'filter-pill-neutral-active' },
+    { value: 'aberto' as StatusFilter, label: 'Abertas', count: dateScopedOrders.filter(o => o.status === 'aberto').length, cls: 'filter-pill-open', activeCls: 'filter-pill-open-active' },
+    { value: 'em_andamento' as StatusFilter, label: 'Andamento', count: dateScopedOrders.filter(o => o.status === 'em_andamento').length, cls: 'filter-pill-progress', activeCls: 'filter-pill-progress-active' },
+    { value: 'finalizado' as StatusFilter, label: 'Finalizadas', count: dateScopedOrders.filter(o => o.status === 'finalizado').length, cls: 'filter-pill-done', activeCls: 'filter-pill-done-active' },
+  ];
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -374,128 +384,147 @@ Deseja continuar?`)) {
 
             <Statistics
               orders={orders}
-              dayFilter={dayFilter}
-              monthFilter={monthFilter}
-              yearFilter={yearFilter}
-              startDateFilter={startDateFilter}
-              endDateFilter={endDateFilter}
+              onSelectPeriod={(period) => {
+                setStatusFilter('todos');
+                setSearchTerm('');
+                setStartDateFilter('');
+                setEndDateFilter('');
+                if (period === 'today') {
+                  setStartDateFilter(currentDateISO);
+                  setEndDateFilter(currentDateISO);
+                } else if (period === 'month') {
+                  const now = new Date();
+                  const firstDay = `${currentYear}-${currentMonth}-01`;
+                  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+                  setStartDateFilter(firstDay);
+                  setEndDateFilter(lastDay);
+                } else {
+                  setStartDateFilter(`${currentYear}-01-01`);
+                  setEndDateFilter(`${currentYear}-12-31`);
+                }
+                window.setTimeout(() => document.getElementById('lista-os')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+              }}
             />
 
-            <div className="filter-bar bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/80 shadow-sm px-3 py-3 sm:px-4 sm:py-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-slate-100 flex items-center justify-center">
-                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0014 13.828V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.172a1 1 0 00-.293-.707L1.293 6.707A1 1 0 011 6V4z" />
-                    </svg>
+            <section className="filter-bar filter-panel mb-5" aria-label="Filtros das ordens de serviço">
+              <div className="filter-panel-inner flex flex-col gap-4">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="filter-panel-icon filter-panel-icon-modern">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0014 13.828V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.172a1 1 0 00-.293-.707L1.293 6.707A1 1 0 011 6V4z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-sm font-bold text-slate-800">Filtros e pesquisa</h2>
+                          {hasActiveFilters && <span className="filter-active-badge">Ativos</span>}
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate">Exibindo: <span className="font-semibold text-slate-500">{dateScopeLabel}</span></p>
+                    </div>
                   </div>
-                  <span className="text-sm font-semibold text-slate-700">Filtros</span>
-                  {hasActiveFilters && (
-                    <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-[9px] font-bold">!</span>
+
+                  <div className="filter-quick-actions flex items-center gap-1.5 flex-wrap">
+                    <button type="button" onClick={resetToToday} className={`filter-preset filter-preset-primary ${isTodayScope && statusFilter === 'todos' ? 'filter-preset-active' : ''}`}>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      Hoje
+                    </button>
+                    <button type="button" onClick={viewAllHistory} className={`filter-preset ${isHistoryScope && statusFilter === 'todos' ? 'filter-preset-active filter-history-active' : ''}`}>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0Z" /></svg>
+                      Histórico
+                    </button>
+                    {hasActiveFilters && (
+                      <button type="button" onClick={resetToTodayAndClearSearch} className="filter-preset text-red-600 hover:bg-red-50 hover:border-red-200">
+                        Limpar
+                      </button>
+                    )}
+                    <button type="button" onClick={() => setShowFilters(v => !v)} className="filter-preset sm:hidden">
+                      <svg className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      Período
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Pesquisar por OS, solicitante, unidade, setor ou serviço realizado..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value.replace(/-/g, ''))}
+                    onKeyDown={(e) => { if (e.key === '-') e.preventDefault(); }}
+                    className="input filter-search pl-10 pr-10"
+                  />
+                  {searchTerm && (
+                    <button type="button" onClick={() => setSearchTerm('')} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Limpar pesquisa">
+                      ×
+                    </button>
                   )}
                 </div>
-                <div className="flex gap-1.5 sm:gap-2">
-                  <button onClick={clearFilters} disabled={!hasActiveFilters}
-                    className="btn btn-outline text-xs py-1.5 px-2.5 sm:px-3 disabled:opacity-40">
-                    Hoje
-                  </button>
-                  <button onClick={viewAllHistory}
-                    className="btn btn-ghost text-xs py-1.5 px-2.5 sm:px-3 text-slate-600">
-                    Histórico
-                  </button>
-                  <button
-                    onClick={() => setShowFilters(v => !v)}
-                    className="sm:hidden btn btn-ghost text-xs py-1.5 px-2.5 text-slate-600"
-                    aria-label="Filtros Avançados"
-                  >
-                    <svg className={`w-4 h-4 transition-transform duration-200 ${showFilters ? 'rotate-180' : ''}`}
-                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-                {statusPills.map((p) => (
-                  <button key={p.value}
-                    onClick={() => setStatusFilter(p.value)}
-                    className={`px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${statusFilter === p.value ? p.activeCls : p.cls}`}
-                  >
-                    {p.label}
-                    <span className={`ml-1 sm:ml-1.5 px-1 sm:px-1.5 py-0.5 rounded-full text-[10px] font-bold ${statusFilter === p.value ? 'bg-white/25' : 'bg-slate-100 text-slate-500'}`}>
-                      {p.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative mb-3">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
-                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Buscar por nº, solicitante, unidade..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value.replace(/-/g, ''))}
-                  onKeyDown={(e) => { if (e.key === '-') e.preventDefault(); }}
-                  className="input pl-9"
-                />
-              </div>
-
-              <div className={`${showFilters ? 'block' : 'hidden'} sm:block`}>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between"><span>Dia</span></label>
-                    <input type="number" value={dayFilter}
-                      onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 1 && +v <= 31)) handleDayFilterChange(v); }}
-                      onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="1–31" min="1" max="31"
-                      disabled={isUsingDateRangeFilters}
-                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1" />
+                <div className="filter-section-block">
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div>
+                      <span className="filter-section-title">Status</span>
+                      <span className="filter-section-subtitle">Escolha uma situação para consultar</span>
+                    </div>
+                    <span className="filter-section-hint">O status limpa o período atual</span>
                   </div>
-                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between"><span>Mês</span></label>
-                    <select value={monthFilter} onChange={(e) => handleMonthFilterChange(e.target.value)}
-                      disabled={isUsingDateRangeFilters}
-                      className="input text-xs sm:text-sm mt-1">
-                      <option value="">Todos</option>
-                      {['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-                        .map((m, i) => <option key={m} value={String(i + 1).padStart(2, '0')}>{m}</option>)}
-                    </select>
-                  </div>
-                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500 flex items-center justify-between"><span>Ano</span></label>
-                    <input type="number" value={yearFilter}
-                      onChange={(e) => { const v = e.target.value; if (v === '' || (+v >= 2000 && +v <= Number(currentYear))) handleYearFilterChange(v); }}
-                      onKeyDown={(e) => { if (['-', '+', 'e', 'E'].includes(e.key)) e.preventDefault(); }}
-                      onWheel={(e) => e.currentTarget.blur()}
-                      placeholder="2020–2100" min="2020" max="2100"
-                      disabled={isUsingDateRangeFilters}
-                      className="input text-center font-semibold tracking-wide text-slate-800 placeholder:text-slate-300 mt-1" />
-                  </div>
-                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Inicial</label>
-                    <input type="date" value={startDateFilter} onChange={(e) => handleStartDateFilterChange(e.target.value)}
-                      max={endDateFilter || undefined}
-                      disabled={isUsingDateFilters}
-                      className="input text-xs sm:text-sm mt-1" />
-                  </div>
-                  <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white/70 shadow-sm px-2.5 py-2 sm:px-3 sm:py-2.5 flex flex-col gap-1">
-                    <label className="label !mb-0 !text-[11px] sm:!text-xs !text-slate-500">Dt. Final</label>
-                    <input type="date" value={endDateFilter} onChange={(e) => handleEndDateFilterChange(e.target.value)}
-                      min={startDateFilter || undefined}
-                      disabled={isUsingDateFilters}
-                      className="input text-xs sm:text-sm mt-1" />
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {statusPills.map((p) => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => handleStatusFilterChange(p.value)}
+                        aria-pressed={statusFilter === p.value}
+                        className={`filter-status-card ${statusFilter === p.value ? p.activeCls : p.cls}`}
+                      >
+                        <span className="filter-status-card-label">
+                          <span className="filter-status-dot" />
+                          {p.label}
+                        </span>
+                        <span className="filter-status-count">{p.count}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className={`${showFilters ? 'block' : 'hidden'} sm:block filter-period-section`}>
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <div>
+                      <span className="filter-section-title">Período</span>
+                      <span className="filter-section-subtitle">Escolha uma data ou um intervalo</span>
+                    </div>
+                    <span className="filter-mode-badge">{isTodayScope ? 'Hoje' : isHistoryScope ? 'Histórico' : 'Intervalo'}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-2xl">
+                    <div className="filter-field">
+                      <label>Data inicial</label>
+                      <input type="date" value={startDateFilter} onChange={(e) => handleStartDateFilterChange(e.target.value)} max={endDateFilter || undefined} className="input text-sm" />
+                    </div>
+                    <div className="filter-field">
+                      <label>Data final</label>
+                      <input type="date" value={endDateFilter} onChange={(e) => handleEndDateFilterChange(e.target.value)} min={startDateFilter || undefined} className="input text-sm" />
+                    </div>
+                  </div>
+                </div>
+
+                {hasActiveFilters && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-1">Ativos:</span>
+                    {statusFilter !== 'todos' && <span className="filter-chip">Status: {statusPills.find(p => p.value === statusFilter)?.label}</span>}
+                    {searchTerm && <span className="filter-chip">Busca: {searchTerm}</span>}
+                    {(startDateFilter || endDateFilter) && <span className="filter-chip">Período: {dateScopeLabel}</span>}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <div id="lista-os" className="flex items-center justify-between mb-3 sm:mb-4 scroll-mt-24">
               <p className="text-sm text-slate-500">
                 {filteredOrders.length === 0 ? '' : (
                   <>
@@ -505,7 +534,7 @@ Deseja continuar?`)) {
                 )}
               </p>
               {hasActiveFilters && (
-                <button onClick={clearFilters} className="text-xs text-slate-500 hover:text-slate-700 underline">
+                <button onClick={resetToTodayAndClearSearch} className="text-xs text-slate-500 hover:text-slate-700 underline">
                   Limpar
                 </button>
               )}
@@ -538,7 +567,7 @@ Deseja continuar?`)) {
                         : 'Nenhuma ordem disponível no momento.'}
                   </p>
                   {hasActiveFilters && (
-                    <button onClick={clearFilters} className="btn btn-outline text-xs">Limpar Filtros</button>
+                    <button onClick={resetToTodayAndClearSearch} className="btn btn-outline text-xs">Limpar Filtros</button>
                   )}
                 </div>
               ) : (

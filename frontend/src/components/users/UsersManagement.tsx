@@ -66,7 +66,7 @@ interface FormState {
 const initialForm: FormState = { nome: '', email: '', senha: '', role: 'tecnico', ativo: true };
 
 const UsersManagement: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { user: me } = useAuth();
+  const { user: me, updateCurrentUser } = useAuth();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -124,6 +124,17 @@ const UsersManagement: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         if (form.email) updateData.email = form.email;
         if (form.senha) updateData.senha = form.senha;
         await authAPI.atualizarUsuario(editingUser.id, updateData);
+
+        // Se o usuário editado é o usuário atualmente logado, atualiza
+        // imediatamente o cabeçalho e o localStorage. Antes, a alteração
+        // só aparecia depois de sair e entrar novamente.
+        if (editingUser.id === me?.id) {
+          updateCurrentUser({
+            nome: form.nome.trim(),
+            ...(form.email.trim() ? { email: form.email.trim().toLowerCase() } : {}),
+          });
+        }
+
         success(`Usuário "${form.nome}" atualizado!`);
       } else {
         await authAPI.criarUsuario({ nome: form.nome, email: form.email, senha: form.senha, role: form.role });

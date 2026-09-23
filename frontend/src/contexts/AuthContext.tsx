@@ -18,6 +18,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, senha: string) => Promise<void>;
   logout: () => void;
+  updateCurrentUser: (data: Partial<Pick<AuthUser, 'nome' | 'email'>>) => void;
   // Helpers de permissão
   isAdmin: boolean;
   isTecnico: boolean;
@@ -76,6 +77,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(authUser);
   }, []);
 
+  const updateCurrentUser = useCallback((data: Partial<Pick<AuthUser, 'nome' | 'email'>>) => {
+    setUser(current => {
+      if (!current) return current;
+      const updated = { ...current, ...data };
+      localStorage.setItem('auth_user', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
@@ -94,6 +104,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading,
     login,
     logout,
+    updateCurrentUser,
     isAdmin,
     isTecnico,
     isVisualizador,

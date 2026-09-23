@@ -3,143 +3,138 @@ import { ServiceOrder } from '../../types';
 
 interface StatisticsProps {
   orders: ServiceOrder[];
-  dayFilter?: string;
-  monthFilter?: string;
-  yearFilter?: string;
-  startDateFilter?: string;
-  endDateFilter?: string;
+  onSelectPeriod?: (period: 'today' | 'month' | 'year') => void;
 }
 
-const MONTHS = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const parseBRDate = (value?: string | null) => {
+  if (!value) return null;
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+  return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+};
 
-const Statistics: React.FC<StatisticsProps> = memo(({
-  orders, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter,
-}) => {
-  const stats = useMemo(() => {
-    const today = new Date();
-    const cDay   = dayFilter   ? parseInt(dayFilter)   : today.getDate();
-    const cMonth = monthFilter ? parseInt(monthFilter) : today.getMonth() + 1;
-    const cYear  = yearFilter  ? parseInt(yearFilter)  : today.getFullYear();
+const sameDay = (date: Date, target: Date) =>
+  date.getDate() === target.getDate() &&
+  date.getMonth() === target.getMonth() &&
+  date.getFullYear() === target.getFullYear();
 
-    let osDay = 0, osMonth = 0, osYear = 0, osPeriod = 0;
-    const hasPeriod = !!(startDateFilter || endDateFilter);
+const sameMonth = (date: Date, target: Date) =>
+  date.getMonth() === target.getMonth() && date.getFullYear() === target.getFullYear();
 
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
-    if (startDateFilter) {
-      const [y, m, d] = startDateFilter.split('-');
-      startDate = new Date(+y, +m - 1, +d);
-    }
-    if (endDateFilter) {
-      const [y, m, d] = endDateFilter.split('-');
-      endDate = new Date(+y, +m - 1, +d, 23, 59, 59);
-    }
+const sameYear = (date: Date, target: Date) => date.getFullYear() === target.getFullYear();
 
-    orders.forEach(o => {
-      if (!o.data_abertura) return;
-      const [d, m, y] = o.data_abertura.split('/').map(Number);
-      const dt = new Date(y, m - 1, d);
-      if (hasPeriod) {
-        if ((!startDate || dt >= startDate) && (!endDate || dt <= endDate)) osPeriod++;
-      }
-      if (y === cYear) {
-        osYear++;
-        if (m === cMonth) {
-          osMonth++;
-          if (d === cDay) osDay++;
-        }
-      }
-    });
+const getCounts = (orders: ServiceOrder[]) => ({
+  total: orders.length,
+  aberto: orders.filter((o) => o.status === 'aberto').length,
+  andamento: orders.filter((o) => o.status === 'em_andamento').length,
+  finalizado: orders.filter((o) => o.status === 'finalizado').length,
+});
 
-    return { osDay, osMonth, osYear, osPeriod, cDay, cMonth, cYear, hasPeriod };
-  }, [orders, dayFilter, monthFilter, yearFilter, startDateFilter, endDateFilter]);
+const Statistics: React.FC<StatisticsProps> = memo(({ orders, onSelectPeriod }) => {
+  const data = useMemo(() => {
+    const now = new Date();
+    const parsed = orders
+      .map((order) => ({ order, date: parseBRDate(order.data_abertura) }))
+      .filter((item): item is { order: ServiceOrder; date: Date } => Boolean(item.date));
 
-  const fmtBR = (iso: string) => {
-    const [y, m, d] = iso.split('-');
-    return `${d}/${m}/${y}`;
-  };
+    return {
+      today: getCounts(parsed.filter(({ date }) => sameDay(date, now)).map(({ order }) => order)),
+      month: getCounts(parsed.filter(({ date }) => sameMonth(date, now)).map(({ order }) => order)),
+      year: getCounts(parsed.filter(({ date }) => sameYear(date, now)).map(({ order }) => order)),
+    };
+  }, [orders]);
 
-  type Tile = {
-    label: string;
-    value: number;
-    sub: string;
-    accent: string;
-    icon: React.ReactNode;
-  };
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = now.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
+  const year = now.getFullYear();
 
-  const tiles: Tile[] = [
+  const cards = [
     {
-      label: dayFilter ? `Dia ${stats.cDay}` : 'Hoje',
-      value: stats.osDay,
-      sub: '',
-      accent: 'text-primary bg-red-50 border-red-100',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      ),
+      key: 'today' as const,
+      eyebrow: 'Hoje',
+      title: `Dia ${day}`,
+      value: data.today.total,
+      description: 'Ordens abertas hoje',
+      counts: data.today,
+      icon: 'calendar',
+      accent: 'blue',
     },
     {
-      label: `${MONTHS[stats.cMonth]}/${stats.cYear}`,
-      value: stats.osMonth,
-      sub: '',
-      accent: 'text-amber-600 bg-amber-50 border-amber-100',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
+      key: 'month' as const,
+      eyebrow: 'Este mês',
+      title: `${month}/${year}`,
+      value: data.month.total,
+      description: 'Ordens abertas no mês',
+      counts: data.month,
+      icon: 'month',
+      accent: 'violet',
     },
     {
-      label: `Ano ${stats.cYear}`,
-      value: stats.osYear,
-      sub: '',
-      accent: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-      ),
+      key: 'year' as const,
+      eyebrow: 'Este ano',
+      title: `Ano ${year}`,
+      value: data.year.total,
+      description: 'Ordens abertas no ano',
+      counts: data.year,
+      icon: 'year',
+      accent: 'emerald',
     },
-    ...(stats.hasPeriod ? [{
-      label: 'Período',
-      value: stats.osPeriod,
-      sub: startDateFilter && endDateFilter
-        ? `${fmtBR(startDateFilter)} — ${fmtBR(endDateFilter)}`
-        : startDateFilter ? `A partir de ${fmtBR(startDateFilter)}`
-        : endDateFilter   ? `Até ${fmtBR(endDateFilter!)}` : '',
-      accent: 'text-blue-600 bg-blue-50 border-blue-100',
-      icon: (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-    } as Tile] : []),
   ];
 
+  const icons: Record<string, React.ReactNode> = {
+    calendar: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8 3v3m8-3v3M4.5 9.5h15M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path strokeLinecap="round" d="M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01"/></svg>,
+    month: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M5 4h14a1 1 0 0 1 1 1v15H4V5a1 1 0 0 1 1-1Z"/><path strokeLinecap="round" d="M8 2v4m8-4v4M7 10h10M7 14h3M14 14h3M7 18h3M14 18h3"/></svg>,
+    year: <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 19V5m0 14h16M8 16v-4m4 4V8m4 8V5"/></svg>,
+  };
+
+  const accents: Record<string, { icon: string; number: string; glow: string; line: string }> = {
+    blue: { icon: 'bg-blue-50 text-blue-600 ring-blue-100', number: 'text-blue-700', glow: 'from-blue-500/10', line: 'bg-blue-500' },
+    violet: { icon: 'bg-violet-50 text-violet-600 ring-violet-100', number: 'text-violet-700', glow: 'from-violet-500/10', line: 'bg-violet-500' },
+    emerald: { icon: 'bg-emerald-50 text-emerald-600 ring-emerald-100', number: 'text-emerald-700', glow: 'from-emerald-500/10', line: 'bg-emerald-500' },
+  };
+
   return (
-    <div className={`grid gap-3 mb-5 ${
-      tiles.length === 4
-        ? 'grid-cols-2 lg:grid-cols-4'
-        : 'grid-cols-3'
-    }`}>
-      {tiles.map((t) => (
-        <div key={t.label} className="stat-card">
-          <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide leading-tight">{t.label}</span>
-            <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center border shrink-0 ${t.accent}`}>
-              {t.icon}
+    <section className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-5" aria-label="Resumo por período">
+      {cards.map((card) => {
+        const accent = accents[card.accent];
+        return (
+          <button
+            key={card.key}
+            type="button"
+            onClick={() => onSelectPeriod?.(card.key)}
+            className="period-card group text-left"
+            title={`Filtrar pelas ordens de ${card.key === 'today' ? 'hoje' : card.key === 'month' ? 'este mês' : 'este ano'}`}
+          >
+            <div className={`period-card-glow bg-gradient-to-br ${accent.glow} to-transparent`} />
+            <div className="relative z-10 flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">{card.eyebrow}</span>
+                  <span className="period-card-arrow">↗</span>
+                </div>
+                <p className="mt-1 text-sm font-semibold text-slate-600">{card.title}</p>
+              </div>
+              <span className={`period-card-icon ring-4 ${accent.icon}`}>{icons[card.icon]}</span>
             </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-extrabold text-slate-800 leading-none mb-0.5 sm:mb-1">{t.value}</p>
-          <p className="text-[10px] sm:text-xs text-slate-500 leading-tight truncate">{t.sub}</p>
-        </div>
-      ))}
-    </div>
+
+            <div className="relative z-10 mt-4 flex items-end justify-between gap-3">
+              <div>
+                <p className={`text-4xl sm:text-[2.65rem] leading-none font-black tracking-tight ${accent.number}`}>{card.value}</p>
+                <p className="mt-1.5 text-[11px] font-medium text-slate-400">{card.description}</p>
+              </div>
+            </div>
+
+            <div className="relative z-10 mt-4 grid grid-cols-3 gap-1.5 border-t border-slate-100 pt-3">
+              <span className="period-mini-stat"><strong>{card.counts.aberto}</strong> abertas</span>
+              <span className="period-mini-stat"><strong>{card.counts.andamento}</strong> andamento</span>
+              <span className="period-mini-stat"><strong>{card.counts.finalizado}</strong> finalizadas</span>
+            </div>
+            <span className={`absolute left-0 bottom-0 h-1 w-full ${accent.line} opacity-70`} />
+          </button>
+        );
+      })}
+    </section>
   );
 });
 
