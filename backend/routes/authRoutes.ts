@@ -7,6 +7,8 @@ import {
   atualizarUsuario,
   deletarUsuario,
   alterarSenha,
+  solicitarRecuperacaoSenha,
+  redefinirSenhaPorToken,
 } from '../controllers/authController';
 import { autenticar, autorizar, autorizarProprioOuAdmin } from '../middlewares/authMiddleware';
 
@@ -14,6 +16,8 @@ const router = Router();
 
 // ─── Rotas públicas ───────────────────────────────────────────
 router.post('/login', login);
+router.post('/password-recovery/request', solicitarRecuperacaoSenha);
+router.post('/password-recovery/reset', redefinirSenhaPorToken);
 
 // ─── Rotas autenticadas ───────────────────────────────────────
 router.get('/me', autenticar, me);

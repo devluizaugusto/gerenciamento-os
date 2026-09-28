@@ -140,6 +140,12 @@ const LoginPage: React.FC = () => {
                 </div>
               )}
 
+              <div className="text-right -mt-2">
+                <button type="button" onClick={() => { window.location.assign('/recuperar-senha'); }} className="text-sm text-blue-600 hover:text-blue-700 hover:underline">
+                  Esqueceu sua senha?
+                </button>
+              </div>
+
               {/* Botão */}
               <button
                 type="submit"

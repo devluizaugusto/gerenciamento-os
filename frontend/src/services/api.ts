@@ -25,7 +25,7 @@ const api: AxiosInstance = axios.create({
 
 // ─── Interceptor: adiciona token JWT em todas as requisições ─────────────
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
+  const token = sessionStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -39,8 +39,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !String(error.config?.url || '').includes('/auth/login')) {
       // Token inválido/expirado: volta para a raiz da SPA, nunca para /login,
       // pois /login é uma tela React e não uma rota HTTP do servidor.
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('auth_user');
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('auth_user');
       if (window.location.pathname !== '/') window.location.replace('/');
     }
     return Promise.reject(error);
@@ -55,6 +55,16 @@ export const authAPI = {
       token: string;
       usuario: { id: number; nome: string; email: string; role: string; role_label: string };
     };
+  },
+
+  solicitarRecuperacaoSenha: async (email: string) => {
+    const response = await api.post('/auth/password-recovery/request', { email });
+    return response.data as { message: string; link?: string; expiresInMinutes?: number };
+  },
+
+  redefinirSenhaPorToken: async (token: string, senha: string) => {
+    const response = await api.post('/auth/password-recovery/reset', { token, senha });
+    return response.data as { message: string };
   },
 
   me: async () => {

@@ -6,6 +6,7 @@ import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import Sidebar from './components/layout/Sidebar';
 import LoginPage from './pages/LoginPage';
+import PasswordRecoveryPage from './pages/PasswordRecoveryPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const Spinner = () => (
@@ -602,6 +603,10 @@ Deseja continuar?`)) {
 
 /* ─── Root with AuthProvider ──────────────────────────────────────────────── */
 function App() {
+  const path = window.location.pathname;
+  if (path === '/recuperar-senha' || path.startsWith('/redefinir-senha/')) {
+    return <PasswordRecoveryPage />;
+  }
   return (
     <AuthProvider>
       <AppContent />

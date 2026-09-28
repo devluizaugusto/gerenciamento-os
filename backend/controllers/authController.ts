@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/prisma';
 import { RoleUsuario } from '../types';
@@ -292,5 +293,114 @@ export const seedAdmin = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Erro ao criar admin inicial:', error);
+  }
+};
+
+
+/* ─── Recuperação de senha por link local ───────────────────────────────── */
+const garantirTabelaRecuperacao = async (): Promise<void> => {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS recuperacao_senha (
+      id INT NOT NULL AUTO_INCREMENT,
+      usuario_id INT NOT NULL,
+      token_hash VARCHAR(64) NOT NULL,
+      expira_em DATETIME NOT NULL,
+      usado BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY uq_recuperacao_token (token_hash),
+      KEY idx_recuperacao_usuario (usuario_id),
+      KEY idx_recuperacao_expira (expira_em)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+};
+
+export const solicitarRecuperacaoSenha = async (req: Request, res: Response): Promise<void> => {
+  try {
+    await garantirTabelaRecuperacao();
+    const email = String(req.body?.email || '').toLowerCase().trim();
+
+    if (!email) {
+      res.status(400).json({ error: 'Informe o e-mail' });
+      return;
+    }
+
+    const usuario = await prisma.usuario.findUnique({ where: { email } });
+
+    // Não revela para o cliente se o e-mail existe.
+    if (!usuario || !usuario.ativo) {
+      res.json({ message: 'Se o e-mail estiver cadastrado, um link de recuperação será disponibilizado.' });
+      return;
+    }
+
+    await prisma.$executeRawUnsafe(
+      `UPDATE recuperacao_senha SET usado = TRUE WHERE usuario_id = ? AND usado = FALSE`,
+      usuario.id
+    );
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiraEm = new Date(Date.now() + 15 * 60 * 1000);
+
+    await prisma.$executeRawUnsafe(
+      `INSERT INTO recuperacao_senha (usuario_id, token_hash, expira_em, usado) VALUES (?, ?, ?, FALSE)`,
+      usuario.id, tokenHash, expiraEm
+    );
+
+    const origem = String(req.get('origin') || '').replace(/\/$/, '');
+    const baseUrl = origem || String(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+    const link = `${baseUrl}/redefinir-senha/${token}`;
+
+    res.json({
+      message: 'Link de recuperação gerado. Ele é válido por 15 minutos.',
+      link,
+      expiresInMinutes: 15,
+    });
+  } catch (error) {
+    console.error('Erro ao solicitar recuperação de senha:', error);
+    res.status(500).json({ error: 'Não foi possível gerar o link de recuperação' });
+  }
+};
+
+export const redefinirSenhaPorToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    await garantirTabelaRecuperacao();
+    const token = String(req.body?.token || '');
+    const senha = String(req.body?.senha || '');
+
+    if (!token || senha.length < 6) {
+      res.status(400).json({ error: 'Informe uma senha com pelo menos 6 caracteres' });
+      return;
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const rows = await prisma.$queryRawUnsafe<any[]>(
+      `SELECT id, usuario_id, expira_em, usado FROM recuperacao_senha WHERE token_hash = ? LIMIT 1`,
+      tokenHash
+    );
+    const registro = rows[0];
+
+    if (!registro || Boolean(registro.usado) || new Date(registro.expira_em).getTime() < Date.now()) {
+      res.status(400).json({ error: 'Link de recuperação inválido ou expirado' });
+      return;
+    }
+
+    const senhaHash = await bcrypt.hash(senha, 12);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.usuario.update({
+        where: { id: Number(registro.usuario_id) },
+        data: { senha_hash: senhaHash },
+      });
+      await tx.$executeRawUnsafe(
+        `UPDATE recuperacao_senha SET usado = TRUE WHERE id = ?`,
+        Number(registro.id)
+      );
+    });
+
+    res.json({ message: 'Senha redefinida com sucesso. Você já pode entrar no sistema.' });
+  } catch (error) {
+    console.error('Erro ao redefinir senha:', error);
+    res.status(500).json({ error: 'Não foi possível redefinir a senha' });
   }
 };
