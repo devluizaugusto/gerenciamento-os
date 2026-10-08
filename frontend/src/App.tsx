@@ -265,15 +265,10 @@ Deseja continuar?`)) {
   };
 
   const handleStatusFilterChange = (status: StatusFilter) => {
+    // Status é um filtro adicional: nunca altera o período selecionado.
+    // Assim, "Hoje + Abertas" mostra somente as abertas de hoje.
+    // Para visualizar todas as OS de um status, use primeiro "Histórico".
     setStatusFilter(status);
-
-    // Status é um filtro de visão e não deve ficar preso ao "Hoje".
-    // Ao escolher um status, removemos o escopo de data para mostrar todas
-    // as OS daquele status. O usuário ainda pode aplicar uma data depois.
-    if (status !== 'todos') {
-      setStartDateFilter('');
-      setEndDateFilter('');
-    }
   };
 
   const handleStatisticsStatus = (status: StatusFilter) => {

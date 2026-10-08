@@ -41,7 +41,17 @@ api.interceptors.response.use(
       // pois /login é uma tela React e não uma rota HTTP do servidor.
       sessionStorage.removeItem('auth_token');
       sessionStorage.removeItem('auth_user');
-      if (window.location.pathname !== '/') window.location.replace('/');
+      sessionStorage.removeItem('auth_last_activity');
+
+      // O AuthContext escuta este evento e limpa o estado React imediatamente.
+      // Assim a tela volta para o login sem depender de F5, inclusive quando
+      // a aba ficou suspensa durante a noite.
+      window.dispatchEvent(new Event('auth:expired'));
+
+      // Se a requisição aconteceu fora da raiz da SPA, volta para a raiz.
+      if (window.location.pathname !== '/') {
+        window.location.replace('/');
+      }
     }
     return Promise.reject(error);
   }
