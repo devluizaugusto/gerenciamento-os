@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" role="img" aria-labelledby="title desc">
+  <title id="title">Brasão do Município de Limoeiro, Pernambuco</title>
+  <desc id="desc">Brasão verde com coroa dourada, círculos amarelos e faixa com a inscrição Limoeiro.</desc>
+  <rect width="200" height="220" fill="none"/>
+  <!-- Coroa mural -->
+  <path d="M28 42h144l-7-29H35z" fill="#f4d51f" stroke="#222" stroke-width="2"/>
+  <path d="M36 18h128l-5-9H41z" fill="#f4d51f" stroke="#222" stroke-width="2"/>
+  <path d="M48 16v23M64 13v26M80 11v28M100 10v29M120 11v28M136 13v26M152 16v23" stroke="#222" stroke-width="2"/>
+  <!-- Escudo -->
+  <path d="M49 45h102v88c0 33-21 53-51 66-30-13-51-33-51-66z" fill="#087a3b" stroke="#222" stroke-width="2.5"/>
+  <!-- Esferas -->
+  <g fill="#f4d51f">
+    <circle cx="70" cy="67" r="9"/><circle cx="100" cy="67" r="9"/><circle cx="130" cy="67" r="9"/>
+    <circle cx="70" cy="94" r="9"/><circle cx="100" cy="94" r="9"/><circle cx="130" cy="94" r="9"/>
+    <circle cx="70" cy="121" r="9"/><circle cx="100" cy="121" r="9"/><circle cx="130" cy="121" r="9"/>
+    <circle cx="100" cy="148" r="9"/>
+  </g>
+  <!-- Faixa -->
+  <path d="M8 174c25 12 51 16 92 17 41-1 67-5 92-17l-8 28c-25 10-51 13-84 13s-59-3-84-13z" fill="#fff" stroke="#222" stroke-width="2"/>
+  <path d="M18 183l-7 16M182 183l7 16" stroke="#222" stroke-width="2"/>
+  <text x="100" y="202" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#222" letter-spacing="1">LIMOEIRO</text>
+  <text x="27" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="700" fill="#222">1751</text>
+  <text x="173" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" font-weight="700" fill="#222">1893</text>
+</svg>
