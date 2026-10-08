@@ -49,14 +49,25 @@ const LoginPage: React.FC = () => {
           <div className="px-8 py-8">
             {/* Brand */}
             <div className="flex flex-col items-center mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg mb-4">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+              <div className="w-24 h-24 mb-4">
+                <img
+                  src="/logo-prefeitura-limoeiro.png"
+                  alt="Brasão da Prefeitura de Limoeiro"
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Help Desk TI</h1>
-              <p className="text-sm text-slate-500 mt-1">Sistema de Gerenciamento de OS</p>
+
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight text-center">
+                Secretaria Municipal de Saúde
+              </h1>
+
+              <p className="text-sm text-slate-500 mt-1 text-center">
+                Tecnologia da Informação
+              </p>
+
+              <p className="text-sm text-slate-500 text-center">
+                Gerenciamento de Ordem de Serviço
+              </p>
             </div>
 
             {/* Form */}

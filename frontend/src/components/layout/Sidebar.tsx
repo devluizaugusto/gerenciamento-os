@@ -60,28 +60,37 @@ const Sidebar: React.FC<SidebarProps> = ({
           border-r border-white/5
           shadow-[4px_0_24px_rgba(0,0,0,0.35)]
           transition-all duration-300 ease-in-out
-          ${collapsed ? 'w-[72px]' : 'w-64'}
+          ${collapsed ? 'w-[72px]' : 'w-[280px]'}
         `}
       >
-        {/* ══ LOGO / BRAND ══ */}
-        <div className={`flex items-center h-16 border-b border-white/8 px-4 shrink-0 ${collapsed ? 'justify-center' : 'gap-3'}`}>
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shrink-0">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+        {/* LOGO / BRAND */}
+        <div className="flex items-center min-h-20 border-b border-white/10 px-4 py-3 shrink-0">
+
+          {/* Brasão */}
+          <div className="w-10 h-10 shrink-0 flex items-center justify-center">
+            <img
+              src="/logo-prefeitura-limoeiro.png"
+              alt="Prefeitura de Limoeiro"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           {!collapsed && (
-            <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-white font-bold text-[15px] leading-tight tracking-tight truncate">
-                Help Desk TI
+            <div className="ml-3 min-w-0">
+              <p className="text-white font-bold text-[12px] leading-tight">
+                Secretaria Municipal de Saúde
               </p>
-              <p className="text-white/40 text-[11px] font-medium truncate">
-                Sistema de Gerenciamento
+
+              <p className="text-white/50 text-[10px] leading-tight mt-1">
+                Tecnologia da Informação
+              </p>
+
+              <p className="text-white/50 text-[10px] leading-tight">
+                Gerenciamento de Ordem de Serviços
               </p>
             </div>
           )}
+
         </div>
 
         {/* ══ NAVEGAÇÃO ══ */}

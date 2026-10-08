@@ -14,8 +14,8 @@ interface HeaderProps {
 
 const PAGE_META: Record<Page, { label: string; sub: string; icon: React.ReactNode }> = {
   helpdesk: {
-    label: 'Ordens de Serviço',
-    sub: 'Gerenciamento de ordens de serviço - TI',
+    label: 'Secretaria Municipal de Saúde',
+    sub: 'Tecnologia da Informação • Gerenciamento de Ordem de Serviços',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -55,6 +55,30 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNewOS, onGeneratePDF, ca
   const meta = PAGE_META[currentPage];
   const { user, logout, isAdmin, canCreate } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
+
+  // Esconde o cabeçalho ao rolar para baixo e mostra novamente
+  // assim que o usuário começa a rolar para cima.
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= 8) {
+        setHeaderHidden(false);
+      } else if (currentScrollY > lastScrollY + 2) {
+        setHeaderHidden(true);
+      } else if (currentScrollY < lastScrollY - 2) {
+        setHeaderHidden(false);
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -73,7 +97,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNewOS, onGeneratePDF, ca
     : '?';
 
   return (
-    <header className="h-14 md:h-16 bg-white border-b border-slate-200 flex items-center px-3 md:px-6 gap-2 md:gap-4 sticky top-0 z-30 shadow-sm">
+    <header className={`sticky top-0 z-30 h-14 md:h-16 bg-white border-b border-slate-200 flex items-center px-3 md:px-6 gap-2 md:gap-4 shadow-sm transition-transform duration-200 ease-out ${headerHidden ? '-translate-y-full' : 'translate-y-0'}`}>
 
       {/* Mobile: Brand icon */}
       <div className="flex md:hidden items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shrink-0">
@@ -84,8 +108,13 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNewOS, onGeneratePDF, ca
       </div>
 
       {/* Desktop: Page icon */}
-      <div className="hidden md:flex w-9 h-9 rounded-lg bg-primary/10 items-center justify-center text-primary shrink-0">
-        {meta.icon}
+      {/* Desktop: Logo da Prefeitura de Limoeiro */}
+      <div className="hidden md:flex w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 p-1 items-center justify-center">
+        <img
+          src="/logo-prefeitura-limoeiro.png"
+          alt="Brasão da Prefeitura de Limoeiro"
+          className="w-full h-full object-contain"
+        />
       </div>
 
       {/* Title block */}
