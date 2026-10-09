@@ -55,30 +55,8 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNewOS, onGeneratePDF, ca
   const meta = PAGE_META[currentPage];
   const { user, logout, isAdmin, canCreate } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [headerHidden, setHeaderHidden] = useState(false);
 
-  // Esconde o cabeçalho ao rolar para baixo e mostra novamente
-  // assim que o usuário começa a rolar para cima.
-  useEffect(() => {
-    let lastScrollY = window.scrollY;
 
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY <= 8) {
-        setHeaderHidden(false);
-      } else if (currentScrollY > lastScrollY + 2) {
-        setHeaderHidden(true);
-      } else if (currentScrollY < lastScrollY - 2) {
-        setHeaderHidden(false);
-      }
-
-      lastScrollY = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -97,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage, onNewOS, onGeneratePDF, ca
     : '?';
 
   return (
-    <header className={`sticky top-0 z-30 h-14 md:h-16 bg-white border-b border-slate-200 flex items-center px-3 md:px-6 gap-2 md:gap-4 shadow-sm transition-transform duration-200 ease-out ${headerHidden ? '-translate-y-full' : 'translate-y-0'}`}>
+    <header className="static h-14 md:h-16 bg-white border-b border-slate-200 flex items-center px-3 md:px-6 gap-2 md:gap-4 shadow-sm">
 
       {/* Mobile: Brand icon */}
       <div className="flex md:hidden items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shrink-0">

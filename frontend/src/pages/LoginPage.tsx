@@ -33,23 +33,23 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#1a2236] to-slate-800 flex items-center justify-center p-4">
+    <div className="relative h-[100dvh] w-full overflow-hidden bg-gradient-to-br from-slate-900 via-[#1a2236] to-slate-800 flex items-center justify-center p-3 sm:p-4">
       {/* Decorative blobs */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-3xl" />
         <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-indigo-600/10 blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-3xl">
         {/* Card */}
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
           {/* Top accent */}
           <div className="h-1.5 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600" />
 
-          <div className="px-8 py-8">
+          <div className="px-6 py-5 sm:px-8 sm:py-7">
             {/* Brand */}
-            <div className="flex flex-col items-center mb-8">
-              <div className="w-24 h-24 mb-4">
+            <div className="flex flex-col items-center mb-5 sm:mb-6">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 mb-3 sm:mb-4">
                 <img
                   src="/logo-prefeitura-limoeiro.png"
                   alt="Brasão da Prefeitura de Limoeiro"
@@ -71,7 +71,7 @@ const LoginPage: React.FC = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               {/* E-mail */}
               <div>
                 <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">
@@ -90,7 +90,7 @@ const LoginPage: React.FC = () => {
                     onChange={e => setEmail(e.target.value)}
                     placeholder="seu@email.com"
                     autoComplete="email"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     disabled={carregando}
                   />
                 </div>
@@ -114,7 +114,7 @@ const LoginPage: React.FC = () => {
                     onChange={e => setSenha(e.target.value)}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 pr-12 py-2.5 sm:py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     disabled={carregando}
                   />
                   <button
@@ -161,7 +161,7 @@ const LoginPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={carregando}
-                className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-900/30 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg shadow-blue-900/30 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {carregando ? (
                   <>
@@ -185,7 +185,7 @@ const LoginPage: React.FC = () => {
           </div>
 
           {/* Footer */}
-          <div className="px-8 py-4 bg-slate-50 border-t border-slate-100 text-center">
+          <div className="px-6 py-3 sm:px-8 sm:py-4 bg-slate-50 border-t border-slate-100 text-center">
             <p className="text-xs text-slate-400">
               © {new Date().getFullYear()} Help Desk TI — Acesso restrito a usuários autorizados
             </p>
